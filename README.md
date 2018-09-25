@@ -18,10 +18,10 @@ More details can be found about the methods in the documents listed in the bibli
 INSTALLATION:
 You can run DONEPIKO on Linux-like OS. It requires Python 2 with Numpy, Matplotlib and Scipy. You also need CVXOPT.
 The following command lines are enough to install the dependencies on Ubuntu 16 with admin rights:
-sudo apt-get install software-properties-common
-sudo apt-add-repository universe && sudo apt-get update
-sudo apt-get install python-pip python-numpy python-matplotlib python-scipy
-sudo CVOPT_BUILD_GLPK=1 pip install cvxopt
+>> sudo apt-get install software-properties-common
+>> sudo apt-add-repository universe && sudo apt-get update
+>> sudo apt-get install python-pip python-numpy python-matplotlib python-scipy
+>> sudo CVOPT_BUILD_GLPK=1 pip install cvxopt
 
 TUTORIAL:
 DONEPIKO is a toolbox and as such a script should be written to make calls to it.
