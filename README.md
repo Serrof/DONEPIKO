@@ -6,10 +6,10 @@ when the dynamics has been linearized around equilibrium. In the R2BP, it can be
 The motion is always formulated in the frame rotating with the Keplerian orbit, with the equilibrium point as the origin.
 
 Mathematically speaking, it solves two-point value boundary problems while optimizing the control law, that is minimizing fuel expenditure. 
-The assumption on propulsion is that the exhaust velocity is constant, implying an optimal solution that can always be expressed as impulsive i.e. instantaneous jumps in velocity. 
+The assumption on propulsion is that the exhaust velocity is constant, implying that the cost function can be written as the integral of the norm of the control vector. Moreover, the optimal solution can always be expressed as impulsive i.e. instantaneous jumps in velocity. 
 The thrusters themselves can either be body-mounted in the 3 directions of the reference orbital frame or gimballed. This translates into the type of norm (1 or 2) whose integral is minimized by the control vector.
 
-It proposes two approaches to tackle this optimal control problem. 
+DONEPIKO offers two approaches to tackle this optimal control problem. 
 The direct method is a relaxation, achieved by discretizing the time horizon. Formulations as linear or semi-definite programs (depending on the norm) is performed via the introduction of slack variables.
 The indirect builds on Neustadt's approach to the problem, later revisited by Carter, that can be seen as the linear version of the primer vector theory introduced by Lawden. 
 In short, it solves first a finite-dimension problem that is the primal to the original one to then derive the optimal thrust strategy. If technically possible, the solver will prefer the analytical solution.
