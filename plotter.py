@@ -23,6 +23,9 @@ plt.rcParams.update({'font.size': tuning_params.font})
 
 
 class Plotter:
+    """Class dealing with the plotting capacities.
+
+    """
 
     def __init__(self, dyn, BC, p, anomaly, linearized, CL=None):
         """Constructor for class plotter.

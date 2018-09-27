@@ -14,6 +14,9 @@ import utils
 
 
 class DynamicalSystem:
+    """Class implementing the dynamics of the restricted 2- or 3-body problem.
+
+    """
 
     def __init__(self, mu, ecc, period, sma, Li=None):
         """Constructor.
