@@ -3,7 +3,7 @@ DONEPIKO stands for Delta-V Optimization Near Equilibrium Points In Keplerian Or
 
 It is a Python toolbox under the GPL 3 license designed to minimize the fuel consumption of trajectories in the Restricted 2- or 3- Body Problem,
 when the dynamics has been linearized around equilibrium. In the R2BP, it can be any reference orbit, while in the R3BP, it is a Lagrange Point of a given binary system. 
-The motion is always formulated in the frame rotating with the Keplerian orbit, with the equilibrium point as the origin.
+The motion is always formulated in the frame rotating with the Keplerian orbit, with the equilibrium point as the origin. The non-linear motion is available only for visualization, not yet for control design.
 
 Mathematically speaking, it solves two-point value boundary problems while optimizing the control law, that is minimizing fuel expenditure. 
 The assumption on propulsion is that the exhaust velocity is constant, implying that the cost function can be written as the integral of the norm of the control vector. Moreover, the optimal solution can always be expressed as impulsive i.e. instantaneous jumps in velocity. 
