@@ -116,10 +116,8 @@ class IndirectSolver(solver.Solver):
         puls = orbital_mechanics.puls_oop_LP(self.dyn.x_L_normalized, self.dyn.mu)
 
         # scaling inputs
-        x0_rescaled = numpy.array((BC.x0[0], BC.x0[1] / puls))
-        xf_rescaled = numpy.array((BC.xf[0], BC.xf[1] / puls))
-        BC_rescaled = utils.BoundaryConditions(BC.nu0 * puls, BC.nuf * puls, x0_rescaled, xf_rescaled)
-        dyn_rescaled = dynamical_system.DynamicalSystem(0., 0., self.dyn.period * puls, self.dyn.Li)
+        BC_rescaled = utils.BoundaryConditions(BC.nu0 * puls, BC.nuf * puls, BC.x0, BC.xf)
+        dyn_rescaled = dynamical_system.DynamicalSystem(0., 0., self.dyn.period / puls, self.dyn.sma)
         z_rescaled = dyn_rescaled.compute_rhs(BC_rescaled)
 
         # 'classic' call to numerical solver
@@ -128,6 +126,8 @@ class IndirectSolver(solver.Solver):
         # un-scaling
         for k in range(0, len(nus)):
             nus[k] /= puls
-            DVs[k] *= puls
+        factor = linalg.norm(self.dyn.compute_rhs(BC)) / linalg.norm(dyn_rescaled.compute_rhs(BC_rescaled))
+        for k in range(0, len(lamb)):
+            lamb[k] /= factor
 
         return utils.ControlLaw(BC.half_dim, nus, DVs, lamb)

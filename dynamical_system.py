@@ -312,7 +312,7 @@ class DynamicalSystem:
                 x2_bar = None
                 if self.mu != 0 and (self.Li == 1 or self.Li == 2 or self.Li == 3):
                     if self.ecc == 0.:
-                        phi = phi_harmo(puls_oop_LP(self.x_L_normalized, self.mu) * (nu2 - nu1))
+                        phi = phi_harmo(nu2 - nu1, puls_oop_LP(self.x_L_normalized, self.mu))
                         x2_bar = phi . dot(x1_bar)
                     else:  # elliptical case
                         print('PROPAGATE: 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
@@ -356,13 +356,14 @@ class DynamicalSystem:
         if BC.half_dim == 1:
             if (self.mu != 0.) and (self.Li == 1 or self.Li == 2 or self.Li == 3):
                 if self.ecc == 0.:
-                    u += phi_harmo(-puls_oop_LP(self.x_L_normalized, self.mu) * BC.nuf) . dot(x2)
-                    u -= phi_harmo(-puls_oop_LP(self.x_L_normalized, self.mu) * BC.nu0) . dot(x1)
+                    pulsation = puls_oop_LP(self.x_L_normalized, self.mu)
+                    u += phi_harmo(-BC.nuf, pulsation). dot(x2)
+                    u -= phi_harmo(-BC.nu0, pulsation). dot(x1)
                 else:
                     print('compute_rhs: 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
             else:  # out-of-plane elliptical 2-body problem or 3-body near L4 and 5
-                u += phi_harmo(-BC.nuf).dot(x2)
-                u -= phi_harmo(-BC.nu0).dot(x1)
+                u += phi_harmo(-BC.nuf, 1.0).dot(x2)
+                u -= phi_harmo(-BC.nu0, 1.0).dot(x1)
             u[0] *= multiplier
             u[1] *= multiplier
         elif BC.half_dim == 2:

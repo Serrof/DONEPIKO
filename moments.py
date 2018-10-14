@@ -25,7 +25,7 @@ def Y_oop(e, nu):
     """
 
     rho = rho_func(e, nu)
-    phi = phi_harmo(-nu)
+    phi = phi_harmo(-nu, 1.0)
     Y = numpy.zeros((2, 1))
     Y[0, 0] = phi[0, 1] / rho
     Y[1, 0] = phi[1, 1] / rho
@@ -47,7 +47,7 @@ def Y_oop_LP123(nu, x, mu):
 
     """
 
-    phi = phi_harmo(-puls_oop_LP(x, mu) * nu)
+    phi = phi_harmo(-nu, puls_oop_LP(x, mu))
     Y = numpy.zeros((2, 1))
     Y[0, 0] = phi[0, 1]
     Y[1, 0] = phi[1, 1]

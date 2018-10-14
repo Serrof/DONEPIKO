@@ -321,11 +321,12 @@ def rho_func(e, nu):
     return 1.0 + e * math.cos(nu)
 
 
-def phi_harmo(nu):
+def phi_harmo(nu, pulsation):
     """Function returning the transition matrix of the harmonic oscillator.
 
             Args:
                 nu (float): true anomaly.
+                pulsation (float): pulsation.
 
             Returns:
                 phi (numpy.array): transition matrix of harmonic oscillator.
@@ -333,10 +334,12 @@ def phi_harmo(nu):
     """
 
     phi = numpy.zeros((2, 2))
-    phi[0, 0] = math.cos(nu)
-    phi[0, 1] = math.sin(nu)
-    phi[1, 0] = -phi[0, 1]
-    phi[1, 1] = phi[0, 0]
+    c = math.cos(pulsation * nu)
+    s = math.sin(pulsation * nu)
+    phi[0, 0] = c
+    phi[0, 1] = s / pulsation
+    phi[1, 0] = -s * pulsation
+    phi[1, 1] = c
 
     return phi
 
@@ -358,7 +361,7 @@ def transition_oop(x1_bar, nu1, nu2):
     if len(x1_bar) != 2:
         print('TRANSITION_OOP: out-of-plane initial conditions need to be two-dimensional')
 
-    return phi_harmo(nu2 - nu1) . dot(x1_bar)
+    return phi_harmo(nu2 - nu1, 1.0). dot(x1_bar)
 
 
 def exp_HCW(nu):
