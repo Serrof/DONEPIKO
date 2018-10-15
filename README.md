@@ -1,5 +1,5 @@
-# DONEPIKO 1.0
-DONEPIKO stands for Delta-V Optimization Near Equilibrium Points In Keplerian Orbits.
+# DONEPIKO 0.1
+DONEPIKO stands for Delta-v Optimization Near Equilibrium Points In Keplerian Orbits.
 
 It is a Python toolbox under the GPL 3 license designed to minimize the fuel consumption of trajectories in the Restricted 2- or 3- Body Problem,
 when the dynamics has been linearized around equilibrium. In the R2BP, it can be any reference orbit, while in the R3BP, it is a Lagrange Point of a given binary system. 
