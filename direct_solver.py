@@ -116,8 +116,7 @@ class DirectSolver(solver.Solver):
             # building matrix for linear constraints
             M = numpy.zeros((d, BC.half_dim * self._n_grid_2norm))
             for k in range(0, self._n_grid_2norm):
-                inter = self.dyn.evaluate_Y(grid[k], BC.half_dim)
-                M[:, BC.half_dim * k: BC.half_dim * (k + 1)] = inter
+                M[:, BC.half_dim * k: BC.half_dim * (k + 1)] = Y_grid[:, k * BC.half_dim: (k+1) * BC.half_dim]
             A = numpy.concatenate((numpy.zeros((d, self._n_grid_2norm)), M), axis=1)
             A = matrix(A)
 
