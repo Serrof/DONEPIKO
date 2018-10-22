@@ -35,7 +35,7 @@ for i in range(0, len(x0)):
 p = 1  # norm for minimization (1 or 2)
 
 BC = utils.BoundaryConditions(nu0, nuf, x0, xf)
-plr = plotter.Plotter(dyn, BC, p, anomaly=True, linearized=True)
+plr = plotter.Plotter(dyn, BC, p, anomaly=True, linearized=True, analytical=True)
 master = master.Master(indirect=True, p=p, plr=plr)
 master.write_boundary_cond("boundary_conditions_suboptim.txt")
 

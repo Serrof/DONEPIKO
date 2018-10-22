@@ -29,12 +29,12 @@ class Master:
         """
 
         self.BC = utils.BoundaryConditions(plr.BC.nu0, plr.BC.nuf, plr.BC.x0, plr.BC.xf)
-        self.plotter = plotter.Plotter(plr.dyn, plr.BC, plr.p, plr.anomaly, plr.linearized)
+        self.plotter = plotter.Plotter(plr.dyn, plr.BC, plr.p, plr.anomaly, plr.linearized, plr.analytical)
         self.CL = utils.NoControl(self.BC.half_dim)
         if indirect:
-            self._solver = indirect_solver.IndirectSolver(self.plotter.dyn, p)
+            self._solver = indirect_solver.IndirectSolver(self.plotter.dyn, p, plr.analytical)
         else:  # direct approach chosen
-            self._solver = direct_solver.DirectSolver(self.plotter.dyn, p)
+            self._solver = direct_solver.DirectSolver(self.plotter.dyn, p, plr.analytical)
 
     def set_norm_solve(self, p):
         """Function to reset type of norm to be minimized.
@@ -66,6 +66,17 @@ class Master:
 
         self.plotter.set_linearity(linearized)
 
+    def set_propagation(self, analytical):
+        """Function to change the propagation type (analytical or numerical) of both plotter and solver.
+
+                Args:
+                    analytical (bool): set to true for analytical propagation of motion, false for integration.
+
+        """
+
+        self.plotter.set_propagation(analytical)
+        self._solver.set_propagation(analytical)
+
     def set_boundary_cond(self, BC):
         """Setter for attribute BC.
 
@@ -86,9 +97,9 @@ class Master:
         """
 
         if indirect:
-            self._solver = indirect_solver.IndirectSolver(self._solver.dyn, self._solver.p)
+            self._solver = indirect_solver.IndirectSolver(self._solver.dyn, self._solver.p, self._solver.prop_ana)
         else:  # direct approach chosen
-            self._solver = direct_solver.DirectSolver(self._solver.dyn, self._solver.p)
+            self._solver = direct_solver.DirectSolver(self._solver.dyn, self._solver.p, self._solver.prop_ana)
 
     def set_control(self, CL):
         """Setter for the utils.ControlLaw attribute.

@@ -467,7 +467,7 @@ def solve_primal_2norm(grid_check, Y_grid, z):
             n_work = len(grid_work)
         else:  # algorithm has converged
             if verbose:
-                print('converged with' + str(n_work) + 'points at iteration' + str(iterations))
+                print('converged with ' + str(n_work) + ' points at iteration ' + str(iterations))
 
     if verbose:
         print('primal numerical cost 2-norm: ' + str(z.dot(lamb)))

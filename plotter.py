@@ -27,7 +27,7 @@ class Plotter:
 
     """
 
-    def __init__(self, dyn, BC, p, anomaly, linearized, CL=None):
+    def __init__(self, dyn, BC, p, anomaly, linearized, analytical, CL=None):
         """Constructor for class plotter.
 
                 Args:
@@ -36,6 +36,7 @@ class Plotter:
                     p (int): type of norm for control law to be plotted.
                     anomaly (bool): set to True if independent variable is the true anomaly and to False if it is time.
                     linearized (bool): set to True to plot linearized dynamics, False otherwise
+                    analytical (bool): set to True to propagate the state vector analytically if possible, False otherwise
                     CL (utils.ControlLaw): control law to be simulated.
 
         """
@@ -48,6 +49,11 @@ class Plotter:
             self.CL = utils.NoControl(BC.half_dim)
         self.linearized = linearized
         self.anomaly = anomaly
+        if analytical and dyn.mu != 0. and dyn.ecc != 0. and (dyn.Li == 1 or dyn.Li == 2 or dyn.Li == 3 or BC.half_dim > 1):
+            print('WARNING: propagation type within plotter changed to numerical')
+            self.analytical = False
+        else:  # propagation has to be numerical for elliptical out-of-plane L1, 2 or 3 or elliptical in-plane of any LP
+            self.analytical = analytical
 
         self._nb = tuning_params.mesh_plot
         self._nus = None
@@ -106,6 +112,16 @@ class Plotter:
         self.p = p
         self._q = indirect_num.dual_to_primal_norm_type(p)
 
+    def set_propagation(self, analytical):
+        """Setter for attribute prop_ana.
+
+                Args:
+                     analytical (bool): set to true for analytical propagation of motion, false for integration.
+
+        """
+
+        self.analytical = analytical
+
     def set_boundary_cond(self, BC):
         """Setter for attribute BC.
 
@@ -136,7 +152,7 @@ class Plotter:
 
         dim = self.BC.half_dim * 2
         
-        if self.linearized:
+        if self.linearized and self.analytical:
             states = numpy.zeros((dim, self._nb))
             inters = numpy.zeros((self.CL.N, dim))
             for i in range(0, self.CL.N):
@@ -156,24 +172,69 @@ class Plotter:
                             states[self.BC.half_dim:dim, k] += self.CL.DVs[i, :]
             self._states = states
 
-        else:  # simulated dynamics for plots is non-linear
-            if self.BC.half_dim == 1:
+        else:  # dynamics for plots has to be numerically simulated
+            if self.BC.half_dim == 1 and not self.linearized:
                 print('_compute_states: non-linear dynamics cannot be only out-of-plane')
-            else:  # in-plane or complete dynamics
+
+            else:  # linearized dynamics or in-plane or complete non-linear dynamics
                 slr = self.dyn.sma * (1. - self.dyn.ecc * self.dyn.ecc)  # semi-latus rectum
 
-                def func(nu, X):
-                    Y = X[0:self.BC.half_dim] + slr * self.dyn.x_L_normalized[0:self.BC.half_dim]
-                    grad = orbital_mechanics.grad(Y, self.dyn.mu, slr)
-                    rho = orbital_mechanics.rho_func(self.dyn.ecc, nu)
-                    if self.BC.half_dim == 2:
-                        return [X[2], X[3], 2.*X[3]+(Y[0]+grad[0])/rho, -2.*X[2]+(Y[1]+grad[1])/rho]
-                    else:  # complete dynamics
-                        return [X[3], X[4], X[5], 2.*X[4]+(Y[0]+grad[0])/rho, -2.*X[3]+(Y[1]+grad[1])/rho, (grad[2] - self.dyn.ecc*math.cos(nu)*Y[2])/rho]
+                if self.linearized:
+
+                    if self.BC.half_dim == 1:
+                        if self.dyn.mu != 0 and (self.dyn.Li == 1 or self.dyn.Li == 2 or self.dyn.Li == 3):
+                            if self.dyn.ecc == 0.:
+                                pulsation = orbital_mechanics.puls_oop_LP(self.dyn.x_eq_normalized, self.dyn.mu)
+                                def func(nu, X):  # right-hand side function for integration
+                                    return [X[1], -X[0] * (pulsation * pulsation)]
+                            else:  # elliptical case
+                                pulsation = orbital_mechanics.puls_oop_LP(self.dyn.x_eq_normalized, self.dyn.mu)
+                                def func(nu, X):  # right-hand side function for integration
+                                    factor = (pulsation * pulsation + self.dyn.ecc * math.cos(nu)) / \
+                                             orbital_mechanics.rho_func(self.dyn.ecc, nu)
+                                    return [X[1], -X[0] * factor]
+                        else:  # 2-body problem or circular 3-body problem around L1, L2 or L3
+                            def func(nu, X):  # right-hand side function for integration
+                                return [X[1], -X[0]]
+
+                    else:  # in-plane or complete dynamics
+                        if self.dyn.mu == 0.:
+                            Hessian = orbital_mechanics.Hessian_ip2bp(self.dyn.x_eq_normalized)
+                        else:  # restricted three-body case
+                            Hessian = orbital_mechanics.Hessian_ip3bp(self.dyn.x_eq_normalized, self.dyn.mu)
+
+                        pulsation = 1.0
+                        if self.dyn.mu != 0.0 and (self.dyn.Li == 1 or self.dyn.Li == 2 or self.dyn.Li == 3):
+                            pulsation = orbital_mechanics.puls_oop_LP(self.dyn.x_eq_normalized, self.dyn.mu)
+
+                        if self.BC.half_dim == 2:
+                            def func(nu, X):  # right-hand side function for integration
+                                rho = orbital_mechanics.rho_func(self.dyn.ecc, nu)
+                                return [X[2], X[3], 2. * X[3] - (Hessian[0, 0] * X[0] + Hessian[0, 1] * X[1]) / rho,
+                                        -2. * X[2] - (Hessian[1, 0] * X[0] + Hessian[1, 1] * X[1]) / rho]
+
+                        else:  # complete dynamics
+                            def func(nu, X):  # right-hand side function for integration
+                                factor = (pulsation * pulsation + self.dyn.ecc * math.cos(nu)) / \
+                                         orbital_mechanics.rho_func(self.dyn.ecc, nu)
+                                return [X[3], X[4], X[5], 2. * X[4] - (Hessian[0, 0] * X[0] + Hessian[0, 1] * X[1]) / rho,
+                                    -2. * X[3] - (Hessian[1, 0] * X[0] + Hessian[1, 1] * X[1]) / rho, -X[2] * factor]
+
+                else:  # non-linear dynamics
+
+                    def func(nu, X):  # right-hand side function for integration
+                        Y = X[0:self.BC.half_dim] + slr * self.dyn.x_eq_normalized[0:self.BC.half_dim]
+                        grad = orbital_mechanics.grad(Y, self.dyn.mu, slr)
+                        rho = orbital_mechanics.rho_func(self.dyn.ecc, nu)
+                        if self.BC.half_dim == 2:
+                            return [X[2], X[3], 2. * X[3] + (Y[0] + grad[0]) / rho, -2. * X[2] + (Y[1] + grad[1]) / rho]
+                        else:  # complete dynamics
+                            return [X[3], X[4], X[5], 2.*X[4] + (Y[0] + grad[0]) / rho, -2. * X[3] +
+                                    (Y[1] + grad[1]) /rho, (grad[2] - self.dyn.ecc * math.cos(nu) * Y[2]) / rho]
 
                 integrator = integrators.ABM8(func)
 
-                def propagate_nonlin(nu1, nu2, IC):
+                def propagate_num(nu1, nu2, IC):
                     if nu1 == nu2:
                         pts_inter = [nu1]
                         states_inter = []
@@ -206,7 +267,7 @@ class Plotter:
                         date0 = pts[-1]
                         datef = self.CL.nus[k]
 
-                    (states_inter, pts_inter) = propagate_nonlin(date0, datef, state0)
+                    (states_inter, pts_inter) = propagate_num(date0, datef, state0)
                     states_inter[-1][self.BC.half_dim:2*self.BC.half_dim] += self.CL.DVs[k, :]
                     
                     if len(pts_inter) == 1:
@@ -218,7 +279,7 @@ class Plotter:
                             states.append(states_inter[i])
 
                 if self.BC.nuf != self.CL.nus[-1]:
-                    (states_inter, pts_inter) = propagate_nonlin(self.CL.nus[-1], self.BC.nuf, states[-1])
+                    (states_inter, pts_inter) = propagate_num(self.CL.nus[-1], self.BC.nuf, states[-1])
 
                     for i in range(1, len(pts_inter)):
                         pts.append(pts_inter[i])
@@ -246,10 +307,20 @@ class Plotter:
 
         # generating primer vector 
         pv = numpy.zeros((self.BC.half_dim, self._nb))
-        pv_norm = [] 
+        pv_norm = []
+        if self.analytical:
+            for k in range(0, self._nb):
+                pv[:, k] = numpy.transpose(self.dyn.evaluate_Y(self._nus[k], self.BC.half_dim)) . dot(self.CL.lamb)
+        else:
+            matrices = self.dyn.integrate_phi_inv(self._nus, self.BC.half_dim)
+            for k in range(0, self._nb):
+                inter = matrices[k]
+                Y_k = inter[:, self.BC.half_dim: 2*self.BC.half_dim] / orbital_mechanics.rho_func(self.dyn.ecc, self._nus[k])
+                pv[:, k] = numpy.transpose(Y_k) . dot(self.CL.lamb)
+
         for k in range(0, self._nb):
-            pv[:, k] = numpy.transpose(self.dyn.evaluate_Y(self._nus[k], self.BC.half_dim)) . dot(self.CL.lamb)
             pv_norm.append(linalg.norm(pv[:, k], self._q))
+
         # plotting primer vector 
         min_pv = numpy.min(pv[0, :])
         max_pv = numpy.max(pv[0, :])    

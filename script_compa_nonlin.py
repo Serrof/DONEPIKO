@@ -35,7 +35,7 @@ for i in range(0, len(x0)):
 p = 1  # norm for minimization (1 or 2)
 
 BC = utils.BoundaryConditions(nu0, nuf, x0, xf)
-plr = plotter.Plotter(dyn, BC, p, anomaly=False, linearized=False)
+plr = plotter.Plotter(dyn, BC, p, anomaly=False, linearized=False, analytical=True)
 master = master.Master(indirect=False, p=p, plr=plr)
 
 master.solve()

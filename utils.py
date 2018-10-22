@@ -67,6 +67,44 @@ def unstack_state(x):
     return x_ip, x_oop
 
 
+def vector_to_square_matrix(x_vector, n):
+    """Function turning a N^2-dimensional vector into a N*N matrix column-wise.
+
+        Args:
+            x_vector (numpy.array): vector.
+            n (int): size of output square matrix.
+
+        Returns:
+            x_matrix (numpy.array): matrix whose concatenated columns would make up the input vector.
+
+    """
+    x_matrix = numpy.zeros((n, n))
+    for i in range(0, n):
+        for j in range(0, n):
+            x_matrix[i, j] = x_vector[i * n + j]
+
+    return x_matrix
+
+
+def square_matrix_to_vector(x_matrix, n):
+    """Function turning a NxN matrix into a N^2-dimensional vector.
+
+        Args:
+            x_matrix (numpy.array): square matrix.
+            n (int): size of input matrix.
+
+        Returns:
+            x_vector (numpy.array): vector composed of the concatenated columns of the input matrix.
+
+    """
+    x_vector = numpy.zeros(n * n)
+    for i in range(0, n):
+        for j in range(0, n):
+            x_vector[i * n + j] = x_matrix[i, j]
+
+    return x_vector
+
+
 class BoundaryConditions:
     """Class to manage boundary conditions.
 
@@ -128,7 +166,7 @@ class ControlLaw:
 
                 Args:
                     half_dim (int): dimension of control vector.
-                    nus (numpy.array): true anomalies where burns cccur.
+                    nus (numpy.array): true anomalies where burns occur.
                     DVs (numpy.array): Delta-Vs.
                     lamb (numpy.array): coefficients for primer vector.
 

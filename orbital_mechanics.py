@@ -338,7 +338,7 @@ def phi_harmo(nu, pulsation):
     s = math.sin(pulsation * nu)
     phi[0, 0] = c
     phi[0, 1] = s / pulsation
-    phi[1, 0] = -s * pulsation
+    phi[1, 0] = - s * pulsation
     phi[1, 1] = c
 
     return phi
@@ -361,7 +361,7 @@ def transition_oop(x1_bar, nu1, nu2):
     if len(x1_bar) != 2:
         print('TRANSITION_OOP: out-of-plane initial conditions need to be two-dimensional')
 
-    return phi_harmo(nu2 - nu1, 1.0). dot(x1_bar)
+    return phi_harmo(nu2 - nu1, 1.0) . dot(x1_bar)
 
 
 def exp_HCW(nu):
@@ -526,3 +526,53 @@ def grad(x, mu, slr):
         gr[2] = -pcube * ((1. - mu) * x[2] / r1cube + mu * x[2] / r2cube)
 
     return gr
+
+
+def Hessian_ip2bp(x):
+    """Function computing the Hessian matrix of conservative forces' potential (gravity + non-inertial) in in-plane R2BP.
+
+            Args:
+                x (numpy.array): spacecraft's coordinates
+
+            Returns:
+                H (numpy.array): Hessian (2x2) of conservative forces' potential.
+
+    """
+
+    r1sq = x[0] * x[0] + x[1] * x[1]
+    r1 = math.sqrt(r1sq)
+    r1cube = r1 * r1 * r1
+    H = numpy.zeros((2, 2))
+    H[0, 0] = -1.0 + 1.0 / r1cube - 3.0 * x[0] * x[0] / (r1cube * r1sq)
+    H[0, 1] = -3.0 * x[1] * x[0] / (r1cube * r1sq)
+    H[1, 0] = H[0, 1]
+    H[1, 1] = -1.0 + 1.0 / r1cube - 3.0 * x[1] * x[1] / (r1cube * r1sq)
+
+    return H
+
+
+def Hessian_ip3bp(x, mu):
+    """Function computing the Hessian matrix of conservative forces' potential (gravity + non-inertial) in in-plane R3BP.
+
+            Args:
+                x (numpy.array): spacecraft's coordinates
+                mu (float): ratio of minor mass over total mass.
+
+            Returns:
+                H (numpy.array): Hessian (2x2) of conservative forces' potential.
+
+    """
+
+    r1sq = (x[0] + mu) * (x[0] + mu) + x[1] * x[1]
+    r1 = math.sqrt(r1sq)
+    r1cube = r1 * r1 * r1
+    r2sq = (x[0] - 1.0 + mu) * (x[0] - 1.0 + mu) + x[1] * x[1]
+    r2 = math.sqrt(r2sq)
+    r2cube = r2 * r2 * r2
+    H = numpy.zeros((2, 2))
+    H[0, 0] = -1.0 + (1.0 - mu) / r1cube - 3.0 * (1.0 - mu) * (x[0] + mu) * (x[0] + mu) / (r1cube * r1sq) + mu / r2cube - 3.0 * mu * (x[0] - 1.0 + mu) * (x[0] - 1.0 + mu) / (r2cube * r2sq)
+    H[0, 1] = -3.0 * (1.0 - mu) * x[1] * (x[0] + mu) / (r1cube * r1sq) - 3.0 * mu * x[1] * (x[0] - 1.0 + mu) / (r2cube * r2sq)
+    H[1, 0] = H[0, 1]
+    H[1, 1] = -1.0 + (1.0 - mu) / r1cube - 3.0 * (1.0 - mu) * x[1] * x[1] / (r1cube * r1sq) + mu / r2cube - 3.0 * mu * x[1] * x[1] / (r2cube * r2sq)
+
+    return H

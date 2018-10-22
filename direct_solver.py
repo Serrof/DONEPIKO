@@ -22,7 +22,7 @@ class DirectSolver(solver.Solver):
 
     """
 
-    def __init__(self, dyn, p):
+    def __init__(self, dyn, p, prop_ana):
         """Constructor for class DirectSolver.
 
                 Args:
@@ -31,7 +31,7 @@ class DirectSolver(solver.Solver):
 
         """
 
-        solver.Solver.__init__(self, dyn, p, indirect=False)  # call to parent constructor
+        solver.Solver.__init__(self, dyn, p, indirect=False, prop_ana=prop_ana)  # call to parent constructor
 
         self._DV_min = DV_min
         self._n_grid_1norm = n_grid_1norm
@@ -52,7 +52,7 @@ class DirectSolver(solver.Solver):
 
         # pre-computations
         d = 2 * BC.half_dim
-        z = self.dyn.compute_rhs(BC)
+        z = self.dyn.compute_rhs(BC, self.prop_ana)
         # scaling the right-hand side of the moment equation
         scale = linalg.norm(z)
         for i in range(0, d):
@@ -116,7 +116,7 @@ class DirectSolver(solver.Solver):
             # building matrix for linear constraints
             M = numpy.zeros((d, BC.half_dim * self._n_grid_2norm))
             for k in range(0, self._n_grid_2norm):
-                M[:, BC.half_dim * k: BC.half_dim * (k + 1)] = Y_grid[:, k * BC.half_dim: (k+1) * BC.half_dim]
+                M[:, BC.half_dim * k: BC.half_dim * (k + 1)] = Y_grid[:, k * BC.half_dim: (k + 1) * BC.half_dim]
             A = numpy.concatenate((numpy.zeros((d, self._n_grid_2norm)), M), axis=1)
             A = matrix(A)
 
