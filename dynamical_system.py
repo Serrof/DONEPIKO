@@ -159,6 +159,7 @@ class DynamicalSystem:
                         return [x[2] * factor, x[3] * factor, -x[0], -x[1]]
 
             else:  # out-of-plane elliptical 2-body problem or 3-body near L4 and 5
+
                 def func(nu, x):  # right-hand side function for integration
                     return [x[2], x[3], -x[0], -x[1]]
 

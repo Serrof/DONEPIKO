@@ -185,14 +185,18 @@ class Plotter:
                         if self.dyn.mu != 0 and (self.dyn.Li == 1 or self.dyn.Li == 2 or self.dyn.Li == 3):
                             if self.dyn.ecc == 0.:
                                 pulsation = orbital_mechanics.puls_oop_LP(self.dyn.x_eq_normalized, self.dyn.mu)
+
                                 def func(nu, X):  # right-hand side function for integration
                                     return [X[1], -X[0] * (pulsation * pulsation)]
+
                             else:  # elliptical case
                                 pulsation = orbital_mechanics.puls_oop_LP(self.dyn.x_eq_normalized, self.dyn.mu)
+
                                 def func(nu, X):  # right-hand side function for integration
                                     factor = (pulsation * pulsation + self.dyn.ecc * math.cos(nu)) / \
                                              orbital_mechanics.rho_func(self.dyn.ecc, nu)
                                     return [X[1], -X[0] * factor]
+
                         else:  # 2-body problem or circular 3-body problem around L1, L2 or L3
                             def func(nu, X):  # right-hand side function for integration
                                 return [X[1], -X[0]]
@@ -215,8 +219,8 @@ class Plotter:
 
                         else:  # complete dynamics
                             def func(nu, X):  # right-hand side function for integration
-                                factor = (pulsation * pulsation + self.dyn.ecc * math.cos(nu)) / \
-                                         orbital_mechanics.rho_func(self.dyn.ecc, nu)
+                                rho = orbital_mechanics.rho_func(self.dyn.ecc, nu)
+                                factor = (pulsation * pulsation + self.dyn.ecc * math.cos(nu)) / rho
                                 return [X[3], X[4], X[5], 2. * X[4] - (Hessian[0, 0] * X[0] + Hessian[0, 1] * X[1]) / rho,
                                     -2. * X[3] - (Hessian[1, 0] * X[0] + Hessian[1, 1] * X[1]) / rho, -X[2] * factor]
 
