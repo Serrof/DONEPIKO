@@ -194,7 +194,7 @@ class DynamicalSystem:
                 f_matrix = -x_matrix.dot(A)  # right-hand side of matrix differential equation satisfied by phi^-1
                 return utils.square_matrix_to_vector(f_matrix, 2 * half_dim)
 
-        integ = integrators.ABM8(func)
+        integ = integrators.RK4(func)
         outputs = []
         IC_matrix = numpy.eye(2 * half_dim)
         outputs.append(IC_matrix)
@@ -202,7 +202,7 @@ class DynamicalSystem:
         n_step = int(math.ceil(math.fabs(nus[1] - nus[0]) / tuning_params.h_min))
 
         for k in range(0, len(nus)-1):
-            (state_hist, nu_hist) = integ.integrate(nus[k], nus[k+1], IC_vector, n_step, integ.saved_steps)
+            (state_hist, nu_hist) = integ.integrate(nus[k], nus[k+1], IC_vector, n_step)
 
             if half_dim == 1:  # temporary fix for the one-dimensional case
                 outputs.append(numpy.transpose(utils.vector_to_square_matrix(state_hist[-1], 2 * half_dim)))
