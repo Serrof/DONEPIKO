@@ -9,7 +9,7 @@
 
 import dynamical_system
 import orbital_mechanics
-import physical_const
+import const_params
 
 
 class EllipticalRestricted2BodyProblemEarthFromSMA(dynamical_system.DynamicalSystem):
@@ -29,7 +29,7 @@ class EllipticalRestricted2BodyProblemEarthFromSMA(dynamical_system.DynamicalSys
 
         # call to parent constructor
         dynamical_system.DynamicalSystem.__init__(self, 0., ecc,
-                                                  orbital_mechanics.sma_to_period(sma, physical_const.Earth_constant),
+                                                  orbital_mechanics.sma_to_period(sma, const_params.grav_const["Earth_constant"]),
                                                   sma)
 
 
@@ -50,7 +50,7 @@ class EllipticalRestricted2BodyProblemEarthFromPeriod(dynamical_system.Dynamical
         # call to parent constructor
         dynamical_system.DynamicalSystem.__init__(self, 0., ecc, period,
                                                   orbital_mechanics.period_to_sma(period,
-                                                                                  physical_const.Earth_constant))
+                                                                                  const_params.grav_const["Earth_constant"]))
 
 
 class CircularRestricted2BodyProblemEarthFromSMA(EllipticalRestricted2BodyProblemEarthFromSMA):
@@ -117,8 +117,8 @@ class EarthMoonLP(dynamical_system.DynamicalSystem):
 
         # call to parent constructor
         period = 3600.0*24.0*27.3
-        dynamical_system.DynamicalSystem.__init__(self, physical_const.mu_EM, 0., period,
-                                                  orbital_mechanics.period_to_sma(period, physical_const.EM_constant),
+        dynamical_system.DynamicalSystem.__init__(self, const_params.mass_const["mu_EM"], 0., period,
+                                                  orbital_mechanics.period_to_sma(period, const_params.grav_const["EM_constant"]),
                                                   Li)
 
 
@@ -137,6 +137,6 @@ class SunEarthLP(dynamical_system.DynamicalSystem):
 
         # call to parent constructor
         period = 3600.0*24.0*365.25
-        dynamical_system.DynamicalSystem.__init__(self, physical_const.mu_SE, 0., period,
-                                                  orbital_mechanics.period_to_sma(period, physical_const.Sun_constant),
+        dynamical_system.DynamicalSystem.__init__(self, const_params.mass_const["mu_SE"], 0., period,
+                                                  orbital_mechanics.period_to_sma(period, const_params.grav_const["Sun_constant"]),
                                                   Li)

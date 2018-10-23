@@ -200,7 +200,7 @@ class DynamicalSystem:
         IC_matrix = numpy.eye(2 * half_dim)
         outputs.append(IC_matrix)
         IC_vector = utils.square_matrix_to_vector(IC_matrix, 2 * half_dim)  # initial conditions of matrix system turned into a vector for integration
-        n_step = int(math.ceil(math.fabs(nus[1] - nus[0]) / tuning_params.h_min))
+        n_step = int(math.ceil(math.fabs(nus[1] - nus[0]) / plot_params["h_min"]))
 
         for k in range(0, len(nus)-1):
             (state_hist, nu_hist) = integ.integrate(nus[k], nus[k+1], IC_vector, n_step)

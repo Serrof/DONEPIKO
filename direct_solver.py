@@ -14,7 +14,7 @@ from cvxopt import matrix, solvers
 import solver
 import math
 import utils
-from tuning_params import *
+from const_params import *
 
 
 class DirectSolver(solver.Solver):
@@ -33,11 +33,11 @@ class DirectSolver(solver.Solver):
 
         solver.Solver.__init__(self, dyn, p, indirect=False, prop_ana=prop_ana)  # call to parent constructor
 
-        self._DV_min = DV_min
-        self._n_grid_1norm = n_grid_1norm
-        self._n_grid_2norm = n_grid_2norm
-        self._tol_linprog_dir = tol_linprog_dir
-        self._tol_cvx_dir = tol_cvx_dir
+        self._DV_min = direct_params["DV_min"]
+        self._n_grid_1norm = direct_params["n_grid_1norm"]
+        self._n_grid_2norm = direct_params["n_grid_2norm"]
+        self._tol_linprog_dir = direct_params["tol_linprog"]
+        self._tol_cvx_dir = direct_params["tol_cvx"]
 
     def run(self, BC):
         """Function to call for optimizing a trajectory by the direct approach.
@@ -77,7 +77,7 @@ class DirectSolver(solver.Solver):
             # solving for slack variables
             res = linprog(numpy.ones(d * self._n_grid_1norm), A_eq=M, b_eq=z, options={"disp": False, "tol": self._tol_linprog_dir})
             sol = res.x
-            if verbose:
+            if direct_params["verbose"]:
                 print('direct cost 1-norm: ' + str(res.fun))
 
             # extracting nus with non-zero impulses
@@ -108,7 +108,7 @@ class DirectSolver(solver.Solver):
                             DVs[k, j] = aux
                         else:  # Delta-V is considered numerically negligible
                             lost += math.fabs(aux)
-            if verbose:
+            if direct_params["verbose"]:
                 print("lost impulse: " + str(lost))
 
         else:  # p = 2
@@ -141,14 +141,14 @@ class DirectSolver(solver.Solver):
                     G += [matrix(mat)]
                     h += [vec]
 
-            if not verbose:
+            if not direct_params["verbose"]:
                 solvers.options['show_progress'] = False  # turn off printed stuff
             solvers.options['abstol'] = self._tol_cvx_dir
             solution = solvers.socp(f, Gq=G, hq=h, A=A, b=matrix(z))
             sol = []
             for el in solution['x']:
                 sol.append(el)
-            if verbose:
+            if direct_params["verbose"]:
                 print("direct cost 2-norm: " + str(solution['primal objective']))
 
             # extracting nus with non-zero impulses
@@ -162,7 +162,7 @@ class DirectSolver(solver.Solver):
                     nus.append(grid[k])
                 else:  # Delta-V is considered numerically negligible
                     lost += linalg.norm(DV, 2)
-            if verbose:
+            if direct_params["verbose"]:
                 print("lost impulse: " + str(lost))
 
             # reconstructing velocity jumps
