@@ -29,8 +29,8 @@ DONEPIKO is a toolbox and as such a script should be written to make calls to it
 Physical constants can be added or modified in const_params.py. For expert use, changes to tuning parameters can also be made in this file.
 
 BIBLIOGRAPHY:
-- SERRA, Romain, ARZELIER, Denis, BRÉHARD, Florent, et al. Fuel-optimal impulsive fixed-time trajectories in the linearized circular restricted 3-body-problem. In : IAF Astrodynamics Symposium in 69TH international astronautical congress. 2018.
-- ARZELIER, Denis, BRÉHARD, Florent, DEAK, Norbert, et al. Linearized impulsive fixed-time fuel-optimal space rendezvous: A new numerical approach. IFAC-PapersOnLine, 2016, vol. 49, no 17, p. 373-378.
+- SERRA, Romain, ARZELIER, Denis, BRÉHARD, Florent, et al. Fuel-optimal impulsive fixed-time trajectories in the linearized circular restricted 3-body-problem. In : IAF Astrodynamics Symposium in 69TH international astronautical congress. 2018. https://hal.archives-ouvertes.fr/hal-01830253
+- ARZELIER, Denis, BRÉHARD, Florent, DEAK, Norbert, et al. Linearized impulsive fixed-time fuel-optimal space rendezvous: A new numerical approach. IFAC-PapersOnLine, 2016, vol. 49, no 17, p. 373-378. https://hal.archives-ouvertes.fr/hal-01275427/
 - SERRA, Romain, ARZELIER, Denis, and RONDEPIERRE, Aude. Analytical solutions for impulsive elliptic out-of-plane rendezvous problem via primer vector theory. IEEE Transactions on Control Systems Technology, 2018, vol. 26, no 1, p. 207-221
 - LOUEMBET, Christophe, ARZELIER, Denis, and DEACONU, Georgia. Robust rendezvous planning under maneuver execution errors. Journal of Guidance, Control, and Dynamics, 2014, vol. 38, no 1, p. 76-93.
 - CARTER, T. E. and BRIENT, J. Linearized impulsive rendezvous problem. Journal of Optimization Theory and Applications, 1995, vol. 86, no 3, p. 553-584.
