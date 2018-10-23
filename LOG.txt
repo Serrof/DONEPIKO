@@ -1,0 +1,6 @@
+Releases:
+
+October 22, 2018: v1.0
+
+October 23, 2018: v1.1
+  - merge of constants and parameters files into a single one, using dictionaries 
