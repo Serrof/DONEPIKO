@@ -70,5 +70,3 @@ grav_const["Earth_constant"] = grav_const["G"] * mass_const["mass_Earth"]
 grav_const["Moon_constant"] = grav_const["G"] * mass_const["mass_Moon"]
 grav_const["EM_constant"] = grav_const["G"] * mass_const["mass_EM"]
 grav_const["Sun_constant"] = grav_const["G"] * mass_const["mass_Sun"]
-
-mass_EM=1
