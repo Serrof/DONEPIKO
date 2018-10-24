@@ -115,11 +115,11 @@ class EarthMoonLP(dynamical_system.DynamicalSystem):
 
         """
 
+        sma = const_params.dist_const["dist_Earth_Moon"]
         # call to parent constructor
-        period = 3600.0*24.0*27.3
-        dynamical_system.DynamicalSystem.__init__(self, const_params.mass_const["mu_EM"], 0., period,
-                                                  orbital_mechanics.period_to_sma(period, const_params.grav_const["EM_constant"]),
-                                                  Li)
+        dynamical_system.DynamicalSystem.__init__(self, const_params.mass_const["mu_EM"], 0.,
+                                                  orbital_mechanics.sma_to_period(sma, const_params.grav_const["EM_constant"]),
+                                                  sma, Li)
 
 
 class SunEarthLP(dynamical_system.DynamicalSystem):
@@ -135,8 +135,8 @@ class SunEarthLP(dynamical_system.DynamicalSystem):
 
         """
 
+        period = 3600.0 * 24.0 * 365.25
         # call to parent constructor
-        period = 3600.0*24.0*365.25
         dynamical_system.DynamicalSystem.__init__(self, const_params.mass_const["mu_SE"], 0., period,
                                                   orbital_mechanics.period_to_sma(period, const_params.grav_const["Sun_constant"]),
                                                   Li)

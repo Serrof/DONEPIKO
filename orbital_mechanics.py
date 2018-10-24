@@ -219,7 +219,7 @@ def nu_to_dt(e, n, nu0, nu):
 
                 Args:
                     e (float): eccentricity.
-                    n (float) :  mean motion.
+                    n (float) : mean motion.
                     nu0 (float) : initial true anomaly.
                     nu (float) : current true anomaly.
 
@@ -260,7 +260,7 @@ def dt_to_nu(e, n, nu0, dt):
 
                 Args:
                     e (float): eccentricity.
-                    n (float) :  mean motion.
+                    n (float) : mean motion.
                     nu0 (float) : initial true anomaly.
                     dt (float) : elapsed time since nu0.
 
@@ -298,7 +298,7 @@ def dt_to_nu(e, n, nu0, dt):
         count += 1
     # compute final true anomaly modulo 2 pi
     nuf = 2.0 * math.atan(math.tan(E / 2.0) / inter)
-    if nuf < 0.0:
+    if nuf < 1.e-10:  # tolerance for negativity
         nuf += 2.0 * math.pi
     # add revolutions to previous result
     nu = nuf

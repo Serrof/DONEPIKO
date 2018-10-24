@@ -48,15 +48,15 @@ other_params = {
 dist_const = {
     "radius_Earth": 6371.e3,
     "alt_geo": 35786.e3,
-    "dist_Earth_Moon": 384400.e37,
+    "dist_Earth_Moon": 384400.e3,
     "astro_unit": 149597870.7e3
 }
 dist_const["radius_geo"] = dist_const["radius_Earth"] + dist_const["alt_geo"]
 
 # physical constants related to masses
 mass_const = {
-    "mass_Sun": 1.989e30,
-    "mass_Earth": 5.972e24,
+    "mass_Sun": 1.9885e30,
+    "mass_Earth": 5.97237e24,
     "mass_Moon": 7.342e22
 }
 mass_const["mass_EM"] = mass_const["mass_Earth"] + mass_const["mass_Moon"]
@@ -65,7 +65,7 @@ mass_const["mu_SE"] = mass_const["mass_EM"] / (mass_const["mass_Sun"] + mass_con
 
 # physical constants related to gravity
 grav_const = {
-    "G": 6.674e-11
+    "G": 6.67408e-11
 }
 grav_const["Earth_constant"] = grav_const["G"] * mass_const["mass_Earth"]
 grav_const["Moon_constant"] = grav_const["G"] * mass_const["mass_Moon"]
