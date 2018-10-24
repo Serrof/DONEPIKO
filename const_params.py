@@ -40,7 +40,8 @@ plot_params = {
 other_params = {
     "tol_kepler": 1.e-8,  # tolerance for solving Kepler equation with Newton method
     "iter_max_kepler": 100,  # maximum number of iterations when solving Kepler equation
-    "tol_gamma_LP": 1.e-8  # tolerance for numerically computing L1, 2 and 3
+    "tol_gamma_LP": 1.e-8,  # tolerance for numerically computing L1, 2 or 3
+    "iter_max_LP": 100  # maximum number of iterations when numerically computing L1, 2 or 3
 }
 
 # physical constants related to distances

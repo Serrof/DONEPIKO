@@ -56,7 +56,7 @@ def initialize_iterative_grid(grid_input):
         grid = [grid_input[indices[0]], grid_input[indices[1]]]
         return grid, indices
     else:  # flight duration (measured in radians) is not equal to 0 modulo pi
-        return initialize_iterative_grid_randomly(indirect_params_n_init, grid_input)
+        return initialize_iterative_grid_randomly(indirect_params["n_init"], grid_input)
 
 
 def initialize_iterative_grid_randomly(n_points, grid):

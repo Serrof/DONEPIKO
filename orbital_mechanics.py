@@ -40,9 +40,11 @@ def find_L1(mu):
     gamma0 = math.pow(mu * (1.0 - mu), 1.0 / 3.0)
     gamma = gamma0 + 1.0
 
-    while math.fabs(gamma - gamma0) > other_params["tol_gamma_LP"]:
+    iter = 0
+    while math.fabs(gamma - gamma0) > other_params["tol_gamma_LP"] and iter < other_params["iter_max_LP"]:
         gamma0 = gamma
         gamma = pow(mu * pow(gamma0 - 1.0, 2) / (3.0 - 2.0 * mu - gamma0 * (3.0 - mu - gamma0)), 1.0 / 3.0)
+        iter += 1
 
     return 1.0 - mu - gamma
 
@@ -62,9 +64,11 @@ def find_L2(mu):
     gamma0 = math.pow(mu * (1.0 - mu), 1.0 / 3.0)
     gamma = gamma0 + 1.0
 
-    while math.fabs(gamma - gamma0) > other_params["tol_gamma_LP"]:
+    iter = 0
+    while math.fabs(gamma - gamma0) > other_params["tol_gamma_LP"] and iter < other_params["iter_max_LP"]:
         gamma0 = gamma
         gamma = pow(mu * pow(gamma0 + 1.0, 2) / (3.0 - 2.0 * mu + gamma0 * (3.0 - mu + gamma0)), 1.0 / 3.0)
+        iter += 1
 
     return 1.0 - mu + gamma
 
@@ -83,9 +87,12 @@ def find_L3(mu):
     # initialization
     gamma0 = math.pow(mu * (1.0 - mu), 1.0 / 3.0)
     gamma = gamma0 + 1.0
-    while math.fabs(gamma - gamma0) > other_params["tol_gamma_LP"]:
+
+    iter = 0
+    while math.fabs(gamma - gamma0) > other_params["tol_gamma_LP"] and iter < other_params["iter_max_LP"]:
         gamma0 = gamma
         gamma = pow((1.0 - mu) * pow(gamma0 + 1.0, 2) / (1.0 + 2.0 * mu + gamma0 * (2.0 + mu + gamma0)), 1.0 / 3.0)
+        iter += 1
 
     return - mu - gamma
 
