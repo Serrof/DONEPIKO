@@ -90,7 +90,7 @@ def Y_ip_elliptical2bp(e, n, nu0, nu):
     """
 
     # sanity check(s)
-    if(e >= 1.0) or (e < 0.0):
+    if (e >= 1.0) or (e < 0.0):
         print('Y_IP_ELLIPTICAL2BP: eccentricity must be larger or equal to 0 and strictly less than 1')
 
     Y = numpy.zeros((4, 2))

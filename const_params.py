@@ -23,8 +23,8 @@ indirect_params = {
 direct_params = {
     "verbose": True,  # set to False for no on-screen information
     "DV_min": 1.e-10,  # numerical threshold to delete impulses in post-process
-    "n_grid_1norm": 10000,  # number of points for direct _solver in 1-norm
-    "n_grid_2norm": 100,  # number of points for direct _solver in 2-norm
+    "n_grid_1norm": 10000,  # number of points for direct solver in 1-norm
+    "n_grid_2norm": 100,  # number of points for direct solver in 2-norm
     "tol_linprog": 1.e-11,  # absolute tolerance for solving linear programs
     "tol_cvx": 1.e-11  # absolute tolerance for solving SDPs
 }

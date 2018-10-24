@@ -34,7 +34,6 @@ class Solver:
         if p != 1 and p != 2:
             print('solver: type of norm to minimized must be 1 or 2')
 
-
         self.dyn = dynamical_system.DynamicalSystem(dyn.mu, dyn.ecc, dyn.period, dyn.sma, dyn.Li)
         self._indirect = indirect
         self.p = p
