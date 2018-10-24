@@ -53,7 +53,7 @@ class IndirectSolver(solver.Solver):
                 # special case of circular out-of-plane L1, 2 or 3 where analytical solution can be obtained from
                 # 2-body solution by rescaling anomaly
                 return self._circular_oop_L123(BC)
-            else:
+            else:  # out-of-plane for elliptical 2-body problem or elliptical 3-body around L4 and 5 or circular around L1, 2 and 3
                 z = self.dyn.compute_rhs(BC, analytical=self.prop_ana)
                 (nus, DVs, lamb) = solver_ana(z, self.dyn.ecc, self.dyn.mean_motion, BC.nu0, BC.nuf)
 

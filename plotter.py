@@ -491,6 +491,6 @@ class Plotter:
 
         if self._states is not None:
             numpy.savetxt(file_path, self._states)
-        else:
+        else:  # state history has not been computed yet
             self._compute_states()
             numpy.savetxt(file_path, self._states)

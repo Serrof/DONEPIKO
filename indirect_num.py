@@ -87,7 +87,7 @@ def initialize_iterative_grid_randomly(n_points, grid):
 
 
 def find_max_pv(Y_grid, lamb, q):
-    """Function checking if the maximum _q-norm of the primer vector on a grid is less than one.
+    """Function checking if the maximum q-norm of the primer vector on a grid is less than one.
 
             Args:
                 Y_grid (numpy.array): grid of moment-function components for norm evaluation of primer vector.
@@ -193,7 +193,7 @@ def extract_nus(grid_check, Y_grid, lamb, q):
                         if inter2 > inter:
                             inter = inter2
                             i_nu = k - 1
-                    else:
+                    else:  # norm is no more less than one according to tolerance
                         lap = False
             nus.append(grid_check[i_nu])
             indices.append(i_nu)
@@ -230,7 +230,7 @@ def solve_alphas(M, z, n_alphas):
 
 
 def solve_primal(grid_check, Y_grid, z, p):
-    """Wrapper for _solver of primal problem.
+    """Wrapper for solver of primal problem.
 
             Args:
                 grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
@@ -245,7 +245,7 @@ def solve_primal(grid_check, Y_grid, z, p):
     """
 
     # sanity check(s)
-    if(p != 1) and (p != 2):
+    if (p != 1) and (p != 2):
         print('SOLVE_PRIMAL: norm in cost function must be 1 or 2')
 
     if p == 1:

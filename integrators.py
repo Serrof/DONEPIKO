@@ -7,6 +7,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see < https://www.gnu.org/licenses/>.
 
+
 class Integrator:
     """Abstract class for the implementation of numerical integrators with a fixed step-size.
 
@@ -379,7 +380,7 @@ class MultistepFixedsize(Integrator):
                     h (float): step-size
 
                 Returns:
-                    _states (list): history of state vector after initialization with single-step integrator.
+                    states (list): history of state vector after initialization with single-step integrator.
                     indVar (list): values of independent variable corresponding to history of state vector.
 
         """

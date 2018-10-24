@@ -9,7 +9,6 @@
 
 import numpy
 from numpy import linalg
-import math
 
 
 def stack_state(x_ip, x_oop):

@@ -87,7 +87,7 @@ class Solver:
         if self.prop_ana:
             for k in range(0, grid_size):
                 Ys[:, half_dim * k: half_dim * (k + 1)] = self.dyn.evaluate_Y(grid[k], half_dim)
-        else:
+        else:  # numerical integration
             matrices = self.dyn.integrate_phi_inv(grid, half_dim)
             for k in range(0, grid_size):
                 inter = matrices[k]

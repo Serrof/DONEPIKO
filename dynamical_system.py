@@ -163,7 +163,7 @@ class DynamicalSystem:
                 def func(nu, x):  # right-hand side function for integration
                     return [x[2], x[3], -x[0], -x[1]]
 
-        else:
+        else:  # in-plane or complete dynamics
 
             if self.mu == 0.:
                 H = orbital_mechanics.Hessian_ip2bp(self.x_eq_normalized)
@@ -205,9 +205,9 @@ class DynamicalSystem:
         for k in range(0, len(nus)-1):
             (state_hist, nu_hist) = integ.integrate(nus[k], nus[k+1], IC_vector, n_step)
 
-            if half_dim == 1:  # temporary fix for the one-dimensional case
+            if half_dim == 1:  # temporary fix for the out-of-plane only case
                 outputs.append(numpy.transpose(utils.vector_to_square_matrix(state_hist[-1], 2 * half_dim)))
-            else:
+            else:  # in-plane or complete dynamics
                 outputs.append(utils.vector_to_square_matrix(state_hist[-1], 2 * half_dim))
 
             IC_vector = state_hist[-1]  # old final condition becomes initial one
