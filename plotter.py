@@ -182,59 +182,26 @@ class Plotter:
                 if self.linearized:
 
                     if self.BC.half_dim == 1:
-                        if self.dyn.mu != 0 and (self.dyn.Li == 1 or self.dyn.Li == 2 or self.dyn.Li == 3):
-                            if self.dyn.ecc == 0.:
-                                pulsation = orbital_mechanics.puls_oop_LP(self.dyn.x_eq_normalized, self.dyn.mu)
-
-                                def func(nu, X):  # right-hand side function for integration
-                                    return [X[1], -X[0] * (pulsation * pulsation)]
-
-                            else:  # elliptical case
-                                pulsation = orbital_mechanics.puls_oop_LP(self.dyn.x_eq_normalized, self.dyn.mu)
-
-                                def func(nu, X):  # right-hand side function for integration
-                                    factor = (pulsation * pulsation + self.dyn.ecc * math.cos(nu)) / \
-                                             orbital_mechanics.rho_func(self.dyn.ecc, nu)
-                                    return [X[1], -X[0] * factor]
-
-                        else:  # 2-body problem or circular 3-body problem around L1, L2 or L3
-                            def func(nu, X):  # right-hand side function for integration
-                                return [X[1], -X[0]]
+                        def func(nu, x):  # right-hand side function for integration
+                            return orbital_mechanics.oop_state_deriv(x, nu, self.dyn.ecc, self.dyn.x_eq_normalized,
+                                                                     self.dyn.mu)
 
                     else:  # in-plane or complete dynamics
-                        if self.dyn.mu == 0.:
-                            Hessian = orbital_mechanics.Hessian_ip2bp(self.dyn.x_eq_normalized)
-                        else:  # restricted three-body case
-                            Hessian = orbital_mechanics.Hessian_ip3bp(self.dyn.x_eq_normalized, self.dyn.mu)
-
-                        pulsation = 1.0
-                        if self.dyn.mu != 0.0 and (self.dyn.Li == 1 or self.dyn.Li == 2 or self.dyn.Li == 3):
-                            pulsation = orbital_mechanics.puls_oop_LP(self.dyn.x_eq_normalized, self.dyn.mu)
-
                         if self.BC.half_dim == 2:
-                            def func(nu, X):  # right-hand side function for integration
-                                rho = orbital_mechanics.rho_func(self.dyn.ecc, nu)
-                                return [X[2], X[3], 2. * X[3] - (Hessian[0, 0] * X[0] + Hessian[0, 1] * X[1]) / rho,
-                                        -2. * X[2] - (Hessian[1, 0] * X[0] + Hessian[1, 1] * X[1]) / rho]
+                            def func(nu, x):  # right-hand side function for integration
+                                return orbital_mechanics.ip_state_deriv(x, nu, self.dyn.ecc, self.dyn.x_eq_normalized,
+                                                                     self.dyn.mu)
 
                         else:  # complete dynamics
                             def func(nu, X):  # right-hand side function for integration
-                                rho = orbital_mechanics.rho_func(self.dyn.ecc, nu)
-                                factor = (pulsation * pulsation + self.dyn.ecc * math.cos(nu)) / rho
-                                return [X[3], X[4], X[5], 2. * X[4] - (Hessian[0, 0] * X[0] + Hessian[0, 1] * X[1]) / rho,
-                                    -2. * X[3] - (Hessian[1, 0] * X[0] + Hessian[1, 1] * X[1]) / rho, -X[2] * factor]
+                                return orbital_mechanics.complete_state_deriv(x, nu, self.dyn.ecc,
+                                                                              self.dyn.x_eq_normalized, self.dyn.mu)
 
                 else:  # non-linear dynamics
 
-                    def func(nu, X):  # right-hand side function for integration
-                        Y = X[0:self.BC.half_dim] + slr * self.dyn.x_eq_normalized[0:self.BC.half_dim]
-                        grad = orbital_mechanics.grad(Y, self.dyn.mu, slr)
-                        rho = orbital_mechanics.rho_func(self.dyn.ecc, nu)
-                        if self.BC.half_dim == 2:
-                            return [X[2], X[3], 2. * X[3] + (Y[0] + grad[0]) / rho, -2. * X[2] + (Y[1] + grad[1]) / rho]
-                        else:  # complete dynamics
-                            return [X[3], X[4], X[5], 2.*X[4] + (Y[0] + grad[0]) / rho, -2. * X[3] +
-                                    (Y[1] + grad[1]) /rho, (grad[2] - self.dyn.ecc * math.cos(nu) * Y[2]) / rho]
+                    def func(nu, x):  # right-hand side function for integration
+                        return orbital_mechanics.state_deriv_nonlin(x, nu, self.dyn.ecc, self.dyn.x_eq_normalized,
+                                                                    self.dyn.mu, slr)
 
                 integrator = integrators.ABM8(func)
 
@@ -261,7 +228,7 @@ class Plotter:
                 state0 = numpy.zeros(2 * self.BC.half_dim)
                 for k in range(0, self.CL.N):
                     if k == 0:
-                        for j in range(0, 2*self.BC.half_dim):
+                        for j in range(0, 2 * self.BC.half_dim):
                             state0[j] = self.BC.x0[j]
                         date0 = self.BC.nu0
                         datef = self.CL.nus[0]

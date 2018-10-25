@@ -9,6 +9,7 @@
 
 import math
 import numpy
+import utils
 from const_params import *
 
 # pre-computation for rotation matrix between local orbital frames
@@ -504,16 +505,16 @@ def transition_ip2bp(x1_bar, e, n, nu1, nu2):
         return Phi . dot(x1_bar)
 
 
-def grad(x, mu, slr):
-    """Function returning the gravitational acceleration in the co-rotating frame in the 2 (mu=0) or 3-body problem.
+def pot_grad(x, mu, slr):
+    """Function returning the gradient of the potential in the co-rotating frame in the 2 (mu=0) or 3-body problem.
 
             Args:
-                x (numpy.array): spacecraft's coordinates
+                x (numpy.array): spacecraft's transformed coordinates
                 mu (float): ratio of minor mass over total mass.
                 slr (float): semilatus rectum of reference elliptical orbit
 
             Returns:
-                gr (numpy.array): gravitational acceleration.
+                gr (numpy.array): gradient of the potential relative to conservative forces.
 
     """
 
@@ -536,11 +537,63 @@ def grad(x, mu, slr):
     return gr
 
 
+def state_deriv_nonlin(x, nu, ecc, x_eq, mu, slr):
+    """Function computing the derivative of the transformed state vector w.r.t. the true anomaly for the non-linear motion.
+
+            Args:
+                x (list): out-of-plane transformed vector.
+                nu (float): true anomaly.
+                ecc (float): eccentricity of reference orbit.
+                x_eq (numpy.array): coordinates of equilibrium point.
+                mu (float): ratio of minor mass over total mass.
+                slr (float): semi-latus rectum of reference orbit.
+
+            Returns:
+                (list): state derivative.
+
+    """
+
+    half_dim = len(x) / 2
+    Y = x[0:half_dim] + slr * x_eq[0:half_dim]
+    grad = pot_grad(Y, mu, slr)
+    rho = rho_func(ecc, nu)
+
+    if half_dim == 2:
+        return [x[2], x[3], 2. * x[3] + (Y[0] + grad[0]) / rho, -2. * x[2] + (Y[1] + grad[1]) / rho]
+    else:  # complete dynamics
+        return [x[3], x[4], x[5], 2. * x[4] + (Y[0] + grad[0]) / rho, -2. * x[3] +
+                (Y[1] + grad[1]) / rho, (grad[2] - ecc * math.cos(nu) * Y[2]) / rho]
+
+
+def oop_state_deriv(x, nu, ecc, x_eq, mu):
+    """Function computing the derivative of the out-of-plane transformed state vector w.r.t. the true anomaly.
+
+            Args:
+                x (list): out-of-plane transformed vector.
+                nu (float): true anomaly.
+                ecc (float): eccentricity of reference orbit.
+                x_eq (numpy.array): coordinates of equilibrium point.
+                mu (float): ratio of minor mass over total mass.
+
+            Returns:
+                (list): state derivative.
+
+    """
+
+    if mu != 0.:
+        pulsation = puls_oop_LP(x_eq, mu)
+        factor = (pulsation * pulsation + ecc * math.cos(nu)) / rho_func(ecc, nu)
+        return [x[0], -x[1] * factor]
+
+    else:  # out-of-plane elliptical 2-body problem
+        return [x[0], -x[1]]
+
+
 def Hessian_ip2bp(x):
     """Function computing the Hessian matrix of conservative forces' potential (gravity + non-inertial) in in-plane R2BP.
 
             Args:
-                x (numpy.array): spacecraft's coordinates
+                x (numpy.array): in-plane coordinates
 
             Returns:
                 H (numpy.array): Hessian (2x2) of conservative forces' potential.
@@ -563,7 +616,7 @@ def Hessian_ip3bp(x, mu):
     """Function computing the Hessian matrix of conservative forces' potential (gravity + non-inertial) in in-plane R3BP.
 
             Args:
-                x (numpy.array): spacecraft's coordinates
+                x (numpy.array): in-plane coordinates
                 mu (float): ratio of minor mass over total mass.
 
             Returns:
@@ -584,3 +637,49 @@ def Hessian_ip3bp(x, mu):
     H[1, 1] = -1.0 + (1.0 - mu) / r1cube - 3.0 * (1.0 - mu) * x[1] * x[1] / (r1cube * r1sq) + mu / r2cube - 3.0 * mu * x[1] * x[1] / (r2cube * r2sq)
 
     return H
+
+
+def ip_state_deriv(x, nu, ecc, x_eq, mu):
+    """Function computing the derivative of the in-plane transformed state vector w.r.t. the true anomaly.
+
+            Args:
+                x (list): in-plane transformed vector.
+                nu (float): true anomaly.
+                ecc (float): eccentricity of reference orbit.
+                x_eq (numpy.array): coordinates of equilibrium point.
+                mu (float): ratio of minor mass over total mass.
+
+            Returns:
+                (list): state derivative.
+
+    """
+    if mu ==0:
+        Hessian = Hessian_ip2bp(x_eq)
+    else:  # restricted three-body case
+        Hessian = Hessian_ip3bp(x_eq, mu)
+
+    rho = rho_func(ecc, nu)
+    return [x[2], x[3], 2. * x[3] - (Hessian[0, 0] * x[0] + Hessian[0, 1] * x[1]) / rho, -2. * x[2] -
+            (Hessian[1, 0] * x[0] + Hessian[1, 1] * x[1]) / rho]
+
+
+def complete_state_deriv(x, nu, ecc, x_eq, mu):
+    """Function computing the derivative of the complete (in-plane + out-of-plane) transformed state vector w.r.t.
+    the true anomaly.
+
+            Args:
+                x (list): complete transformed vector.
+                nu (float): true anomaly.
+                ecc (float): eccentricity of reference orbit.
+                x_eq (numpy.array): coordinates of equilibrium point.
+                mu (float): ratio of minor mass over total mass.
+
+            Returns:
+                (list): state derivative.
+
+    """
+    (x_ip, x_oop) = utils.unstack_state(x)
+    ip_deriv = ip_state_deriv(x_ip, nu, ecc, x_eq, mu)
+    oop_deriv = oop_state_deriv(x_oop, nu, ecc, x_eq, mu)
+    return utils.stack_state(ip_deriv, oop_deriv)
+

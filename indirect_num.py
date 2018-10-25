@@ -315,12 +315,12 @@ def solve_primal_1norm(grid_check, Y_grid, z):
 
         # building matrix for linear constraints
         A = numpy.zeros((d * n_work, d))
-        for j, nu in enumerate(grid_work):
+        for j in range(0, len(grid_work)):
             tY = numpy.transpose(Y_grid[:, hd * indices_work[j]: hd * (indices_work[j] + 1)])
             A[d * j: d * j + hd, :] = tY
             A[d * j + hd: d * (j + 1), :] = -tY
 
-        res = linprog(-z, A_ub=A, b_ub=numpy.ones(d * n_work), bounds = (-numpy.inf, numpy.inf), options={"disp": False, "tol": indirect_params["tol_lin_prog"]})
+        res = linprog(-z, A_ub=A, b_ub=numpy.ones(d * n_work), bounds=(-numpy.inf, numpy.inf), options={"disp": False, "tol": indirect_params["tol_lin_prog"]})
         lamb = res.x
 
         (converged, index_max) = find_max_pv(Y_grid, lamb, numpy.inf)
@@ -378,7 +378,7 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
         # building matrix for linear system
     M = numpy.zeros((d, n_alphas))
     count = 0
-    for i, nu in enumerate(nus):
+    for i in range(0, len(nus)):
         aux = Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]
         for j in range(0, hd):
             if math.fabs(directions[i, j]) > 0.0:
@@ -436,7 +436,7 @@ def solve_primal_2norm(grid_check, Y_grid, z):
         # building matrices for SDP constraints
         A = None
         h = None
-        for j, nu in enumerate(grid_work):
+        for j in range(0, len(grid_work)):
             Y = Y_grid[:, hd * indices_work[j]: hd * (indices_work[j] + 1)]
             if hd == 1:
                 B = [[0.0, Y[0, 0], Y[0, 0], 0.0], [0.0, Y[1, 0], Y[1, 0], 0.0]]
@@ -502,10 +502,10 @@ def primal_to_dual_2norm(grid_check, Y_grid, lamb, z):
     # building matrix for linear system
     M = numpy.zeros((d, len(nus)))
     directions = numpy.zeros((len(nus), hd))
-    for i, nu in enumerate(nus):
+    for i in range(0, len(nus)):
         aux = Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]
         inter = numpy.transpose(aux) . dot(lamb)
-        for j, comp in enumerate(inter):
+        for j in range(0, len(inter)):
             directions[i, j] = inter[j] / linalg.norm(inter, p)
             M[:, i] += aux[:, j] * directions[i, j]
 

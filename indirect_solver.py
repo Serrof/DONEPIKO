@@ -48,7 +48,7 @@ class IndirectSolver(solver.Solver):
 
         """
 
-        if BC.half_dim == 1 and self.prop_ana:  # out-of-plane analytical case
+        if BC.half_dim == 1 and self.prop_ana:  # out-of-plane analytical solving
             if (self.dyn.mu != 0) and (self.dyn.ecc == 0.) and (self.dyn.Li == 1 or self.dyn.Li == 2 or self.dyn.Li == 3):
                 # special case of circular out-of-plane L1, 2 or 3 where analytical solution can be obtained from
                 # 2-body solution by rescaling anomaly
@@ -56,6 +56,7 @@ class IndirectSolver(solver.Solver):
             else:  # out-of-plane for elliptical 2-body problem or elliptical 3-body around L4 and 5 or circular around L1, 2 and 3
                 z = self.dyn.compute_rhs(BC, analytical=self.prop_ana)
                 (nus, DVs, lamb) = solver_ana(z, self.dyn.ecc, self.dyn.mean_motion, BC.nu0, BC.nuf)
+                return utils.ControlLaw(BC.half_dim, nus, DVs, lamb)
 
         elif (BC.half_dim == 3) and (self.p == 1):  # merge analytical and numerical solutions in the case of complete
             #  dynamics with the 1-norm
@@ -67,10 +68,8 @@ class IndirectSolver(solver.Solver):
             CL_ip = self.run(BC_ip)
             return utils.merge_control(CL_ip, CL_oop)
 
-        else:  # general numerical case
+        else:  # numerical solving
             return self.indirect_num(BC)
-
-        return utils.ControlLaw(BC.half_dim, nus, DVs, lamb)
 
     def indirect_num(self, BC):
         """Function handling the indirect approach numerically.
