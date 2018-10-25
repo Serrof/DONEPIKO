@@ -49,7 +49,7 @@ class IndirectSolver(solver.Solver):
         """
 
         if BC.half_dim == 1 and self.prop_ana:  # out-of-plane analytical solving
-            if (self.dyn.mu != 0) and (self.dyn.ecc == 0.) and (self.dyn.Li == 1 or self.dyn.Li == 2 or self.dyn.Li == 3):
+            if self.dyn.mu != 0 and self.dyn.ecc == 0. and (self.dyn.Li == 1 or self.dyn.Li == 2 or self.dyn.Li == 3):
                 # special case of circular out-of-plane L1, 2 or 3 where analytical solution can be obtained from
                 # 2-body solution by rescaling anomaly
                 return self._circular_oop_L123(BC)

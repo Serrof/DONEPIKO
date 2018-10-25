@@ -75,7 +75,8 @@ class DirectSolver(solver.Solver):
                 M[:, d * k + BC.half_dim: d * k + d] = -inter
 
             # solving for slack variables
-            res = linprog(numpy.ones(d * self._n_grid_1norm), A_eq=M, b_eq=z, options={"disp": False, "tol": self._tol_linprog_dir})
+            res = linprog(numpy.ones(d * self._n_grid_1norm), A_eq=M, b_eq=z, options={"disp": False,
+                                                                                       "tol": self._tol_linprog_dir})
             sol = res.x
             if direct_params["verbose"]:
                 print('direct cost 1-norm: ' + str(res.fun))
@@ -121,7 +122,8 @@ class DirectSolver(solver.Solver):
             A = matrix(A)
 
             # building matrix for linear cost function
-            f = numpy.concatenate((numpy.ones(self._n_grid_2norm), numpy.zeros(BC.half_dim * self._n_grid_2norm)), axis=0)
+            f = numpy.concatenate((numpy.ones(self._n_grid_2norm), numpy.zeros(BC.half_dim * self._n_grid_2norm)),
+                                  axis=0)
             f = matrix(f)
 
             # building matrices for SDP constraints
@@ -168,7 +170,8 @@ class DirectSolver(solver.Solver):
             # reconstructing velocity jumps
             DVs = numpy.zeros((len(nus), BC.half_dim))
             for k in range(0, len(nus)):
-                DVs[k, :] = sol[self._n_grid_2norm + BC.half_dim * indices[k]: self._n_grid_2norm + BC.half_dim * indices[k] + BC.half_dim]
+                DVs[k, :] = sol[self._n_grid_2norm + BC.half_dim * indices[k]:
+                                self._n_grid_2norm + BC.half_dim * indices[k] + BC.half_dim]
 
         # un-scaling
         for j in range(0, len(nus)):

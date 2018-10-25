@@ -58,7 +58,8 @@ class DynamicalSystem:
                     self.x_eq_normalized = numpy.array((find_L3(self.mu), 0.0, 0.0))
                 puls = puls_oop_LP(self.x_eq_normalized, self.mu)
                 (gamma_re, gamma_im, c, k) = inter_L123(puls * puls)
-                A = numpy.array([[1.0, 1.0, 1.0, 0.0], [c, -c, 0.0, k], [gamma_re, -gamma_re, 0.0, gamma_im], [gamma_re * c, gamma_re * c, - gamma_im * k, 0.0]])
+                A = numpy.array([[1.0, 1.0, 1.0, 0.0], [c, -c, 0.0, k], [gamma_re, -gamma_re, 0.0, gamma_im],
+                                 [gamma_re * c, gamma_re * c, - gamma_im * k, 0.0]])
                 self._A_inv = numpy.linalg.inv(A)
             else:  # Lagrange Point 4 or 5
                 if Li == 4:
@@ -68,7 +69,8 @@ class DynamicalSystem:
                     self.x_eq_normalized = numpy.array((0.5 * (1.0 - 2.0 * self.mu), -math.sqrt(3.) / 2., 0., 0.))
                     kappa = -1.0 + 2.0 * self.mu
                 root1, root2, a1, a2, b1, b2, c1, c2, d1, d2 = inter_L45(self.mu, kappa)
-                A = numpy.array([[1.0, 0.0, 1.0, 0.0], [a1, a2, c1, c2], [0.0, root1, 0.0, root2], [b1 * root1, b2 * root1, d1 * root2, d2 * root2]])
+                A = numpy.array([[1.0, 0.0, 1.0, 0.0], [a1, a2, c1, c2],
+                                 [0.0, root1, 0.0, root2], [b1 * root1, b2 * root1, d1 * root2, d2 * root2]])
                 self._A_inv = numpy.linalg.inv(A)
 
         else:  # restricted 2-body problem
@@ -134,7 +136,7 @@ class DynamicalSystem:
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    outputs (list): list of inverse fundamental transition matrices integrated numerically on input grid.
+                    outputs (list): list of inverse fundamental transition matrices integrated on input grid.
 
         """
 
@@ -348,9 +350,12 @@ class DynamicalSystem:
         puls = puls_oop_LP(self.x_eq_normalized, self.mu)
         (gamma_re, gamma_im, c, k) = inter_L123(puls * puls)
         line1 = [math.exp(gamma_re * nu), math.exp(-gamma_re * nu), math.cos(gamma_im * nu), math.sin(gamma_im * nu)]
-        line2 = [c * math.exp(gamma_re * nu), -c * math.exp(-gamma_re * nu), -k * math.sin(gamma_im * nu), k * math.cos(gamma_im * nu)]
-        line3 = [gamma_re * math.exp(gamma_re * nu), -gamma_re * math.exp(-gamma_re * nu), -gamma_im * math.sin(gamma_im * nu), gamma_im * math.cos(gamma_im * nu)]
-        line4 = [gamma_re * c * math.exp(gamma_re * nu), gamma_re * c * math.exp(-gamma_re * nu), -gamma_im * k * math.cos(gamma_im * nu), -gamma_im * k * math.sin(gamma_im * nu)]
+        line2 = [c * math.exp(gamma_re * nu), -c * math.exp(-gamma_re * nu),
+                 -k * math.sin(gamma_im * nu), k * math.cos(gamma_im * nu)]
+        line3 = [gamma_re * math.exp(gamma_re * nu), -gamma_re * math.exp(-gamma_re * nu),
+                 -gamma_im * math.sin(gamma_im * nu), gamma_im * math.cos(gamma_im * nu)]
+        line4 = [gamma_re * c * math.exp(gamma_re * nu), gamma_re * c * math.exp(-gamma_re * nu),
+                 -gamma_im * k * math.cos(gamma_im * nu), -gamma_im * k * math.sin(gamma_im * nu)]
         phi = numpy.array([line1, line2, line3, line4]).dot(self._A_inv)
 
         return phi
@@ -370,9 +375,16 @@ class DynamicalSystem:
 
         root1, root2, a1, a2, b1, b2, c1, c2, d1, d2 = inter_L45(self.mu, kappa)
         line1 = [math.cos(root1 * nu), math.sin(root1 * nu), math.cos(root2 * nu), math.sin(root2 * nu)]
-        line2 = [a1 * math.cos(root1 * nu) + b1 * math.sin(root1 * nu), a2 * math.cos(root1 * nu) + b2 * math.sin(root1 * nu), c1 * math.cos(root2 * nu) + d1 * math.sin(root2 * nu), c2 * math.cos(root2 * nu) + d2 * math.sin(root2 * nu)]
-        line3 = [-root1 * math.sin(root1 * nu), root1 * math.cos(root1 * nu), -root2 * math.sin(root2 * nu), root2 * math.cos(root2 * nu)]
-        line4 = [-root1 * a1 * math.sin(root1 * nu) + root1 * b1 * math.cos(root1 * nu), -root1 * a2 * math.sin(root1 * nu) + root1 * b2 * math.cos(root1 * nu), -root2 * c1 * math.sin(root2 * nu) + root2 * d1 * math.cos(root2 * nu), -root2 * c2 * math.sin(root2 * nu) + root2 * d2 * math.cos(root2 * nu)]
+        line2 = [a1 * math.cos(root1 * nu) + b1 * math.sin(root1 * nu),
+                 a2 * math.cos(root1 * nu) + b2 * math.sin(root1 * nu),
+                 c1 * math.cos(root2 * nu) + d1 * math.sin(root2 * nu),
+                 c2 * math.cos(root2 * nu) + d2 * math.sin(root2 * nu)]
+        line3 = [-root1 * math.sin(root1 * nu), root1 * math.cos(root1 * nu),
+                 -root2 * math.sin(root2 * nu), root2 * math.cos(root2 * nu)]
+        line4 = [-root1 * a1 * math.sin(root1 * nu) + root1 * b1 * math.cos(root1 * nu),
+                 -root1 * a2 * math.sin(root1 * nu) + root1 * b2 * math.cos(root1 * nu),
+                 -root2 * c1 * math.sin(root2 * nu) + root2 * d1 * math.cos(root2 * nu),
+                 -root2 * c2 * math.sin(root2 * nu) + root2 * d2 * math.cos(root2 * nu)]
         phi = numpy.array([line1, line2, line3, line4]).dot(self._A_inv)
 
         return phi

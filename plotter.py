@@ -76,7 +76,8 @@ class Plotter:
             self._pts = self._times
             self._nus = numpy.zeros(self._nb)
             for k in range(0, self._nb):
-                self._nus[k] = orbital_mechanics.dt_to_nu(self.dyn.ecc, self.dyn.mean_motion, self.BC.nu0, self._times[k])
+                self._nus[k] = orbital_mechanics.dt_to_nu(self.dyn.ecc, self.dyn.mean_motion,
+                                                          self.BC.nu0, self._times[k])
 
     def set_ind_var(self, anomaly):
         """Setter for attribute anomaly.
@@ -263,7 +264,8 @@ class Plotter:
                 else:  # the independent variable is time
                     self._pts = []
                     for nu in self._nus:
-                        self._pts.append(orbital_mechanics.nu_to_dt(self.dyn.ecc, self.dyn.mean_motion, self.BC.nu0, nu))
+                        self._pts.append(orbital_mechanics.nu_to_dt(self.dyn.ecc, self.dyn.mean_motion,
+                                                                    self.BC.nu0, nu))
                 self._states = numpy.zeros((dim, self._nb))
                 for k in range(0, self._nb):
                     self._states[:, k] = states[k]
@@ -286,7 +288,8 @@ class Plotter:
             matrices = self.dyn.integrate_phi_inv(self._nus, self.BC.half_dim)
             for k in range(0, self._nb):
                 inter = matrices[k]
-                Y_k = inter[:, self.BC.half_dim: 2*self.BC.half_dim] / orbital_mechanics.rho_func(self.dyn.ecc, self._nus[k])
+                Y_k = inter[:, self.BC.half_dim: 2*self.BC.half_dim] / orbital_mechanics.rho_func(self.dyn.ecc,
+                                                                                                  self._nus[k])
                 pv[:, k] = numpy.transpose(Y_k) . dot(self.CL.lamb)
 
         for k in range(0, self._nb):
@@ -364,9 +367,11 @@ class Plotter:
                 else:  # index = 2
                     color_plot = 'black'
             ax1.plot([self._pts[0]], [self.BC.x0[index]], marker='o', color=color_plot, markersize=12)
-            ax2.plot([self._pts[0]], [self.BC.x0[index + self.BC.half_dim]], marker='o', color=color_plot, markersize=12)
+            ax2.plot([self._pts[0]], [self.BC.x0[index + self.BC.half_dim]], marker='o', color=color_plot,
+                     markersize=12)
             ax1.plot([self._pts[-1]], [self.BC.xf[index]], marker='o', color=color_plot, markersize=12)
-            ax2.plot([self._pts[-1]], [self.BC.xf[index + self.BC.half_dim]], marker='o', color=color_plot, markersize=12)
+            ax2.plot([self._pts[-1]], [self.BC.xf[index + self.BC.half_dim]], marker='o', color=color_plot,
+                     markersize=12)
             ax1.plot(self._pts, self._states[index, :], color_plot, linewidth=2)
             ax2.plot(self._pts, self._states[index + self.BC.half_dim, :], color_plot, linewidth=2)
             index += 1
@@ -396,7 +401,8 @@ class Plotter:
             if self.anomaly:
                 dates_cost.append(self.CL.nus[k])
             else:  # the independent variable is time
-                dates_cost.append(orbital_mechanics.nu_to_dt(self.dyn.ecc, self.dyn.mean_motion, self.BC.nu0, self.CL.nus[k]))
+                dates_cost.append(orbital_mechanics.nu_to_dt(self.dyn.ecc, self.dyn.mean_motion,
+                                                             self.BC.nu0, self.CL.nus[k]))
         if dates_cost[-1] != self._pts[-1]:
             cost.append(cost[-1])
             dates_cost.append(self._pts[-1])
