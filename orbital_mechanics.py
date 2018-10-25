@@ -586,7 +586,7 @@ def oop_state_deriv(x, nu, ecc, x_eq, mu):
         return [x[0], -x[1] * factor]
 
     else:  # out-of-plane elliptical 2-body problem
-        return [x[0], -x[1]]
+        return [x[1], -x[0]]
 
 
 def Hessian_ip2bp(x):

@@ -193,7 +193,7 @@ class Plotter:
                                                                      self.dyn.mu)
 
                         else:  # complete dynamics
-                            def func(nu, X):  # right-hand side function for integration
+                            def func(nu, x):  # right-hand side function for integration
                                 return orbital_mechanics.complete_state_deriv(x, nu, self.dyn.ecc,
                                                                               self.dyn.x_eq_normalized, self.dyn.mu)
 
