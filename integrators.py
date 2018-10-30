@@ -11,6 +11,9 @@
 class Integrator:
     """Abstract class for the implementation of numerical integrators with a fixed step-size.
 
+        Attributes:
+            _func (method): function to be integrated.
+
     """
 
     def __init__(self, func):
@@ -45,8 +48,8 @@ class Integrator:
                     n_step (int): number of integration steps to be performed.
 
                 Returns:
-                    (list): history of state vectors at integration steps.
-                    (list): values taken by the independent variable at successive integration steps.
+                    Xs (list): history of state vectors at integration steps.
+                    Ts (list): values taken by the independent variable at successive integration steps.
 
         """
 
@@ -164,6 +167,10 @@ class RK4(Integrator):
 
 class BS(Integrator):
     """Class implementing the Bulirsch-Stoer integration scheme.
+
+            Attributes:
+                 _extrapol (int): extrapolation order.
+                 sequence (list): Burlirsch sequence of integers to be used in scheme.
 
     """
 
@@ -295,6 +302,13 @@ class BS(Integrator):
 class MultistepFixedsize(Integrator):
     """Abstract class for the implementation of multi-step integrators with fixed step-size.
 
+            Attributes:
+                 saved_steps (list): values of state derivative at previous steps.
+                 _order (int): order of integration scheme.
+                 _stepsize (float): step-size.
+                 _beta (list): vector of numbers used in integration scheme.
+                 _initializer (): integrator used to initialize the multi-step method.
+
     """
 
     def __init__(self, func, order):
@@ -406,16 +420,15 @@ class MultistepFixedsize(Integrator):
                     saved_steps (list): past values of self._func.
 
                 Returns:
-                    (list): history of state vectors at integration steps.
-                    (list): values taken by the independent variable at successive integration steps.
+                    Xs (list): history of state vectors at integration steps.
+                    Ts (list): values taken by the independent variable at successive integration steps.
 
         """
-
-        if saved_steps is not None:
-            if len(saved_steps) == self._order and len(saved_steps[0]) == len(x0):
-                self.saved_steps = saved_steps
-        else:  # no previous saved steps were given as inputs
-            self.saved_steps = []
+        self.saved_steps = []
+        if saved_steps is not None and len(saved_steps) == self._order:
+            # input saved steps are recyclable
+            for el in saved_steps:
+                self.saved_steps.append(el)
 
         h = (tf - t0) / float(n_step)
 

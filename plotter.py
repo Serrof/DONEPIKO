@@ -25,6 +25,21 @@ plt.rcParams.update({'font.size': plot_params["font"]})
 class Plotter:
     """Class dealing with the plotting capacities.
 
+                Attributes:
+                    dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
+                    BC (utils.BoundaryConditions): constraints for two-point boundary value problem.
+                    p (int): type of norm for control law to be plotted.
+                    anomaly (bool): set to True if independent variable is the true anomaly and to False if it is time.
+                    linearized (bool): set to True to plot linearized dynamics, False otherwise
+                    analytical (bool): set to True to propagate the state vector analytically if possible, False otherwise
+                    CL (utils.ControlLaw): control law to be simulated.
+                    _q (int): type of norm for primer vector.
+                    _nb (int): number of points to be plotted.
+                    _nus (list): anomalies to be plotted.
+                    _times (list): instants to be plotted.
+                    _pts (list): values of independent variable to be plotted (depending on boolean 'anomaly')
+                    _states (numpy.array): states to be plotted.
+
     """
 
     def __init__(self, dyn, BC, p, anomaly, linearized, analytical, CL=None):
@@ -459,6 +474,9 @@ class Plotter:
 
     def write_states_to_file(self, file_path):
         """Function writing in a file the history of the states' variables.
+
+            Args:
+                file_path (str): The path to create/overwrite the state history.
 
         """
 

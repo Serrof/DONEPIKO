@@ -18,6 +18,16 @@ import orbital_mechanics
 class DynamicalSystem:
     """Class implementing the dynamics of the restricted 2- or 3-body problem.
 
+                Attributes:
+                    mu (float): ratio of minor mass over total mass.
+                    ecc (float): eccentricity.
+                    period (float): orbital period.
+                    mean_motion(float): mean motion.
+                    sma (float): semi-major axis (must be consistent with period)
+                    Li (int): index of Lagrange Point (used only if mu != 0)
+                    x_eq_normalized (numpy.array): normalized coordinates of equilibrium point.
+                    _A_inv (numpy.array): intermediate matrix only useful when mu !=0.
+
     """
 
     def __init__(self, mu, ecc, period, sma, Li=None):

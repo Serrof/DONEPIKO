@@ -107,6 +107,13 @@ def square_matrix_to_vector(x_matrix, n):
 class BoundaryConditions:
     """Class to manage boundary conditions.
 
+            Attributes:
+                nu0 (float): initial true anomaly.
+                nuf (float): final true anomaly.
+                half_dim (int): half-dimension of state vector.
+                x0 (numpy.array): initial state vector.
+                xf (numpy.array): final state vector.
+
     """
 
     def __init__(self, nu0, nuf, x0, xf):
@@ -157,6 +164,13 @@ class BoundaryConditions:
 
 class ControlLaw:
     """Class to manage control laws.
+
+            Attributes:
+                N (int): number of impulses.
+                half_dim (int): dimension of control vector.
+                nus (numpy.array): true anomalies where burns occur.
+                DVs (numpy.array): Delta-Vs.
+                lamb (numpy.array): coefficients for primer vector.
 
     """
 

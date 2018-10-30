@@ -17,6 +17,12 @@ import math
 class Solver:
     """Abstract class for the implementation of fuel-optimality solvers.
 
+            Attributes:
+                dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
+                p (int): type of norm to be minimized.
+                _indirect (bool): set to True for indirect approach and False for direct one.
+                prop_ana (bool): set to true for analytical propagation of motion, false for integration.
+
     """
 
     def __init__(self, dyn, p, indirect, prop_ana):
@@ -26,7 +32,7 @@ class Solver:
                     dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
                     p (int): type of norm to be minimized.
                     indirect (bool): set to True for indirect approach and False for direct one.
-                    prop_ana(bool): set to true for analytical propagation of motion, false for integration.
+                    prop_ana (bool): set to true for analytical propagation of motion, false for integration.
 
         """
 
@@ -53,7 +59,7 @@ class Solver:
         """Setter for attribute prop_ana.
 
                 Args:
-                    prop_ana(bool): set to true for analytical propagation of motion, false for integration.
+                    prop_ana (bool): set to true for analytical propagation of motion, false for integration.
 
         """
 

@@ -28,16 +28,11 @@ class DirectSolver(solver.Solver):
                 Args:
                     dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
                     p (int): type of norm to be minimized.
+                    prop_ana (bool): set to true for analytical propagation of motion, false for integration.
 
         """
 
         solver.Solver.__init__(self, dyn, p, indirect=False, prop_ana=prop_ana)  # call to parent constructor
-
-        self._DV_min = direct_params["DV_min"]
-        self._n_grid_1norm = direct_params["n_grid_1norm"]
-        self._n_grid_2norm = direct_params["n_grid_2norm"]
-        self._tol_linprog_dir = direct_params["tol_linprog"]
-        self._tol_cvx_dir = direct_params["tol_cvx"]
 
     def run(self, BC):
         """Function to call for optimizing a trajectory by the direct approach.
@@ -60,23 +55,23 @@ class DirectSolver(solver.Solver):
 
         # building grid on possible impulses' location
         if self.p == 1:
-            grid = numpy.linspace(BC.nu0, BC.nuf, self._n_grid_1norm)
+            grid = numpy.linspace(BC.nu0, BC.nuf, direct_params["n_grid_1norm"])
         else:  # p = 2
-            grid = numpy.linspace(BC.nu0, BC.nuf, self._n_grid_2norm)
+            grid = numpy.linspace(BC.nu0, BC.nuf, direct_params["n_grid_2norm"])
         Y_grid = self.grid_Y(grid, BC.half_dim)
 
         if self.p == 1:
 
             # building matrix for linear program
-            M = numpy.zeros((d, d * self._n_grid_1norm))
-            for k in range(0, self._n_grid_1norm):
+            M = numpy.zeros((d, d * direct_params["n_grid_1norm"]))
+            for k in range(0, direct_params["n_grid_1norm"]):
                 inter = Y_grid[:, k * BC.half_dim: (k+1) * BC.half_dim]
                 M[:, d * k: d * k + BC.half_dim] = inter
                 M[:, d * k + BC.half_dim: d * k + d] = -inter
 
             # solving for slack variables
-            res = linprog(numpy.ones(d * self._n_grid_1norm), A_eq=M, b_eq=z, options={"disp": False,
-                                                                                       "tol": self._tol_linprog_dir})
+            res = linprog(numpy.ones(d * direct_params["n_grid_1norm"]), A_eq=M, b_eq=z,
+                          options={"disp": False, "tol": direct_params["tol_linprog"]})
             sol = res.x
             if direct_params["verbose"]:
                 print('direct cost 1-norm: ' + str(res.fun))
@@ -86,13 +81,13 @@ class DirectSolver(solver.Solver):
             n_components = 0
             indices = []
             nus = []
-            for k in range(0, self._n_grid_1norm):
+            for k in range(0, direct_params["n_grid_1norm"]):
                 DV = sol[d * k: d * k + BC.half_dim] - sol[d * k + BC.half_dim: d * k + d]
-                if linalg.norm(DV, 1) > self._DV_min:
+                if linalg.norm(DV, 1) > direct_params["DV_min"]:
                     indices.append(k)
                     nus.append(grid[k])
                     for component in DV:
-                        if math.fabs(component) > self._DV_min:
+                        if math.fabs(component) > direct_params["DV_min"]:
                             n_components += 1
                 else:  # Delta-V is considered numerically negligible
                     lost += linalg.norm(DV, 1)
@@ -105,7 +100,7 @@ class DirectSolver(solver.Solver):
                 else:  # in-plane of complete dynamics
                     for j in range(0, BC.half_dim):
                         aux = sol[d * index + j] - sol[d * index + BC.half_dim + j]
-                        if math.fabs(aux) > self._DV_min:
+                        if math.fabs(aux) > direct_params["DV_min"]:
                             DVs[k, j] = aux
                         else:  # Delta-V is considered numerically negligible
                             lost += math.fabs(aux)
@@ -115,15 +110,15 @@ class DirectSolver(solver.Solver):
         else:  # p = 2
 
             # building matrix for linear constraints
-            M = numpy.zeros((d, BC.half_dim * self._n_grid_2norm))
-            for k in range(0, self._n_grid_2norm):
+            M = numpy.zeros((d, BC.half_dim * direct_params["n_grid_2norm"]))
+            for k in range(0, direct_params["n_grid_2norm"]):
                 M[:, BC.half_dim * k: BC.half_dim * (k + 1)] = Y_grid[:, k * BC.half_dim: (k + 1) * BC.half_dim]
-            A = numpy.concatenate((numpy.zeros((d, self._n_grid_2norm)), M), axis=1)
+            A = numpy.concatenate((numpy.zeros((d, direct_params["n_grid_2norm"])), M), axis=1)
             A = matrix(A)
 
             # building matrix for linear cost function
-            f = numpy.concatenate((numpy.ones(self._n_grid_2norm), numpy.zeros(BC.half_dim * self._n_grid_2norm)),
-                                  axis=0)
+            f = numpy.concatenate((numpy.ones(direct_params["n_grid_2norm"]),
+                                   numpy.zeros(BC.half_dim * direct_params["n_grid_2norm"])), axis=0)
             f = matrix(f)
 
             # building matrices for SDP constraints
@@ -131,11 +126,11 @@ class DirectSolver(solver.Solver):
             h = None
             vec = numpy.zeros(BC.half_dim + 1)
             vec = matrix(vec)
-            for j in range(0, self._n_grid_2norm):
-                mat = numpy.zeros((BC.half_dim + 1, self._n_grid_2norm * (BC.half_dim + 1)))
+            for j in range(0, direct_params["n_grid_2norm"]):
+                mat = numpy.zeros((BC.half_dim + 1, direct_params["n_grid_2norm"] * (BC.half_dim + 1)))
                 mat[0, j] = -1.0
                 for i in range(0, BC.half_dim):
-                    mat[i + 1, self._n_grid_2norm + BC.half_dim * j + i] = 1.0
+                    mat[i + 1, direct_params["n_grid_2norm"] + BC.half_dim * j + i] = 1.0
                 if j == 0:
                     G = [matrix(mat)]
                     h = [vec]
@@ -145,7 +140,7 @@ class DirectSolver(solver.Solver):
 
             if not direct_params["verbose"]:
                 solvers.options['show_progress'] = False  # turn off printed stuff
-            solvers.options['abstol'] = self._tol_cvx_dir
+            solvers.options['abstol'] = direct_params["tol_cvx"]
             solution = solvers.socp(f, Gq=G, hq=h, A=A, b=matrix(z))
             sol = []
             for el in solution['x']:
@@ -157,9 +152,9 @@ class DirectSolver(solver.Solver):
             lost = 0.0  # variable to keep track of cost from deleted impulses
             indices = []
             nus = []
-            for k in range(0, self._n_grid_2norm):
-                DV = sol[self._n_grid_2norm + BC.half_dim * k: self._n_grid_2norm + BC.half_dim * k + BC.half_dim]
-                if linalg.norm(DV, 2) > self._DV_min:
+            for k in range(0, direct_params["n_grid_2norm"]):
+                DV = sol[direct_params["n_grid_2norm"] + BC.half_dim * k: direct_params["n_grid_2norm"] + BC.half_dim * k + BC.half_dim]
+                if linalg.norm(DV, 2) > direct_params["DV_min"]:
                     indices.append(k)
                     nus.append(grid[k])
                 else:  # Delta-V is considered numerically negligible
@@ -170,8 +165,8 @@ class DirectSolver(solver.Solver):
             # reconstructing velocity jumps
             DVs = numpy.zeros((len(nus), BC.half_dim))
             for k in range(0, len(nus)):
-                DVs[k, :] = sol[self._n_grid_2norm + BC.half_dim * indices[k]:
-                                self._n_grid_2norm + BC.half_dim * indices[k] + BC.half_dim]
+                DVs[k, :] = sol[direct_params["n_grid_2norm"] + BC.half_dim * indices[k]:
+                                direct_params["n_grid_2norm"] + BC.half_dim * indices[k] + BC.half_dim]
 
         # un-scaling
         for j in range(0, len(nus)):

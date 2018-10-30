@@ -16,6 +16,12 @@ import direct_solver
 class Master:
     """Class implementing a so-called master for solving and plotting fuel-optimal trajectories.
 
+            Attributes:
+                BC (utils.BoundaryConditions): boundary conditions.
+                plotter (plotter.Plotter): plotter object for plotting.
+                CL (utils.ControlLaw): control law.
+                solver (solver.Solver): trajectory solver.
+
     """
 
     def __init__(self, indirect, p, plr):
