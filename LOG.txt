@@ -7,3 +7,6 @@ October 23, 2018: v1.0.1
 
 October 24, 2018: v1.0.2
   - more precise values of constants and some more comments and small improvements
+
+October 30, 2018: v1.0.3
+  - more docstring and refactoring of numerical integration within solver and plotter
