@@ -248,10 +248,11 @@ def nu_to_dt(e, n, nu0, nu):
             E += 2.0 * math.pi
         # compute elapsed time (modulo the period) via Kepler equation
         dt = (E - E0 - e * (math.sin(E) - math.sin(E0))) / n
+        period = 2.0 * math.pi / n
         if E - E0 < -1.0e-10:
-            dt += 2.0 * math.pi / n
+            dt += period
         # add revolutions to previous result
-        dt += (2.0 * math.pi / n) * math.floor((nu - nu0) / (2.0 * math.pi))
+        dt += period * math.floor((nu - nu0) / (2.0 * math.pi))
 
         return dt
 
@@ -276,6 +277,10 @@ def dt_to_nu(e, n, nu0, dt):
     if n <= 0.0:
         print('dt_to_nu: mean motion cannot be negative')
 
+    if (nu0 < 0.) or (nu0 >= 2.0 * math.pi):
+        n_mod = math.floor(nu0 / (2.0 * math.pi))
+        return 2.0 * math.pi * n_mod + dt_to_nu(e, n, nu0 - 2.0 * math.pi * n_mod, dt)
+
     # convert initial true anomaly into eccentric one (modulo 2 pi)
     inter = math.sqrt((1.0 - e) / (1.0 + e))
     E0 = 2.0 * math.atan(inter * math.tan(nu0 / 2.0))
@@ -290,7 +295,7 @@ def dt_to_nu(e, n, nu0, dt):
     else:  # negative time of flight
         dt_bis += period * n_rev
     # compute final eccentric anomaly by solving Kepler equation via Newton-Raphson algorithm
-    E = nu0
+    E = E0
     E_bis = E + 2.0 * other_params["tol_kepler"]
     count = 0
     while math.fabs(E - E_bis) > other_params["tol_kepler"] and count < other_params["iter_max_kepler"]:
@@ -304,13 +309,13 @@ def dt_to_nu(e, n, nu0, dt):
     # add revolutions to previous result
     nu = nuf
     if dt >= 0.0:
-        nu += 2.0 * math.pi * n_rev
         if nu < nu0:
             nu += 2.0 * math.pi
+        nu += 2.0 * math.pi * n_rev
     else:  # negative time of flight
-        nu -= 2.0 * math.pi * n_rev
         if nu > nu0:
             nu -= 2.0 * math.pi
+        nu -= 2.0 * math.pi * n_rev
 
     return nu
 
