@@ -10,3 +10,6 @@ October 24, 2018: v1.0.2
 
 October 30, 2018: v1.0.3
   - more docstring and refactoring of numerical integration within solver and plotter
+
+December 5, 2018: v1.0.4
+ - fix of bugs with conversions between time and true anomaly plus simplifications in code of numerical indirect method

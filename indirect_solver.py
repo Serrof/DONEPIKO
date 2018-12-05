@@ -69,9 +69,9 @@ class IndirectSolver(solver.Solver):
             return utils.merge_control(CL_ip, CL_oop)
 
         else:  # numerical solving
-            return self.indirect_num(BC)
+            return self.num_approach(BC)
 
-    def indirect_num(self, BC):
+    def num_approach(self, BC):
         """Function handling the indirect approach numerically.
 
                 Args:

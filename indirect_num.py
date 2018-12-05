@@ -74,11 +74,11 @@ def initialize_iterative_grid_randomly(n_points, grid):
 
     indices = []
     points = []
-    indices.append(random.randint(0, indirect_params["n_check"] - 1))
+    indices.append(random.randint(0, len(grid) - 1))
     points.append(grid[indices[0]])
 
     while len(points) < n_points:
-        index_drawn = random.randint(0, indirect_params["n_check"] - 1)
+        index_drawn = random.randint(0,len(grid) - 1)
         if index_drawn not in indices:  # true anomaly has not been selected yet
             points.append(grid[index_drawn])
             indices.append(index_drawn)
@@ -104,7 +104,7 @@ def find_max_pv(Y_grid, lamb, q):
     index_max = 0
     val_max = 0.0
     unit_norm = True
-    for k in range(0, indirect_params["n_check"]):
+    for k in range(0, len(Y_grid[0, :])):
         Y_k = Y_grid[:, hd * k: hd * (k + 1)]
         inter = linalg.norm(numpy.transpose(Y_k).dot(lamb), q)
         if val_max < inter:
@@ -167,27 +167,29 @@ def extract_nus(grid_check, Y_grid, lamb, q):
 
     """
 
+    # pre-computations
     d = len(lamb)
     hd = d / 2
+    n_check = len(grid_check)
 
     # extracting optimal nus from primer vector
     nus = []
     indices = []
     k = 0
-    while k < indirect_params["n_check"]:
+    while k < n_check:
         Y_k = Y_grid[:, hd * k: hd * (k + 1)]
         inter = linalg.norm(numpy.transpose(Y_k) . dot(lamb), q)
         if 1.0 - indirect_params["tol_unit_norm"] < inter:
             k += 1
             i_nu = k - 1
             # skip following nus for which norm is almost one
-            if k < indirect_params["n_check"]:
+            if k < n_check:
                 lap = True
                 while lap:
                     Y_k = Y_grid[:, hd * k: hd * (k + 1)]
                     inter2 = linalg.norm(numpy.transpose(Y_k) . dot(lamb), q)
                     if 1.0 - indirect_params["tol_unit_norm"] < inter2:
-                        if k == indirect_params["n_check"] - 1:
+                        if k == n_check:
                             lap = False
                         k += 1
                         if inter2 > inter:
@@ -320,7 +322,8 @@ def solve_primal_1norm(grid_check, Y_grid, z):
             A[d * j: d * j + hd, :] = tY
             A[d * j + hd: d * (j + 1), :] = -tY
 
-        res = linprog(-z, A_ub=A, b_ub=numpy.ones(d * n_work), bounds=(-numpy.inf, numpy.inf), options={"disp": False, "tol": indirect_params["tol_lin_prog"]})
+        res = linprog(-z, A_ub=A, b_ub=numpy.ones(d * n_work), bounds=(-numpy.inf, numpy.inf),
+                      options={"disp": indirect_params["verbose"], "tol": indirect_params["tol_lin_prog"]})
         lamb = res.x
 
         (converged, index_max) = find_max_pv(Y_grid, lamb, numpy.inf)
@@ -427,8 +430,7 @@ def solve_primal_2norm(grid_check, Y_grid, z):
 
     converged = False
     iterations = 1
-    if not indirect_params["verbose"]:
-        solvers.options['show_progress'] = False  # turn off printed stuff
+    solvers.options['show_progress'] = indirect_params["verbose"]
     solvers.options['abstol'] = indirect_params["tol_cvx"]
     lamb = numpy.zeros(d)
     while (not converged) and (iterations < indirect_params["max_iter"]):
