@@ -13,7 +13,8 @@ import numpy
 from numpy import linalg
 from scipy.optimize import linprog
 from cvxopt import matrix, solvers
-from const_params import *
+from config import conf
+from config import conf
 
 
 def dual_to_primal_norm_type(p):
@@ -56,7 +57,7 @@ def initialize_iterative_grid(grid_input):
         grid = [grid_input[indices[0]], grid_input[indices[1]]]
         return grid, indices
     else:  # flight duration (measured in radians) is not equal to 0 modulo pi
-        return initialize_iterative_grid_randomly(indirect_params["n_init"], grid_input)
+        return initialize_iterative_grid_randomly(conf.params_indirect["n_init"], grid_input)
 
 
 def initialize_iterative_grid_randomly(n_points, grid):
@@ -110,7 +111,7 @@ def find_max_pv(Y_grid, lamb, q):
         if val_max < inter:
             val_max = inter
             index_max = k
-    if val_max > 1.0 + indirect_params["tol_unit_norm"]:
+    if val_max > 1.0 + conf.params_indirect["tol_unit_norm"]:
         unit_norm = False
 
     return unit_norm, index_max
@@ -143,7 +144,7 @@ def remove_nus(Y_grid, q, grid_work, indices_work, lamb):
     for k in range(0, len(grid)):
         pv = numpy.transpose(Y_grid[:, hd * indices[k - removed_nus]: hd * (indices[k - removed_nus] + 1)]).dot(lamb)
         pv_norm = linalg.norm(pv, q)
-        if pv_norm < 1.0 - indirect_params["tol_unit_norm"]:
+        if pv_norm < 1.0 - conf.params_indirect["tol_unit_norm"]:
             del grid[k - removed_nus]
             del indices[k - removed_nus]
             removed_nus += 1
@@ -179,7 +180,7 @@ def extract_nus(grid_check, Y_grid, lamb, q):
     while k < n_check:
         Y_k = Y_grid[:, hd * k: hd * (k + 1)]
         inter = linalg.norm(numpy.transpose(Y_k) . dot(lamb), q)
-        if 1.0 - indirect_params["tol_unit_norm"] < inter:
+        if 1.0 - conf.params_indirect["tol_unit_norm"] < inter:
             k += 1
             i_nu = k - 1
             # skip following nus for which norm is almost one
@@ -188,7 +189,7 @@ def extract_nus(grid_check, Y_grid, lamb, q):
                 while lap:
                     Y_k = Y_grid[:, hd * k: hd * (k + 1)]
                     inter2 = linalg.norm(numpy.transpose(Y_k) . dot(lamb), q)
-                    if 1.0 - indirect_params["tol_unit_norm"] < inter2:
+                    if 1.0 - conf.params_indirect["tol_unit_norm"] < inter2:
                         if k == n_check:
                             lap = False
                         k += 1
@@ -220,11 +221,11 @@ def solve_alphas(M, z, n_alphas):
 
     d = len(z)
     if n_alphas == d:
-        if indirect_params["verbose"]:
+        if conf.params_other["verbose"]:
             print('square case')
         alphas = linalg.solve(M, z)
     else:  # system of equations is either over or under-determined
-        if indirect_params["verbose"]:
+        if conf.params_other["verbose"]:
             print('non-square case')
         alphas = linalg.lstsq(M, z)[0]
 
@@ -313,7 +314,7 @@ def solve_primal_1norm(grid_check, Y_grid, z):
     iterations = 1
     lamb = None
     res = None
-    while (not converged) and (iterations < indirect_params["max_iter"]):
+    while (not converged) and (iterations < conf.params_indirect["max_iter"]):
 
         # building matrix for linear constraints
         A = numpy.zeros((d * n_work, d))
@@ -323,23 +324,23 @@ def solve_primal_1norm(grid_check, Y_grid, z):
             A[d * j + hd: d * (j + 1), :] = -tY
 
         res = linprog(-z, A_ub=A, b_ub=numpy.ones(d * n_work), bounds=(-numpy.inf, numpy.inf),
-                      options={"disp": indirect_params["verbose"], "tol": indirect_params["tol_lin_prog"]})
+                      options={"disp": conf.params_other["verbose"], "tol": conf.params_indirect["tol_lin_prog"]})
         lamb = res.x
 
         (converged, index_max) = find_max_pv(Y_grid, lamb, numpy.inf)
         if not converged:
             iterations += 1
-            if indirect_params["exchange"]:
+            if conf.params_indirect["exchange"]:
                 (grid_work, indices_work) = remove_nus(Y_grid, numpy.inf, grid_work, indices_work, lamb)
             grid_work.append(grid_check[index_max])  # add nu
             indices_work.append(index_max)
             n_work = len(grid_work)
 
         else:  # algorithm has converged
-            if indirect_params["verbose"]:
+            if conf.params_other["verbose"]:
                 print('converged with ' + str(n_work) + ' points at iteration ' + str(iterations))
 
-    if indirect_params["verbose"]:
+    if conf.params_other["verbose"]:
         print('primal numerical cost 1-norm: ' + str(-res.fun))
 
     return lamb
@@ -374,7 +375,7 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
     for i in range(0, len(nus)):
         inter = numpy.transpose(Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]) . dot(lamb)
         for j in range(0, hd):
-            if math.fabs(inter[j]) > 1.0 - indirect_params["tol_unit_norm"]:
+            if math.fabs(inter[j]) > 1.0 - conf.params_indirect["tol_unit_norm"]:
                 directions[i, j] = numpy.sign(inter[j])
                 n_alphas += 1
 
@@ -391,7 +392,7 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
 
     # solve for the alphas
     alphas = solve_alphas(M, z, n_alphas)
-    if indirect_params["verbose"]:
+    if conf.params_other["verbose"]:
         print('dual numerical cost 1-norm : ' + str(sum(alphas)))
 
     # reconstructing velocity jumps
@@ -430,10 +431,10 @@ def solve_primal_2norm(grid_check, Y_grid, z):
 
     converged = False
     iterations = 1
-    solvers.options['show_progress'] = indirect_params["verbose"]
-    solvers.options['abstol'] = indirect_params["tol_cvx"]
+    solvers.options['show_progress'] = conf.params_other["verbose"]
+    solvers.options['abstol'] = conf.params_indirect["tol_cvx"]
     lamb = numpy.zeros(d)
-    while (not converged) and (iterations < indirect_params["max_iter"]):
+    while (not converged) and (iterations < conf.params_indirect["max_iter"]):
 
         # building matrices for SDP constraints
         A = None
@@ -470,16 +471,16 @@ def solve_primal_2norm(grid_check, Y_grid, z):
         (converged, index_max) = find_max_pv(Y_grid, lamb, 2)
         if not converged:
             iterations += 1
-            if indirect_params["exchange"]:
+            if conf.params_indirect["exchange"]:
                 (grid_work, indices_work) = remove_nus(Y_grid, 2, grid_work, indices_work, lamb)
             grid_work.append(grid_check[index_max])  # add nu
             indices_work.append(index_max)
             n_work = len(grid_work)
         else:  # algorithm has converged
-            if indirect_params["verbose"]:
+            if conf.params_other["verbose"]:
                 print('converged with ' + str(n_work) + ' points at iteration ' + str(iterations))
 
-    if indirect_params["verbose"]:
+    if conf.params_other["verbose"]:
         print('primal numerical cost 2-norm: ' + str(z.dot(lamb)))
 
     return lamb
@@ -520,7 +521,7 @@ def primal_to_dual_2norm(grid_check, Y_grid, lamb, z):
             M[:, i] += aux[:, j] * directions[i, j]
 
     alphas = solve_alphas(M, z, len(nus))
-    if indirect_params["verbose"]:
+    if conf.params_other["verbose"]:
         print('dual numerical cost 2-norm : ' + str(sum(alphas)))
 
     # reconstructing velocity jumps

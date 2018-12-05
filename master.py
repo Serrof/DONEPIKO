@@ -11,6 +11,7 @@ import plotter
 import utils
 import indirect_solver
 import direct_solver
+from config import conf
 
 
 class Master:

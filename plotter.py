@@ -17,9 +17,9 @@ import integrators
 import orbital_mechanics
 import math
 import indirect_num
-from const_params import *
+from config import conf
 
-plt.rcParams.update({'font.size': plot_params["font"]})
+plt.rcParams.update({'font.size': conf.params_plot["font"]})
 
 
 class Plotter:
@@ -70,7 +70,7 @@ class Plotter:
         else:  # propagation has to be numerical for elliptical out-of-plane L1, 2 or 3 or elliptical in-plane of any LP
             self.analytical = analytical
 
-        self._nb = plot_params["mesh_plot"]
+        self._nb = conf.params_plot["mesh_plot"]
         self._nus = None
         self._times = None
         self._pts = None
@@ -232,7 +232,7 @@ class Plotter:
                         return states_inter, pts_inter
                     else:  # initial and final true anomaly are different
                         IC_transformed = self.dyn.transformation(IC, nu1)
-                        n_int = int(math.ceil((nu2 - nu1) / plot_params["h_min"]))
+                        n_int = int(math.ceil((nu2 - nu1) / conf.params_plot["h_min"]))
                         (states_transformed, pts_inter) = integrator.integrate(nu1, nu2, IC_transformed, n_int)
                         states_inter = []
                         for i, state in enumerate(states_transformed):

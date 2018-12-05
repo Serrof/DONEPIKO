@@ -10,7 +10,7 @@
 import math
 import numpy
 import utils
-from const_params import *
+from config import conf
 
 # pre-computation for rotation matrix between local orbital frames
 # (3-BP co-rotating and LVLH used by Yamanaka & Ankersen)
@@ -42,7 +42,7 @@ def find_L1(mu):
     gamma = gamma0 + 1.0
 
     iter = 0
-    while math.fabs(gamma - gamma0) > other_params["tol_gamma_LP"] and iter < other_params["iter_max_LP"]:
+    while math.fabs(gamma - gamma0) > conf.params_other["tol_gamma_LP"] and iter < conf.params_other["iter_max_LP"]:
         gamma0 = gamma
         gamma = pow(mu * pow(gamma0 - 1.0, 2) / (3.0 - 2.0 * mu - gamma0 * (3.0 - mu - gamma0)), 1.0 / 3.0)
         iter += 1
@@ -66,7 +66,7 @@ def find_L2(mu):
     gamma = gamma0 + 1.0
 
     iter = 0
-    while math.fabs(gamma - gamma0) > other_params["tol_gamma_LP"] and iter < other_params["iter_max_LP"]:
+    while math.fabs(gamma - gamma0) > conf.params_other["tol_gamma_LP"] and iter < conf.params_other["iter_max_LP"]:
         gamma0 = gamma
         gamma = pow(mu * pow(gamma0 + 1.0, 2) / (3.0 - 2.0 * mu + gamma0 * (3.0 - mu + gamma0)), 1.0 / 3.0)
         iter += 1
@@ -90,7 +90,7 @@ def find_L3(mu):
     gamma = gamma0 + 1.0
 
     iter = 0
-    while math.fabs(gamma - gamma0) > other_params["tol_gamma_LP"] and iter < other_params["iter_max_LP"]:
+    while math.fabs(gamma - gamma0) > conf.params_other["tol_gamma_LP"] and iter < conf.params_other["iter_max_LP"]:
         gamma0 = gamma
         gamma = pow((1.0 - mu) * pow(gamma0 + 1.0, 2) / (1.0 + 2.0 * mu + gamma0 * (2.0 + mu + gamma0)), 1.0 / 3.0)
         iter += 1
@@ -296,9 +296,9 @@ def dt_to_nu(e, n, nu0, dt):
         dt_bis += period * n_rev
     # compute final eccentric anomaly by solving Kepler equation via Newton-Raphson algorithm
     E = E0
-    E_bis = E + 2.0 * other_params["tol_kepler"]
+    E_bis = E + 2.0 * conf.params_other["tol_kepler"]
     count = 0
-    while math.fabs(E - E_bis) > other_params["tol_kepler"] and count < other_params["iter_max_kepler"]:
+    while math.fabs(E - E_bis) > conf.params_other["tol_kepler"] and count < conf.params_other["iter_max_kepler"]:
         E_bis = E
         E -= (n * dt_bis - E + E0 + e * math.sin(E) - e * math.sin(E0)) / (-1.0 + e * math.cos(E))
         count += 1

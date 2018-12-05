@@ -16,7 +16,7 @@ from indirect_ana import *
 import solver
 import orbital_mechanics
 import dynamical_system
-from const_params import *
+from config import conf
 
 
 class IndirectSolver(solver.Solver):
@@ -89,7 +89,7 @@ class IndirectSolver(solver.Solver):
             z[i] /= scale
 
         # building grid for norm checks
-        grid_check = numpy.linspace(BC.nu0, BC.nuf, indirect_params["n_check"])
+        grid_check = numpy.linspace(BC.nu0, BC.nuf, conf.params_indirect["n_check"])
         Y_grid = self.grid_Y(grid_check, BC.half_dim)
 
         lamb = solve_primal(grid_check, Y_grid, z, self.p)
