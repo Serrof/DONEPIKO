@@ -13,3 +13,6 @@ October 30, 2018: v1.0.3
 
 December 5, 2018: v1.0.4
  - fix of bugs with conversions between time and true anomaly plus simplifications in code of numerical indirect method
+
+December 5, 2018: v1.0.4
+ - default conf now in XML file and new possibility to edit it in the loop, plus recently introduced bug-fix

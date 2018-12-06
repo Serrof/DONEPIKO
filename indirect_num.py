@@ -102,10 +102,11 @@ def find_max_pv(Y_grid, lamb, q):
     """
 
     hd = len(lamb) / 2
+    n_check = int(len(Y_grid[0, :]) / hd)
     index_max = 0
     val_max = 0.0
     unit_norm = True
-    for k in range(0, len(Y_grid[0, :])):
+    for k in range(0, n_check):
         Y_k = Y_grid[:, hd * k: hd * (k + 1)]
         inter = linalg.norm(numpy.transpose(Y_k).dot(lamb), q)
         if val_max < inter:

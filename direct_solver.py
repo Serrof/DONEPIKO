@@ -15,7 +15,6 @@ import solver
 import math
 import utils
 from config import conf
-from config import conf
 
 
 class DirectSolver(solver.Solver):
@@ -72,7 +71,8 @@ class DirectSolver(solver.Solver):
 
             # solving for slack variables
             res = linprog(numpy.ones(d * conf.params_direct["n_grid_1norm"]), A_eq=M, b_eq=z,
-                          options={"disp": False, "tol": conf.params_direct["tol_linprog"]})
+                          options={"disp": conf.params_other["verbose"],
+                                   "tol": conf.params_direct["tol_lin_prog"]})
             sol = res.x
             if conf.params_other["verbose"]:
                 print('direct cost 1-norm: ' + str(res.fun))

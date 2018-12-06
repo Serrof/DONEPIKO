@@ -1,4 +1,4 @@
-# DONEPIKO 1.0.4
+# DONEPIKO 1.0.
 DONEPIKO stands for Delta-v Optimization Near Equilibrium Points In Keplerian Orbits.
 
 It is a Python toolbox under the GPL 3 license designed to minimize the fuel consumption of trajectories in the Restricted 2- or 3- Body Problem,
@@ -26,7 +26,8 @@ The following command lines are enough to install the dependencies on Ubuntu 16 
 TUTORIAL:
 DONEPIKO is a toolbox and as such a script should be written to make calls to it.
 4 examples are provided with this version, designed to demonstrate its features and illustrate both theory and practise.
-Physical constants can be added or modified in const_params.py. For expert use, changes to tuning parameters can also be made in this file.
+Physical constants used by default can be added or modified in default_conf.xml. For expert use, changes to tuning parameters can also be made in this file. 
+Note that any value can also be overloaded using the appropriate setters of the conf object.
 
 BIBLIOGRAPHY:
 - SERRA, Romain, ARZELIER, Denis, BRÉHARD, Florent, et al. Fuel-optimal impulsive fixed-time trajectories in the linearized circular restricted 3-body-problem. In : IAF Astrodynamics Symposium in 69TH international astronautical congress. 2018. https://hal.archives-ouvertes.fr/hal-01830253

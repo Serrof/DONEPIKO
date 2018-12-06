@@ -7,12 +7,11 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see < https://www.gnu.org/licenses/>.
 
-import default_conf
+import xml.etree.ElementTree as ET
 
 
 class Singleton(type):
     """Class implementing the singleton design pattern
-
 
     """
     _instances = {}
@@ -43,15 +42,70 @@ class Config:
         """Constructor for class Conf.
 
         """
+        # get root of XML configuration file
+        tree = ET.parse("default_conf.xml")
+        root = tree.getroot()
 
-        # initialize configuration
-        self.params_indirect = default_conf.params_indirect
-        self.params_direct = default_conf.params_direct
-        self.params_plot = default_conf.params_plot
-        self.params_other = default_conf.params_other
-        self.const_dist = default_conf.const_dist
-        self.const_mass = default_conf.const_mass
-        self.const_grav = default_conf.const_grav
+        # instantiate configuration
+        self.params_indirect = {}
+        self.params_direct = {}
+        self.params_plot = {}
+        self.params_other = {}
+        self.const_dist = {}
+        self.const_mass = {}
+        self.const_grav = {}
+
+        # fill configuration variables
+        for child in root:
+
+            # fetch and fill parameters
+            if child.tag == "params":
+
+                indirect = child.find("indirect")
+                for el in {"tol_lin_prog", "tol_unit_norm", "tol_cvx"}:
+                    self.params_indirect[el] = float(indirect.find(el).text)
+                for el in {"n_init", "n_check", "max_iter"}:
+                    self.params_indirect[el] = int(indirect.find(el).text)
+                for el in {"exchange"}:
+                    self.params_indirect[el] = indirect.find(el).attrib
+
+                direct = child.find("direct")
+                for el in {"tol_lin_prog", "DV_min", "tol_cvx"}:
+                    self.params_direct[el] = float(direct.find(el).text)
+                for el in {"n_grid_1norm", "n_grid_2norm"}:
+                    self.params_direct[el] = int(direct.find(el).text)
+
+                plot = child.find("plot")
+                for el in {"font", "mesh_plot"}:
+                    self.params_plot[el] = int(plot.find(el).text)
+                for el in {"h_min"}:
+                    self.params_plot[el] = float(plot.find(el).text)
+
+                other = child.find("other")
+                for el in {"verbose"}:
+                    self.params_other[el] = other.find(el).attrib
+                for el in {"iter_max_kepler", "iter_max_LP"}:
+                    self.params_other[el] = int(other.find(el).text)
+                for el in {"tol_kepler", "tol_gamma_LP"}:
+                    self.params_other[el] = float(other.find(el).text)
+
+            # fetch and fill constants
+            elif child.tag == "const":
+
+                dist = child.find("dist")
+                for el in {"radius_Earth", "alt_geo", "dist_Earth_Moon", "astro_unit"}:
+                    self.const_dist[el] = float(dist.find(el).text)
+
+                mass = child.find("mass")
+                for el in {"mass_Earth", "mass_Sun", "mass_Moon"}:
+                    self.const_mass[el] = float(mass.find(el).text)
+
+                grav = child.find("grav")
+                for el in {"G"}:
+                    self.const_grav[el] = float(grav.find(el).text)
+
+        # generate dependent constants
+        self.compute_complement()
 
         # save initial config
         self._params_indirect_init = self.params_indirect.copy()
@@ -61,9 +115,6 @@ class Config:
         self._const_dist_init = self.const_dist.copy()
         self._const_mass_init = self.const_mass.copy()
         self._const_grav_init = self.const_grav.copy()
-
-        # generate dependent constants
-        self.compute_complement()
 
     def compute_complement(self):
         """Function to generate values of constants that depend exclusively on others.
