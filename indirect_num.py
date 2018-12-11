@@ -14,7 +14,6 @@ from numpy import linalg
 from scipy.optimize import linprog
 from cvxopt import matrix, solvers
 from config import conf
-from config import conf
 
 
 def dual_to_primal_norm_type(p):

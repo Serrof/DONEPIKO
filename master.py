@@ -11,7 +11,6 @@ import plotter
 import utils
 import indirect_solver
 import direct_solver
-from config import conf
 
 
 class Master:
@@ -35,8 +34,8 @@ class Master:
 
         """
 
-        self.BC = utils.BoundaryConditions(plr.BC.nu0, plr.BC.nuf, plr.BC.x0, plr.BC.xf)
-        self.plotter = plotter.Plotter(plr.dyn, plr.BC, plr.p, plr.anomaly, plr.linearized, plr.analytical)
+        self.BC = plr.BC.copy()
+        self.plotter = plr.copy()
         self.CL = utils.NoControl(self.BC.half_dim)
         if indirect:
             self._solver = indirect_solver.IndirectSolver(self.plotter.dyn, p, plr.analytical)
@@ -92,7 +91,7 @@ class Master:
 
         """
 
-        self.BC = utils.BoundaryConditions(BC.nu0, BC.nuf, BC.x0, BC.xf)
+        self.BC = BC.copy()
         self.plotter.set_boundary_cond(BC)
 
     def set_approach(self, indirect):
@@ -116,7 +115,7 @@ class Master:
 
         """
 
-        self.CL = utils.ControlLaw(CL.half_dim, CL.nus, CL.DVs, CL.lamb)
+        self.CL = CL.copy()
         self.plotter.set_control_law(CL)
 
     def suboptimize(self):

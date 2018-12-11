@@ -139,6 +139,13 @@ class BoundaryConditions:
             self.x0[i] = x0[i]
             self.xf[i] = xf[i]
 
+    def copy(self):
+        """Function returning a copy of the object.
+
+        """
+
+        return BoundaryConditions(self.nu0, self.nuf, self.x0, self.xf)
+
     def write_to_file(self, file_path):
         """Function that writes the boundary conditions in a file.
 
@@ -203,6 +210,13 @@ class ControlLaw:
                 self.lamb[i] = lamb[i]
         else:  # no coefficients of primer vector were provided as inputs
             self.lamb = []
+
+    def copy(self):
+        """Function returning a copy of the object.
+
+        """
+
+        return ControlLaw(self.half_dim, self.nus, self.DVs, self.lamb)
 
     def compute_cost(self, p):
         """Function returning the p-norm of a control law.

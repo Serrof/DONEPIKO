@@ -12,6 +12,7 @@ import dynamical_system
 import orbital_mechanics
 import utils
 import math
+from abc import ABCMeta, abstractmethod
 
 
 class Solver:
@@ -24,6 +25,8 @@ class Solver:
                 prop_ana (bool): set to true for analytical propagation of motion, false for integration.
 
     """
+
+    __metaclass_ = ABCMeta
 
     def __init__(self, dyn, p, indirect, prop_ana):
         """Constructor for class Solver.
@@ -40,10 +43,24 @@ class Solver:
         if p != 1 and p != 2:
             print('solver: type of norm to minimized must be 1 or 2')
 
-        self.dyn = dynamical_system.DynamicalSystem(dyn.mu, dyn.ecc, dyn.period, dyn.sma, dyn.Li)
+        self.dyn = dyn.copy()
         self._indirect = indirect
         self.p = p
         self.prop_ana = prop_ana
+
+    @abstractmethod
+    def run(self, BC):
+        """Abstract method optimizing a trajectory.
+
+                Args:
+                    BC (utils.BoundaryConditions): constraints for two-point boundary value problem.
+
+                Returns:
+                    (utils.ControlLaw): optimal control law.
+
+        """
+
+        pass
 
     def set_norm(self, p):
         """Setter for attribute p.

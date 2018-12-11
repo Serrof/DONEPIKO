@@ -58,8 +58,8 @@ class Plotter:
 
         self.p = p
         self._q = indirect_num.dual_to_primal_norm_type(p)
-        self.dyn = dynamical_system.DynamicalSystem(dyn.mu, dyn.ecc, dyn.period, dyn.sma, dyn.Li)
-        self.BC = utils.BoundaryConditions(BC.nu0, BC.nuf, BC.x0, BC.xf)
+        self.dyn = dyn.copy()
+        self.BC = BC.copy()
         if CL is None:
             self.CL = utils.NoControl(BC.half_dim)
         self.linearized = linearized
@@ -77,6 +77,13 @@ class Plotter:
         self._compute_points()
 
         self._states = None
+
+    def copy(self):
+        """Function returning a copy of the object.
+
+        """
+
+        return Plotter(self.dyn, self.BC, self.p, self.anomaly, self.linearized, self.analytical, self.CL)
 
     def _compute_points(self):
         """Function generating subsequent values of independent variables used in history of state vector.
@@ -146,7 +153,7 @@ class Plotter:
 
         """
 
-        self.BC = utils.BoundaryConditions(BC.nu0, BC.nuf, BC.x0, BC.xf)
+        self.BC = BC.copy()
         self._states = None
 
     def set_control_law(self, CL):
@@ -157,7 +164,7 @@ class Plotter:
 
         """
 
-        self.CL = utils.ControlLaw(CL.half_dim, CL.nus, CL.DVs, CL.lamb)
+        self.CL = CL.copy()
         if self._states is not None:
             self._compute_states()
 

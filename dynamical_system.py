@@ -87,6 +87,13 @@ class DynamicalSystem:
             self.x_eq_normalized = numpy.array([1.0, 0.0, 0.0])
             self._A_inv = None
 
+    def copy(self):
+        """Function returning a copy of the object.
+
+        """
+
+        return DynamicalSystem(self.mu, self.ecc, self.period, self.sma, self.Li)
+
     def transformation(self, x, nu):
         """Function converting original state vector to a modified space where propagation is simpler.
 
