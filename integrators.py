@@ -7,6 +7,8 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see < https://www.gnu.org/licenses/>.
 
+from abc import ABCMeta, abstractmethod
+
 
 class Integrator:
     """Abstract class for the implementation of numerical integrators with a fixed step-size.
@@ -15,6 +17,8 @@ class Integrator:
             _func (method): function to be integrated.
 
     """
+
+    __metaclass__ = ABCMeta
 
     def __init__(self, func):
         """Constructor for class Integrator.
@@ -26,6 +30,7 @@ class Integrator:
 
         self._func = func
 
+    @abstractmethod
     def integration_step(self, t, x, h):
         """Abstract method to be overwritten in classes inheriting from abstract class.
 
@@ -311,6 +316,8 @@ class MultistepFixedsize(Integrator):
 
     """
 
+    __metaclass__ = ABCMeta
+
     def __init__(self, func, order):
         """Constructor for class MultistepFixedsize.
 
@@ -325,7 +332,7 @@ class MultistepFixedsize(Integrator):
         self._stepsize = 0.
         self.saved_steps = []
         self._beta = None
-        self._initializer = Integrator(self._func)
+        self._initializer = None
 
     def update_saved_steps(self, t, x):
         """Function updating the saved values of self._func at the past self._order steps.
