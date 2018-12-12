@@ -26,7 +26,7 @@ class Plotter:
     """Class dealing with the plotting capacities.
 
                 Attributes:
-                    dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
+                    dyn (dynamical_system.BodyProbDyn): dynamics to be used for two-boundary value problem.
                     BC (utils.BoundaryConditions): constraints for two-point boundary value problem.
                     p (int): type of norm for control law to be plotted.
                     anomaly (bool): set to True if independent variable is the true anomaly and to False if it is time.
@@ -46,7 +46,7 @@ class Plotter:
         """Constructor for class plotter.
 
                 Args:
-                    dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
+                    dyn (dynamical_system.BodyProbDyn): dynamics to be used for two-boundary value problem.
                     BC (utils.BoundaryConditions): constraints for two-point boundary value problem.
                     p (int): type of norm for control law to be plotted.
                     anomaly (bool): set to True if independent variable is the true anomaly and to False if it is time.
@@ -64,7 +64,8 @@ class Plotter:
             self.CL = utils.NoControl(BC.half_dim)
         self.linearized = linearized
         self.anomaly = anomaly
-        if analytical and dyn.mu != 0. and dyn.ecc != 0. and (dyn.Li == 1 or dyn.Li == 2 or dyn.Li == 3 or BC.half_dim > 1):
+        if analytical and dyn.params.mu != 0. and dyn.params.ecc != 0. and \
+                (dyn.params.Li == 1 or dyn.params.Li == 2 or dyn.params.Li == 3 or BC.half_dim > 1):
             print('WARNING: propagation type within plotter changed to numerical')
             self.analytical = False
         else:  # propagation has to be numerical for elliptical out-of-plane L1, 2 or 3 or elliptical in-plane of any LP
@@ -94,12 +95,11 @@ class Plotter:
             self._nus = numpy.linspace(self.BC.nu0, self.BC.nuf, self._nb)
             self._pts = self._nus
         else:  # the independent variable is time
-            self._times = numpy.linspace(0., orbital_mechanics.nu_to_dt(self.dyn.ecc, self.dyn.mean_motion, self.BC.nu0, self.BC.nuf), self._nb)
+            self._times = numpy.linspace(0., self.dyn.convToAlterIndVar(self.BC.nu0, 0., self.BC.nuf), self._nb)
             self._pts = self._times
             self._nus = numpy.zeros(self._nb)
             for k in range(0, self._nb):
-                self._nus[k] = orbital_mechanics.dt_to_nu(self.dyn.ecc, self.dyn.mean_motion,
-                                                          self.BC.nu0, self._times[k])
+                self._nus[k] = self.dyn.convFromAlterIndVar(self.BC.nu0, 0., self._times[k])
 
     def set_ind_var(self, anomaly):
         """Setter for attribute anomaly.
@@ -200,31 +200,32 @@ class Plotter:
                 print('_compute_states: non-linear dynamics cannot be only out-of-plane')
 
             else:  # linearized dynamics or in-plane or complete non-linear dynamics
-                slr = self.dyn.sma * (1. - self.dyn.ecc * self.dyn.ecc)  # semi-latus rectum
+                slr = self.dyn.params.sma * (1. - self.dyn.params.ecc * self.dyn.params.ecc)  # semi-latus rectum
 
                 if self.linearized:
 
                     if self.BC.half_dim == 1:
                         def func(nu, x):  # right-hand side function for integration
-                            return orbital_mechanics.oop_state_deriv(x, nu, self.dyn.ecc, self.dyn.x_eq_normalized,
-                                                                     self.dyn.mu)
+                            return orbital_mechanics.oop_state_deriv(x, nu, self.dyn.params.ecc,
+                                                                     self.dyn.x_eq_normalized, self.dyn.params.mu)
 
                     else:  # in-plane or complete dynamics
                         if self.BC.half_dim == 2:
                             def func(nu, x):  # right-hand side function for integration
-                                return orbital_mechanics.ip_state_deriv(x, nu, self.dyn.ecc, self.dyn.x_eq_normalized,
-                                                                     self.dyn.mu)
+                                return orbital_mechanics.ip_state_deriv(x, nu, self.dyn.params.ecc,
+                                                                        self.dyn.x_eq_normalized, self.dyn.params.mu)
 
                         else:  # complete dynamics
                             def func(nu, x):  # right-hand side function for integration
-                                return orbital_mechanics.complete_state_deriv(x, nu, self.dyn.ecc,
-                                                                              self.dyn.x_eq_normalized, self.dyn.mu)
+                                return orbital_mechanics.complete_state_deriv(x, nu, self.dyn.params.ecc,
+                                                                              self.dyn.x_eq_normalized,
+                                                                              self.dyn.params.mu)
 
                 else:  # non-linear dynamics
 
                     def func(nu, x):  # right-hand side function for integration
-                        return orbital_mechanics.state_deriv_nonlin(x, nu, self.dyn.ecc, self.dyn.x_eq_normalized,
-                                                                    self.dyn.mu, slr)
+                        return orbital_mechanics.state_deriv_nonlin(x, nu, self.dyn.params.ecc,
+                                                                    self.dyn.x_eq_normalized, self.dyn.params.mu, slr)
 
                 integrator = integrators.ABM8(func)
 
@@ -286,8 +287,7 @@ class Plotter:
                 else:  # the independent variable is time
                     self._pts = []
                     for nu in self._nus:
-                        self._pts.append(orbital_mechanics.nu_to_dt(self.dyn.ecc, self.dyn.mean_motion,
-                                                                    self.BC.nu0, nu))
+                        self._pts.append(self.dyn.convToAlterIndVar(self.BC.nu0, 0., nu))
                 self._states = numpy.zeros((dim, self._nb))
                 for k in range(0, self._nb):
                     self._states[:, k] = states[k]
@@ -310,7 +310,7 @@ class Plotter:
             matrices = self.dyn.integrate_phi_inv(self._nus, self.BC.half_dim)
             for k in range(0, self._nb):
                 inter = matrices[k]
-                Y_k = inter[:, self.BC.half_dim: 2*self.BC.half_dim] / orbital_mechanics.rho_func(self.dyn.ecc,
+                Y_k = inter[:, self.BC.half_dim: 2*self.BC.half_dim] / orbital_mechanics.rho_func(self.dyn.params.ecc,
                                                                                                   self._nus[k])
                 pv[:, k] = numpy.transpose(Y_k) . dot(self.CL.lamb)
 
@@ -423,8 +423,7 @@ class Plotter:
             if self.anomaly:
                 dates_cost.append(self.CL.nus[k])
             else:  # the independent variable is time
-                dates_cost.append(orbital_mechanics.nu_to_dt(self.dyn.ecc, self.dyn.mean_motion,
-                                                             self.BC.nu0, self.CL.nus[k]))
+                dates_cost.append(self.dyn.convToAlterIndVar(self.BC.nu0, 0., self.CL.nus[k]))
         if dates_cost[-1] != self._pts[-1]:
             cost.append(cost[-1])
             dates_cost.append(self._pts[-1])

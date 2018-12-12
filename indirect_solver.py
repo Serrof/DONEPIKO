@@ -28,7 +28,7 @@ class IndirectSolver(solver.Solver):
         """Constructor for class IndirectSolver.
 
                 Args:
-                    dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
+                    dyn (dynamical_system.BodyProbDyn): dynamics to be used for two-boundary value problem.
                     p (int): type of norm to be minimized.
                     prop_ana (bool): set to true for analytical propagation of motion, false for integration.
 
@@ -49,13 +49,14 @@ class IndirectSolver(solver.Solver):
         """
 
         if BC.half_dim == 1 and self.prop_ana:  # out-of-plane analytical solving
-            if self.dyn.mu != 0 and self.dyn.ecc == 0. and (self.dyn.Li == 1 or self.dyn.Li == 2 or self.dyn.Li == 3):
+            if self.dyn.params.mu != 0 and self.dyn.params.ecc == 0. and \
+                    (self.dyn.params.Li == 1 or self.dyn.params.Li == 2 or self.dyn.params.Li == 3):
                 # special case of circular out-of-plane L1, 2 or 3 where analytical solution can be obtained from
                 # 2-body solution by rescaling anomaly
                 return self._circular_oop_L123(BC)
             else:  # out-of-plane for elliptical 2-body problem or elliptical 3-body around L4 and 5 or circular around L1, 2 and 3
                 z = self.dyn.compute_rhs(BC, analytical=self.prop_ana)
-                (nus, DVs, lamb) = solver_ana(z, self.dyn.ecc, self.dyn.mean_motion, BC.nu0, BC.nuf)
+                (nus, DVs, lamb) = solver_ana(z, self.dyn.params.ecc, self.dyn.params.mean_motion, BC.nu0, BC.nuf)
                 return utils.ControlLaw(BC.half_dim, nus, DVs, lamb)
 
         elif (BC.half_dim == 3) and (self.p == 1):  # merge analytical and numerical solutions in the case of complete
@@ -114,15 +115,15 @@ class IndirectSolver(solver.Solver):
         """
 
         # getting scaling factor for time
-        puls = orbital_mechanics.puls_oop_LP(self.dyn.x_eq_normalized, self.dyn.mu)
+        puls = orbital_mechanics.puls_oop_LP(self.dyn.x_eq_normalized, self.dyn.params.mu)
 
         # scaling inputs
         BC_rescaled = utils.BoundaryConditions(BC.nu0 * puls, BC.nuf * puls, BC.x0, BC.xf)
-        dyn_rescaled = dynamical_system.DynamicalSystem(0., 0., self.dyn.period / puls, self.dyn.sma)
+        dyn_rescaled = dynamical_system.BodyProbDyn(0., 0., self.dyn.params.period / puls, self.dyn.params.sma)
         z_rescaled = dyn_rescaled.compute_rhs(BC_rescaled, analytical=True)
 
         # 'classic' call to numerical solver
-        (nus, DVs, lamb) = solver_ana(z_rescaled, 0., dyn_rescaled.mean_motion, BC_rescaled.nu0, BC_rescaled.nuf)
+        (nus, DVs, lamb) = solver_ana(z_rescaled, 0., dyn_rescaled.params.mean_motion, BC_rescaled.nu0, BC_rescaled.nuf)
 
         factor = linalg.norm(self.dyn.compute_rhs(BC, analytical=True)) / linalg.norm(z_rescaled)
 

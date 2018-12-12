@@ -26,7 +26,7 @@ class DirectSolver(solver.Solver):
         """Constructor for class DirectSolver.
 
                 Args:
-                    dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
+                    dyn (dynamical_system.BodyProbDyn): dynamics to be used for two-boundary value problem.
                     p (int): type of norm to be minimized.
                     prop_ana (bool): set to true for analytical propagation of motion, false for integration.
 

@@ -29,8 +29,8 @@ for i in range(0, len(x0)):
         x0[i] = (-1.0 + 2.0 * random.random()) * 1.0e3
         xf[i] = (-1.0 + 2.0 * random.random()) * 1.0e3
     else:
-        x0[i] = (-1.0 + 2.0 * random.random()) * 1.0e3 * math.pi / dyn.period
-        xf[i] = (-1.0 + 2.0 * random.random()) * 1.0e3 * math.pi / dyn.period
+        x0[i] = (-1.0 + 2.0 * random.random()) * 1.0e3 * math.pi / dyn.params.period
+        xf[i] = (-1.0 + 2.0 * random.random()) * 1.0e3 * math.pi / dyn.params.period
 
 p = 1  # norm for minimization (1 or 2)
 

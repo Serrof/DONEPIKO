@@ -13,10 +13,26 @@ from numpy import linalg
 import utils
 import integrators
 import orbital_mechanics
+from abc import ABCMeta, abstractmethod
 
 
-class DynamicalSystem:
-    """Class implementing the dynamics of the restricted 2- or 3-body problem.
+class DynParams:
+    """Abstract class for the implementation of dynamical parameters.
+
+    """
+
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def copy(self):
+        """Function returning a copy of the object.
+
+        """
+        pass
+
+
+class BodyProbParams(DynParams):
+    """Class handling the dynamical parameters of a restricted 2 or 3 body problem.
 
                 Attributes:
                     mu (float): ratio of minor mass over total mass.
@@ -25,6 +41,145 @@ class DynamicalSystem:
                     mean_motion(float): mean motion.
                     sma (float): semi-major axis (must be consistent with period)
                     Li (int): index of Lagrange Point (used only if mu != 0)
+
+    """
+
+    def __init__(self, mu, ecc, period, sma, Li):
+        """Constructor.
+
+                Args:
+                    mu (float): ratio of minor mass over total mass.
+                    ecc (float): eccentricity.
+                    period (float): orbital period.
+                    sma (float): semi-major axis (must be consistent with period)
+                    Li (int): index of Lagrange Point (used only if mu != 0)
+
+        """
+        # sanity checks
+        if mu < 0. or mu >= 1.:
+            print('BodyProbParams: mass ratio must be between 0 and 1')
+        if ecc < 0. or ecc >= 1.:
+            print('BodyProbParams: eccentricity must be between 0 and 1')
+        if period <= 0.:
+            print('BodyProbParams: orbital period must be non negative')
+        if mu != 0. and Li != 1 and Li != 2 and Li != 3 and Li != 4 and Li != 5:
+            print('BodyProbParams: for 3-body problem, valid index of Lagrange Point must be provided')
+
+        self.mu = mu
+        self.ecc = ecc
+        self.period = period
+        self.sma = sma
+        self.Li = Li
+        self.mean_motion = 2. * math.pi / period
+
+    def copy(self):
+        """Function returning a copy of the object.
+
+        """
+
+        return BodyProbParams(self.mu, self.ecc, self.period, self.sma, self.Li)
+
+
+class DynamicalSystem:
+    """Abstract class for dynamical systems.
+
+        Attributes:
+            name (str): name of the dynamics implemented.
+            params (DynParams): object dealing with the dynamical parameters.
+            convToAlterIndVar (func): conversion from original to alternative independent variable
+            convFromAlterIndVar (func): conversion from alternative to original independent variable
+
+    """
+
+    __metaclass__ = ABCMeta
+
+    def __init__(self, name):
+        """Constructor.
+
+                Args:
+                    name (str): name of implemented dynamics.
+
+        """
+        self.name = name
+        self.params = None
+
+        # conversion to dummy alternative independent variable
+        def identical_var(nu0, t0, nu):
+            return nu
+
+        # default is alternative variable identical to original one
+        self.convToAlterIndVar = identical_var
+        self.convFromAlterIndVar = identical_var
+
+    @abstractmethod
+    def propagate(self, nu1, nu2, x1):
+        """Function for the propagation of the state vector.
+
+                Args:
+                    nu1 (float): initial value of independent variable.
+                    nu2 (float): final value of independent variable.
+                    x1 (numpy.array): initial state vector.
+
+                Returns:
+                    (numpy.array): final state vector.
+
+        """
+        pass
+
+    @abstractmethod
+    def evaluate_Y(self, nu, half_dim):
+        """Function returning the moment-function involved in the equation satisfied by the control law.
+
+                Args:
+                    nu (float): current value of independent variable.
+                    half_dim (int): half-dimension of state vector.
+
+                Returns:
+                    (numpy.array): moment-function evaluated at nu.
+
+        """
+        pass
+
+    @abstractmethod
+    def copy(self):
+        """Function returning a copy of the object.
+
+        """
+        pass
+
+    def transformation(self, x, nu):
+        """Method to be overwritten is there is a transformation to be performed to obtain a state vector that has an
+        analytical formula to be propagated.
+
+                Args:
+                    x (numpy.array): original state vector.
+                    nu (float): independent variable.
+
+                Returns:
+                    (numpy.array): transformed state vector.
+
+        """
+        return x.copy()
+
+    def transformation_inv(self, x, nu):
+        """Method to be overwritten by inverse of transformation if the latter is different from (x, nu) -> x.
+
+                Args:
+                    x (numpy.array): transformed state vector.
+                    nu (float): independent variable.
+
+                Returns:
+                    (numpy.array): original state vector.
+
+        """
+        return self.transformation(x, nu)
+
+
+class BodyProbDyn(DynamicalSystem):
+    """Class implementing the dynamics of the restricted 2- or 3-body problem.
+
+                Attributes:
+                    params (BodyProbParams): parameters characterizing the dynamical system
                     x_eq_normalized (numpy.array): normalized coordinates of equilibrium point.
                     _A_inv (numpy.array): intermediate matrix only useful when mu !=0.
 
@@ -41,44 +196,40 @@ class DynamicalSystem:
                     Li (int): index of Lagrange Point (used only if mu != 0)
 
         """
-        if mu < 0. or mu >= 1.:
-            print('DynamicalSystem: mass ratio must be between 0 and 1')
-        if ecc < 0. or ecc >= 1.:
-            print('DynamicalSystem: eccentricity must be between 0 and 1')
-        if period <= 0.:
-            print('DynamicalSystem: orbital period must be non negative')
-        if mu != 0. and Li != 1 and Li != 2 and Li != 3 and Li != 4 and Li != 5:
-            print('DynamicalSystem: for 3-body problem, valid index of Lagrange Point must be provided')
 
-        self.mu = mu
-        self.ecc = ecc
-        self.period = period
-        self.mean_motion = 2. * math.pi / period
-        self.sma = sma
-        self.Li = Li
+        DynamicalSystem.__init__(self, "N-body problem")
+        self.params = BodyProbParams(mu, ecc, period, sma, Li)
+
+        def conv(nu0, t0, nu):
+            return orbital_mechanics.nu_to_dt(self.params.ecc, self.params.mean_motion, nu0, nu)
+        self.convToAlterIndVar = conv
+
+        def convInv(nu0, t0, t):
+            return orbital_mechanics.dt_to_nu(self.params.ecc, self.params.mean_motion, nu0, t)
+        self.convFromAlterIndVar = convInv
 
         if mu != 0.:
             # set normalized coordinates of Lagrange point of interest
-            if self.Li == 1 or self.Li == 2 or self.Li == 3:
-                if self.Li == 1:
-                    self.x_eq_normalized = numpy.array((find_L1(self.mu), 0.0, 0.0))
-                elif self.Li == 2:
-                    self.x_eq_normalized = numpy.array((find_L2(self.mu), 0.0, 0.0))
-                elif self.Li == 3:
-                    self.x_eq_normalized = numpy.array((find_L3(self.mu), 0.0, 0.0))
-                puls = puls_oop_LP(self.x_eq_normalized, self.mu)
+            if self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3:
+                if self.params.Li == 1:
+                    self.x_eq_normalized = numpy.array((find_L1(self.params.mu), 0.0, 0.0))
+                elif self.params.Li == 2:
+                    self.x_eq_normalized = numpy.array((find_L2(self.params.mu), 0.0, 0.0))
+                elif self.params.Li == 3:
+                    self.x_eq_normalized = numpy.array((find_L3(self.params.mu), 0.0, 0.0))
+                puls = puls_oop_LP(self.x_eq_normalized, self.params.mu)
                 (gamma_re, gamma_im, c, k) = inter_L123(puls * puls)
                 A = numpy.array([[1.0, 1.0, 1.0, 0.0], [c, -c, 0.0, k], [gamma_re, -gamma_re, 0.0, gamma_im],
                                  [gamma_re * c, gamma_re * c, - gamma_im * k, 0.0]])
                 self._A_inv = numpy.linalg.inv(A)
             else:  # Lagrange Point 4 or 5
                 if Li == 4:
-                    self.x_eq_normalized = numpy.array((0.5 * (1.0 - 2.0 * self.mu), math.sqrt(3.) / 2., 0., 0.))
-                    kappa = 1.0 - 2.0 * self.mu
+                    self.x_eq_normalized = numpy.array((0.5 * (1.0 - 2.0 * self.params.mu), math.sqrt(3.) / 2., 0., 0.))
+                    kappa = 1.0 - 2.0 * self.params.mu
                 else:  # Li = 5
-                    self.x_eq_normalized = numpy.array((0.5 * (1.0 - 2.0 * self.mu), -math.sqrt(3.) / 2., 0., 0.))
-                    kappa = -1.0 + 2.0 * self.mu
-                root1, root2, a1, a2, b1, b2, c1, c2, d1, d2 = inter_L45(self.mu, kappa)
+                    self.x_eq_normalized = numpy.array((0.5 * (1.0 - 2.0 * self.params.mu), -math.sqrt(3.) / 2., 0., 0.))
+                    kappa = -1.0 + 2.0 * self.params.mu
+                root1, root2, a1, a2, b1, b2, c1, c2, d1, d2 = inter_L45(self.params.mu, kappa)
                 A = numpy.array([[1.0, 0.0, 1.0, 0.0], [a1, a2, c1, c2],
                                  [0.0, root1, 0.0, root2], [b1 * root1, b2 * root1, d1 * root2, d2 * root2]])
                 self._A_inv = numpy.linalg.inv(A)
@@ -92,7 +243,7 @@ class DynamicalSystem:
 
         """
 
-        return DynamicalSystem(self.mu, self.ecc, self.period, self.sma, self.Li)
+        return BodyProbDyn(self.params.mu, self.params.ecc, self.params.period, self.params.sma, self.params.Li)
 
     def transformation(self, x, nu):
         """Function converting original state vector to a modified space where propagation is simpler.
@@ -107,15 +258,15 @@ class DynamicalSystem:
         """
 
         half_dim = len(x) / 2
-        inter = 1.0 - self.ecc * self.ecc
-        inter2 = math.sqrt(inter * inter * inter) / self.mean_motion
-        rho = rho_func(self.ecc, nu)
+        inter = 1.0 - self.params.ecc * self.params.ecc
+        inter2 = math.sqrt(inter * inter * inter) / self.params.mean_motion
+        rho = rho_func(self.params.ecc, nu)
         x_bar = numpy.zeros(2 * half_dim)
         for k in range(0, len(x)):
             if k < half_dim:
                 x_bar[k] = rho * x[k]
             else:  # indices for velocity components of state vector
-                x_bar[k] = -self.ecc * math.sin(nu) * x[k-half_dim] + inter2 * x[k] / rho
+                x_bar[k] = -self.params.ecc * math.sin(nu) * x[k-half_dim] + inter2 * x[k] / rho
 
         return x_bar
 
@@ -132,15 +283,15 @@ class DynamicalSystem:
         """
 
         half_dim = len(x_bar) / 2
-        inter = 1.0 - self.ecc * self.ecc
-        inter2 = math.sqrt(inter * inter * inter) / self.mean_motion
-        rho = rho_func(self.ecc, nu)
+        inter = 1.0 - self.params.ecc * self.params.ecc
+        inter2 = math.sqrt(inter * inter * inter) / self.params.mean_motion
+        rho = rho_func(self.params.ecc, nu)
         x = numpy.zeros(2 * half_dim)
         for k in range(0, len(x)):
             if k < half_dim:
                 x[k] = x_bar[k] / rho
             else:  # indices for velocity components of state vector
-                x[k] = (self.ecc * math.sin(nu) * x_bar[k-half_dim] + rho * x_bar[k]) / inter2
+                x[k] = (self.params.ecc * math.sin(nu) * x_bar[k-half_dim] + rho * x_bar[k]) / inter2
 
         return x
 
@@ -163,10 +314,10 @@ class DynamicalSystem:
 
         if half_dim == 1:
 
-            if (self.mu != 0.) and (self.Li == 1 or self.Li == 2 or self.Li == 3):
-                pulsation = orbital_mechanics.puls_oop_LP(self.x_eq_normalized, self.mu)
+            if (self.params.mu != 0.) and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
+                pulsation = orbital_mechanics.puls_oop_LP(self.x_eq_normalized, self.params.mu)
 
-                if self.ecc == 0.:
+                if self.params.ecc == 0.:
 
                     def func(nu, x):  # right-hand side function for integration
                         return [x[2] * pulsation * pulsation, x[3] * pulsation * pulsation, -x[0], -x[1]]
@@ -174,7 +325,7 @@ class DynamicalSystem:
                 else:  # elliptical case 3-body near L1, 2 or 3
 
                     def func(nu, x):  # right-hand side function for integration
-                        factor = (pulsation * pulsation + self.ecc * math.cos(nu)) / rho_func(self.ecc, nu)
+                        factor = (pulsation * pulsation + self.params.ecc * math.cos(nu)) / rho_func(self.params.ecc, nu)
                         return [x[2] * factor, x[3] * factor, -x[0], -x[1]]
 
             else:  # out-of-plane elliptical 2-body problem or 3-body near L4 and 5
@@ -184,10 +335,10 @@ class DynamicalSystem:
 
         else:  # in-plane or complete dynamics
 
-            if self.mu == 0.:
+            if self.params.mu == 0.:
                 H = orbital_mechanics.Hessian_ip2bp(self.x_eq_normalized)
             else:  # restricted three-body case
-                H = orbital_mechanics.Hessian_ip3bp(self.x_eq_normalized, self.mu)
+                H = orbital_mechanics.Hessian_ip3bp(self.x_eq_normalized, self.params.mu)
 
             if half_dim == 2:
 
@@ -197,8 +348,8 @@ class DynamicalSystem:
             else:  # complete dynamics
 
                 pulsation = 1.0
-                if self.mu != 0.0 and (self.Li == 1 or self.Li == 2 or self.Li == 3):
-                    pulsation = orbital_mechanics.puls_oop_LP(self.x_eq_normalized, self.mu)
+                if self.params.mu != 0.0 and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
+                    pulsation = orbital_mechanics.puls_oop_LP(self.x_eq_normalized, self.params.mu)
 
                 A = numpy.array([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
                                  [0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 2.0, 0.0],
@@ -206,9 +357,9 @@ class DynamicalSystem:
                                  [0.0, 0.0, -pulsation * pulsation, 0.0, 0.0, 0.0]])
 
             def func(nu, x):  # right-hand side function for integration
-                rho = orbital_mechanics.rho_func(self.ecc, nu)
+                rho = orbital_mechanics.rho_func(self.params.ecc, nu)
                 if half_dim == 3:
-                    A[5, 2] = -(pulsation * pulsation + self.ecc * math.cos(nu)) / rho
+                    A[5, 2] = -(pulsation * pulsation + self.params.ecc * math.cos(nu)) / rho
                 A[half_dim: half_dim + 2, 0:2] = -H / rho
                 x_matrix = utils.vector_to_square_matrix(x, 2 * half_dim)
                 f_matrix = -x_matrix.dot(A)  # right-hand side of matrix differential equation satisfied by phi^-1
@@ -249,10 +400,10 @@ class DynamicalSystem:
         if (half_dim != 3) and (half_dim != 2) and (half_dim != 1):
             print('evaluate_Y: half-dimension of state vector should be 1, 2 or 3')
 
-        if self.mu == 0.:
-            return Y_2bp(self.ecc, self.mean_motion, 0., nu, half_dim)
+        if self.params.mu == 0.:
+            return Y_2bp(self.params.ecc, self.params.mean_motion, 0., nu, half_dim)
         else:  # restricted 3-body problem
-            return self._Y_3bp(self.ecc, self.mean_motion, nu, half_dim)
+            return self._Y_3bp(self.params.ecc, self.params.mean_motion, nu, half_dim)
 
     def _Y_3bp(self, e, n, nu, half_dim):
         """Wrapper returning the moment-function involved in the equation satisfied by the control
@@ -274,19 +425,19 @@ class DynamicalSystem:
             print('Y_3BP: half-dimension must be 1, 2 or 3')
 
         if half_dim == 1:
-            if self.Li == 1 or self.Li == 2 or self.Li == 3:
+            if self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3:
                 if e != 0.:
                     print('Y_3BP: analytical case not coded yet')
                 else:  # circular case
-                    return Y_oop_LP123(nu, self.x_eq_normalized, self.mu)
+                    return Y_oop_LP123(nu, self.x_eq_normalized, self.params.mu)
             else:  # Lagrange Point 4 or 5
                 return Y_oop(e, nu)
         elif half_dim == 2:
             return self._Y_ip3bp_ds(nu)
         else:  # complete dynamics
             Y = numpy.zeros((6, 3))
-            if self.Li == 1 or self.Li == 2 or self.Li == 3:
-                Yoop = Y_oop_LP123(nu, self.x_eq_normalized, self.mu)
+            if self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3:
+                Yoop = Y_oop_LP123(nu, self.x_eq_normalized, self.params.mu)
             else:   # Lagrange Point 4 or 5
                 Yoop = Y_oop(e, nu)
             Yip = self._Y_ip3bp_ds(nu)
@@ -308,14 +459,14 @@ class DynamicalSystem:
 
         """
 
-        if self.ecc == 0.:
+        if self.params.ecc == 0.:
             Y = numpy.zeros((4, 2))
-            if (self.Li == 1) or (self.Li == 2) or (self.Li == 3):
+            if (self.params.Li == 1) or (self.params.Li == 2) or (self.params.Li == 3):
                 phi = self.exp_LP123(-nu)
-            elif self.Li == 4:
-                phi = self.exp_LP45(-nu, 1. - 2. * self.mu)
+            elif self.params.Li == 4:
+                phi = self.exp_LP45(-nu, 1. - 2. * self.params.mu)
             else:  # Li = 5
-                phi = self.exp_LP45(-nu, -1. + 2. * self.mu)
+                phi = self.exp_LP45(-nu, -1. + 2. * self.params.mu)
             Y[:, 0:2] = phi[:, 2:4]
 
             return Y
@@ -338,16 +489,16 @@ class DynamicalSystem:
         # sanity check(s)
         if len(x1_bar) != 4:
             print('TRANSITION_IP3BP: in-plane initial conditions need to be four-dimensional')
-        if (self.ecc >= 1.0) or (self.ecc < 0.0):
+        if (self.params.ecc >= 1.0) or (self.params.ecc < 0.0):
             print('TRANSITION_IP3BP: eccentricity must be larger or equal to 0 and strictly less than 1')
 
-        if self.ecc == 0.:
-            if self.Li == 1 or self.Li == 2 or self.Li == 3:
+        if self.params.ecc == 0.:
+            if self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3:
                 phi = self.exp_LP123(nu2 - nu1)
-            elif self.Li == 4:
-                phi = self.exp_LP45(nu2 - nu1, 1. - 2. * self.mu)
+            elif self.params.Li == 4:
+                phi = self.exp_LP45(nu2 - nu1, 1. - 2. * self.params.mu)
             else:  # Li = 5
-                phi = self.exp_LP45(nu2 - nu1, -1. + 2. * self.mu)
+                phi = self.exp_LP45(nu2 - nu1, -1. + 2. * self.params.mu)
             return phi.dot(x1_bar)
         else:  # elliptical case
             print('TRANSITION_IP3BP: analytical elliptical case not coded yet')
@@ -364,7 +515,7 @@ class DynamicalSystem:
 
         """
 
-        puls = puls_oop_LP(self.x_eq_normalized, self.mu)
+        puls = puls_oop_LP(self.x_eq_normalized, self.params.mu)
         (gamma_re, gamma_im, c, k) = inter_L123(puls * puls)
         line1 = [math.exp(gamma_re * nu), math.exp(-gamma_re * nu), math.cos(gamma_im * nu), math.sin(gamma_im * nu)]
         line2 = [c * math.exp(gamma_re * nu), -c * math.exp(-gamma_re * nu),
@@ -390,7 +541,7 @@ class DynamicalSystem:
 
         """
 
-        root1, root2, a1, a2, b1, b2, c1, c2, d1, d2 = inter_L45(self.mu, kappa)
+        root1, root2, a1, a2, b1, b2, c1, c2, d1, d2 = inter_L45(self.params.mu, kappa)
         line1 = [math.cos(root1 * nu), math.sin(root1 * nu), math.cos(root2 * nu), math.sin(root2 * nu)]
         line2 = [a1 * math.cos(root1 * nu) + b1 * math.sin(root1 * nu),
                  a2 * math.cos(root1 * nu) + b2 * math.sin(root1 * nu),
@@ -430,9 +581,9 @@ class DynamicalSystem:
             if half_dim == 1:
                 x1_bar = self.transformation(x1, nu1)
                 x2_bar = None
-                if self.mu != 0 and (self.Li == 1 or self.Li == 2 or self.Li == 3):
-                    if self.ecc == 0.:
-                        phi = phi_harmo(nu2 - nu1, puls_oop_LP(self.x_eq_normalized, self.mu))
+                if self.params.mu != 0 and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
+                    if self.params.ecc == 0.:
+                        phi = phi_harmo(nu2 - nu1, puls_oop_LP(self.x_eq_normalized, self.params.mu))
                         x2_bar = phi . dot(x1_bar)
                     else:  # elliptical case
                         print('PROPAGATE: analytical 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
@@ -442,10 +593,10 @@ class DynamicalSystem:
             elif half_dim == 2:
                 x1_bar = self.transformation(x1, nu1)
                 x2_bar = None
-                if self.mu == 0.:
-                    x2_bar = transition_ip2bp(x1_bar, self.ecc, self.mean_motion, nu1, nu2)
+                if self.params.mu == 0.:
+                    x2_bar = transition_ip2bp(x1_bar, self.params.ecc, self.params.mean_motion, nu1, nu2)
                 else:  # in-plane 3-body problem
-                    if self.ecc == 0:
+                    if self.params.ecc == 0:
                         x2_bar = self.transition_ip3bp(x1_bar, nu1, nu2)
                     else:
                         print('PROPAGATE: analytical 3-body elliptical in-plane case not coded yet')
@@ -468,8 +619,8 @@ class DynamicalSystem:
 
         """
 
-        factor = 1.0 - self.ecc * self.ecc
-        multiplier = self.mean_motion / math.sqrt(factor * factor * factor)
+        factor = 1.0 - self.params.ecc * self.params.ecc
+        multiplier = self.params.mean_motion / math.sqrt(factor * factor * factor)
         x1 = self.transformation(BC.x0, BC.nu0)
         x2 = self.transformation(BC.xf, BC.nuf)
 
@@ -477,10 +628,10 @@ class DynamicalSystem:
             u = numpy.zeros(2 * BC.half_dim)
 
             if BC.half_dim == 1:
-                if (self.mu != 0.) and (self.Li == 1 or self.Li == 2 or self.Li == 3):
-                    if self.ecc == 0.:
-                        u += phi_harmo(-BC.nuf, puls_oop_LP(self.x_eq_normalized, self.mu)) . dot(x2)
-                        u -= phi_harmo(-BC.nu0, puls_oop_LP(self.x_eq_normalized, self.mu)) . dot(x1)
+                if (self.params.mu != 0.) and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
+                    if self.params.ecc == 0.:
+                        u += phi_harmo(-BC.nuf, puls_oop_LP(self.x_eq_normalized, self.params.mu)) . dot(x2)
+                        u -= phi_harmo(-BC.nu0, puls_oop_LP(self.x_eq_normalized, self.params.mu)) . dot(x1)
                     else:
                         print('compute_rhs: analytical 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
                 else:  # out-of-plane elliptical 2-body problem or 3-body near L4 and 5
@@ -490,28 +641,28 @@ class DynamicalSystem:
                 u[1] *= multiplier
 
             elif BC.half_dim == 2:
-                if self.mu == 0.:
-                    if self.ecc == 0.:
+                if self.params.mu == 0.:
+                    if self.params.ecc == 0.:
                         u += exp_HCW(-BC.nuf) . dot(x2)
                         u -= exp_HCW(-BC.nu0) . dot(x1)
                     else:  # elliptical case
-                        M = phi_YA(self.ecc, self.mean_motion, 0., BC.nuf)
+                        M = phi_YA(self.params.ecc, self.params.mean_motion, 0., BC.nuf)
                         u += linalg.inv(M) . dot(x2)
-                        M = phi_YA(self.ecc, self.mean_motion, 0., BC.nu0)
+                        M = phi_YA(self.params.ecc, self.params.mean_motion, 0., BC.nu0)
                         u -= linalg.inv(M) . dot(x1)
                     for i in range(0, len(u)):
                         u[i] *= multiplier
                 else:  # in-plane restricted 3-body problem
-                    if self.ecc == 0.:
-                        if (self.Li == 1) or (self.Li == 2) or (self.Li == 3):
+                    if self.params.ecc == 0.:
+                        if (self.params.Li == 1) or (self.params.Li == 2) or (self.params.Li == 3):
                             u += self.exp_LP123(-BC.nuf) . dot(x2)
                             u -= self.exp_LP123(-BC.nu0) . dot(x1)
-                        elif self.Li == 4:
-                            u += self.exp_LP45(-BC.nuf, 1. - 2. * self.mu) . dot(x2)
-                            u -= self.exp_LP45(-BC.nu0, 1. - 2. * self.mu) . dot(x1)
+                        elif self.params.Li == 4:
+                            u += self.exp_LP45(-BC.nuf, 1. - 2. * self.params.mu) . dot(x2)
+                            u -= self.exp_LP45(-BC.nu0, 1. - 2. * self.params.mu) . dot(x1)
                         else:  # Li = 5
-                            u += self.exp_LP45(-BC.nuf, -1. + 2. * self.mu) . dot(x2)
-                            u -= self.exp_LP45(-BC.nu0, -1. + 2. * self.mu) . dot(x1)
+                            u += self.exp_LP45(-BC.nuf, -1. + 2. * self.params.mu) . dot(x2)
+                            u -= self.exp_LP45(-BC.nu0, -1. + 2. * self.params.mu) . dot(x1)
                     else:  # elliptical case
                         print('compute_rhs: analytical elliptical 3-body problem in-plane dynamics case not coded yet')
 

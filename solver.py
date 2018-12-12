@@ -19,7 +19,7 @@ class Solver:
     """Abstract class for the implementation of fuel-optimality solvers.
 
             Attributes:
-                dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
+                dyn (dynamical_system.BodyProbDyn): dynamics to be used for two-boundary value problem.
                 p (int): type of norm to be minimized.
                 _indirect (bool): set to True for indirect approach and False for direct one.
                 prop_ana (bool): set to true for analytical propagation of motion, false for integration.
@@ -32,7 +32,7 @@ class Solver:
         """Constructor for class Solver.
 
                 Args:
-                    dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
+                    dyn (dynamical_system.BodyProbDyn): dynamics to be used for two-boundary value problem.
                     p (int): type of norm to be minimized.
                     indirect (bool): set to True for indirect approach and False for direct one.
                     prop_ana (bool): set to true for analytical propagation of motion, false for integration.
@@ -86,11 +86,11 @@ class Solver:
         """Setter for attribute dyn.
 
                 Args:
-                    dyn (dynamical_system.DynamicalSystem): new dynamics to be used for two-boundary value problem.
+                    dyn (dynamical_system.BodyProbDyn): new dynamics to be used for two-boundary value problem.
 
         """
 
-        self.dyn = (dyn.mu, dyn.ecc, dyn.period, dyn.Li)
+        self.dyn = (dyn.params.mu, dyn.params.ecc, dyn.params.period, dyn.params.Li)
 
     def grid_Y(self, grid, half_dim):
         """Function computing the value of the moment-function on the given list of true anomalies.
@@ -113,7 +113,8 @@ class Solver:
             matrices = self.dyn.integrate_phi_inv(grid, half_dim)
             for k in range(0, grid_size):
                 inter = matrices[k]
-                Ys[:, half_dim * k: half_dim * (k + 1)] = inter[:, half_dim: 2*half_dim] / orbital_mechanics.rho_func(self.dyn.ecc, grid[k])
+                Ys[:, half_dim * k: half_dim * (k + 1)] = inter[:, half_dim: 2*half_dim] / \
+                                                          orbital_mechanics.rho_func(self.dyn.params.ecc, grid[k])
 
         return Ys
 
@@ -145,13 +146,13 @@ class Solver:
                 IC_matrix = matrices[0]
                 FC_matrix = matrices[-1]
 
-                rho_nu0 = orbital_mechanics.rho_func(self.dyn.ecc, BC.nu0)
-                rho_nuf = orbital_mechanics.rho_func(self.dyn.ecc, BC.nuf)
+                rho_nu0 = orbital_mechanics.rho_func(self.dyn.params.ecc, BC.nu0)
+                rho_nuf = orbital_mechanics.rho_func(self.dyn.params.ecc, BC.nuf)
                 mat[:, 0: BC.half_dim] = IC_matrix[:, BC.half_dim: 2 * BC.half_dim] / rho_nu0
                 mat[:, BC.half_dim: 2 * BC.half_dim] = FC_matrix[:, BC.half_dim: 2 * BC.half_dim] / rho_nuf
 
-                factor = 1.0 - self.dyn.ecc * self.dyn.ecc
-                multiplier = self.dyn.mean_motion / math.sqrt(factor * factor * factor)
+                factor = 1.0 - self.dyn.params.ecc * self.dyn.params.ecc
+                multiplier = self.dyn.params.mean_motion / math.sqrt(factor * factor * factor)
                 inv_mat = numpy.linalg.inv(mat)
                 inter = inv_mat.dot((FC_matrix.dot(self.dyn.transformation(BC.xf, BC.nuf)) -
                                      IC_matrix.dot(self.dyn.transformation(BC.x0, BC.nu0)))*multiplier)
