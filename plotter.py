@@ -224,8 +224,7 @@ class Plotter:
                 else:  # non-linear dynamics
 
                     def func(nu, x):  # right-hand side function for integration
-                        return orbital_mechanics.state_deriv_nonlin(x, nu, self.dyn.params.ecc,
-                                                                    self.dyn.x_eq_normalized, self.dyn.params.mu, slr)
+                        return self.dyn.evaluate_state_deriv_nonlin(nu, x)
 
                 integrator = integrators.ABM8(func)
 
@@ -307,12 +306,9 @@ class Plotter:
             for k in range(0, self._nb):
                 pv[:, k] = numpy.transpose(self.dyn.evaluate_Y(self._nus[k], self.BC.half_dim)) . dot(self.CL.lamb)
         else:
-            matrices = self.dyn.integrate_phi_inv(self._nus, self.BC.half_dim)
+            Ys = self.dyn.integrate_Y(self._nus, self.BC.half_dim)
             for k in range(0, self._nb):
-                inter = matrices[k]
-                Y_k = inter[:, self.BC.half_dim: 2*self.BC.half_dim] / orbital_mechanics.rho_func(self.dyn.params.ecc,
-                                                                                                  self._nus[k])
-                pv[:, k] = numpy.transpose(Y_k) . dot(self.CL.lamb)
+                pv[:, k] = numpy.transpose(Ys[k]) . dot(self.CL.lamb)
 
         for k in range(0, self._nb):
             pv_norm.append(linalg.norm(pv[:, k], self._q))

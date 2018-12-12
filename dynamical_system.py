@@ -112,6 +112,21 @@ class DynamicalSystem:
         self.convFromAlterIndVar = identical_var
 
     @abstractmethod
+    def evaluate_state_deriv_nonlin(self, nu, x):
+        """Function returning the derivative of the state vector w.r.t. the independent variable in the non-linearized
+        dynamics.
+
+                Args:
+                    nu (float): value of independent variable.
+                    x (numpy.array): state vector.
+
+                Returns:
+                    (numpy.array): derivative of state vector in non-linear dynamics.
+
+        """
+        pass
+
+    @abstractmethod
     def propagate(self, nu1, nu2, x1):
         """Function for the propagation of the state vector.
 
@@ -295,6 +310,21 @@ class BodyProbDyn(DynamicalSystem):
 
         return x
 
+    def evaluate_state_deriv_nonlin(self, nu, x):
+        """Function returning the derivative of the state vector w.r.t. the independent variable in the non-linearized
+        dynamics.
+
+                Args:
+                    nu (float): value of independent variable.
+                    x (numpy.array): state vector.
+
+                Returns:
+                    (numpy.array): derivative of state vector in non-linear dynamics.
+
+        """
+        slr = self.params.sma * (1. - self.params.ecc * self.params.ecc)
+        return orbital_mechanics.state_deriv_nonlin(x, nu, self.params.ecc, self.x_eq_normalized, self.params.mu, slr)
+
     def integrate_phi_inv(self, nus, half_dim):
         """Function integrating over the true anomaly the inverse of the fundamental transition matrix associated to the
         transformed state vector.
@@ -383,6 +413,25 @@ class BodyProbDyn(DynamicalSystem):
             IC_vector = state_hist[-1]  # old final condition becomes initial one
 
         return outputs
+
+    def integrate_Y(self, nus, half_dim):
+        """Function integrating over the true anomaly the moment-function.
+
+                Args:
+                    nus (list): grid of true anomalies.
+                    half_dim (int): half-dimension of state vector.
+
+                Returns:
+                    outputs (list): moment-function integrated on input grid.
+
+        """
+        matrices = self.integrate_phi_inv(nus, half_dim)
+        Ys = numpy.zeros((2 * half_dim, half_dim * len(nus)))
+        for k in range(0, len(nus)):
+            inter = matrices[k]
+            Ys[:, half_dim * k: half_dim * (k + 1)] = inter[:, half_dim: 2 * half_dim] / \
+                                                      orbital_mechanics.rho_func(self.params.ecc, nus[k])
+        return Ys
 
     def evaluate_Y(self, nu, half_dim):
         """Wrapper returning the moment-function involved in the equation satisfied by the control law.

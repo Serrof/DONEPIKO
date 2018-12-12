@@ -104,17 +104,13 @@ class Solver:
 
         """
 
-        grid_size = len(grid)
-        Ys = numpy.zeros((2 * half_dim, half_dim * grid_size))
         if self.prop_ana:
+            grid_size = len(grid)
+            Ys = numpy.zeros((2 * half_dim, half_dim * grid_size))
             for k in range(0, grid_size):
                 Ys[:, half_dim * k: half_dim * (k + 1)] = self.dyn.evaluate_Y(grid[k], half_dim)
         else:  # numerical integration
-            matrices = self.dyn.integrate_phi_inv(grid, half_dim)
-            for k in range(0, grid_size):
-                inter = matrices[k]
-                Ys[:, half_dim * k: half_dim * (k + 1)] = inter[:, half_dim: 2*half_dim] / \
-                                                          orbital_mechanics.rho_func(self.dyn.params.ecc, grid[k])
+            Ys = self.dyn.integrate_Y(grid, half_dim)
 
         return Ys
 
@@ -155,7 +151,7 @@ class Solver:
                 multiplier = self.dyn.params.mean_motion / math.sqrt(factor * factor * factor)
                 inv_mat = numpy.linalg.inv(mat)
                 inter = inv_mat.dot((FC_matrix.dot(self.dyn.transformation(BC.xf, BC.nuf)) -
-                                     IC_matrix.dot(self.dyn.transformation(BC.x0, BC.nu0)))*multiplier)
+                                     IC_matrix.dot(self.dyn.transformation(BC.x0, BC.nu0))) * multiplier)
 
             # retrieve the two Delta-Vs
             DVs = numpy.zeros((2, BC.half_dim))
