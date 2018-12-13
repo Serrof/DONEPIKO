@@ -432,7 +432,7 @@ class Plotter:
         else:  # the independent variable is time
             ax3.set_xlabel('time (s)')
         ax3.set_ylabel('cost (m/s)')
-        ax3.grid()      
+        ax3.grid()
 
     def plot_traj(self):
         """Function plotting the trajectory. In case of pure out-of-plane dynamics, the trajectory is in the phase plane.
@@ -473,6 +473,12 @@ class Plotter:
             ax.set_title('phase plane')
         else:  # in-plane or complete dynamics
             ax.set_title('trajectory')
+
+    def show(self):
+        """Function to show all the pre-computed plots.
+
+        """
+        plt.show()
 
     def write_states_to_file(self, file_path):
         """Function writing in a file the history of the states' variables.

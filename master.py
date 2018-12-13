@@ -131,7 +131,7 @@ class Master:
         self.plotter.set_control_law(self.CL)
 
     def plot(self):
-        """Function to plot states and trajectory as well as primer vector in case of an indirect approach.
+        """Function to prepare plots of states and trajectory as well as primer vector in case of an indirect approach.
 
         """
 
@@ -139,6 +139,12 @@ class Master:
         self.plotter.plot_traj()
         if self.CL.lamb != []:
             self.plotter.plot_pv()
+
+    def show(self):
+        """Function to show all the pre-computed plots.
+
+        """
+        self.plotter.show()
 
     def write_control_law(self, file_path):
         """Wrapper for writer-method of ControlLaw attribute.

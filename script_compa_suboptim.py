@@ -13,7 +13,6 @@ import numpy
 import math
 import master
 import plotter
-import matplotlib.pyplot as plt
 import dynamics_factory
 
 nu0 = 2.0 * math.pi * random.random()  # initial true anomaly in rad
@@ -43,4 +42,4 @@ master.suboptimize()
 master.write_control_law("control_law_suboptim.txt")
 master.plot()
 
-plt.show()
+master.show()

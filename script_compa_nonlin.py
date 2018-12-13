@@ -13,7 +13,6 @@ import numpy
 import math
 import master
 import plotter
-import matplotlib.pyplot as plt
 import dynamics_factory
 
 nu0 = 2.0 * math.pi * random.random()  # initial true anomaly in rad
@@ -43,4 +42,5 @@ master.solve()
 master.set_linearity_plot(False)
 master.plot()
 master.write_states("nonlin_states.txt")
-plt.show()
+
+master.show()

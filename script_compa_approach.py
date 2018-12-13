@@ -13,7 +13,6 @@ import numpy
 import math
 import master
 import plotter
-import matplotlib.pyplot as plt
 import dynamics_factory
 import time
 
@@ -53,4 +52,4 @@ print("Time elapsed with direct approach: " + str(time.time() - t2) + " s")
 master.plot()
 master.write_control_law("control_law_direct.txt")
 
-plt.show()
+master.show()
