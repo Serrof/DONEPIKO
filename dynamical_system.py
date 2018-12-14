@@ -311,19 +311,41 @@ class BodyProbDyn(DynamicalSystem):
         return x
 
     def evaluate_state_deriv_nonlin(self, nu, x):
-        """Function returning the derivative of the state vector w.r.t. the independent variable in the non-linearized
-        dynamics.
+        """Function returning the derivative of the transformed state vector w.r.t. the independent variable in the
+        non-linearized dynamics.
 
                 Args:
                     nu (float): value of independent variable.
-                    x (numpy.array): state vector.
+                    x (numpy.array): transformed state vector.
 
                 Returns:
-                    (numpy.array): derivative of state vector in non-linear dynamics.
+                    (numpy.array): derivative of transformed state vector in non-linear dynamics.
 
         """
         slr = self.params.sma * (1. - self.params.ecc * self.params.ecc)
         return orbital_mechanics.state_deriv_nonlin(x, nu, self.params.ecc, self.x_eq_normalized, self.params.mu, slr)
+
+    def evaluate_state_deriv(self, nu, x):
+        """Function returning the derivative of the transformed state vector w.r.t. the independent variable in the
+        linearized dynamics.
+
+                Args:
+                    nu (float): value of independent variable.
+                    x (numpy.array): transformed state vector.
+
+                Returns:
+                    (numpy.array): derivative of transformed state vector in linearized dynamics.
+
+        """
+        half_dim = len(x) / 2
+
+        if half_dim == 1:
+            return orbital_mechanics.oop_state_deriv(x, nu, self.params.ecc, self.x_eq_normalized, self.params.mu)
+        elif half_dim == 2:
+                return orbital_mechanics.ip_state_deriv(x, nu, self.params.ecc, self.x_eq_normalized, self.params.mu)
+        else:  # complete dynamics
+            return orbital_mechanics.complete_state_deriv(x, nu, self.params.ecc, self.x_eq_normalized,
+                                                            self.params.mu)
 
     def integrate_phi_inv(self, nus, half_dim):
         """Function integrating over the true anomaly the inverse of the fundamental transition matrix associated to the

@@ -14,7 +14,6 @@ import dynamical_system
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import integrators
-import orbital_mechanics
 import math
 import indirect_num
 from config import conf
@@ -200,26 +199,11 @@ class Plotter:
                 print('_compute_states: non-linear dynamics cannot be only out-of-plane')
 
             else:  # linearized dynamics or in-plane or complete non-linear dynamics
-                slr = self.dyn.params.sma * (1. - self.dyn.params.ecc * self.dyn.params.ecc)  # semi-latus rectum
 
                 if self.linearized:
 
-                    if self.BC.half_dim == 1:
-                        def func(nu, x):  # right-hand side function for integration
-                            return orbital_mechanics.oop_state_deriv(x, nu, self.dyn.params.ecc,
-                                                                     self.dyn.x_eq_normalized, self.dyn.params.mu)
-
-                    else:  # in-plane or complete dynamics
-                        if self.BC.half_dim == 2:
-                            def func(nu, x):  # right-hand side function for integration
-                                return orbital_mechanics.ip_state_deriv(x, nu, self.dyn.params.ecc,
-                                                                        self.dyn.x_eq_normalized, self.dyn.params.mu)
-
-                        else:  # complete dynamics
-                            def func(nu, x):  # right-hand side function for integration
-                                return orbital_mechanics.complete_state_deriv(x, nu, self.dyn.params.ecc,
-                                                                              self.dyn.x_eq_normalized,
-                                                                              self.dyn.params.mu)
+                    def func(nu, x):  # right-hand side function for integration
+                        return self.dyn.evaluate_state_deriv(nu, x)
 
                 else:  # non-linear dynamics
 
