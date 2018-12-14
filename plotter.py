@@ -25,7 +25,7 @@ class Plotter:
     """Class dealing with the plotting capacities.
 
                 Attributes:
-                    dyn (dynamical_system.BodyProbDyn): dynamics to be used for two-boundary value problem.
+                    dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
                     BC (utils.BoundaryConditions): constraints for two-point boundary value problem.
                     p (int): type of norm for control law to be plotted.
                     anomaly (bool): set to True if independent variable is the true anomaly and to False if it is time.
@@ -45,7 +45,7 @@ class Plotter:
         """Constructor for class plotter.
 
                 Args:
-                    dyn (dynamical_system.BodyProbDyn): dynamics to be used for two-boundary value problem.
+                    dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
                     BC (utils.BoundaryConditions): constraints for two-point boundary value problem.
                     p (int): type of norm for control law to be plotted.
                     anomaly (bool): set to True if independent variable is the true anomaly and to False if it is time.

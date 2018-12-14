@@ -15,7 +15,7 @@ from indirect_num import *
 from indirect_ana import *
 import solver
 import orbital_mechanics
-import dynamical_system
+import body_prob_dyn
 from config import conf
 
 
@@ -28,7 +28,7 @@ class IndirectSolver(solver.Solver):
         """Constructor for class IndirectSolver.
 
                 Args:
-                    dyn (dynamical_system.BodyProbDyn): dynamics to be used for two-boundary value problem.
+                    dyn (dynamical_system.DynamicalSystem): dynamics to be used for two-boundary value problem.
                     p (int): type of norm to be minimized.
                     prop_ana (bool): set to true for analytical propagation of motion, false for integration.
 
@@ -38,7 +38,7 @@ class IndirectSolver(solver.Solver):
         solver.Solver.__init__(self, dyn, p, indirect=True, prop_ana=prop_ana)  # call to parent constructor
 
     def run(self, BC):
-        """Wrapper for all solving strategies (analytical, numerical and both).
+        """Function to optimize a trajectory.
 
                 Args:
                     BC (utils.BoundaryConditions): constraints for two-point boundary value problem.
@@ -48,29 +48,10 @@ class IndirectSolver(solver.Solver):
 
         """
 
-        if BC.half_dim == 1 and self.prop_ana:  # out-of-plane analytical solving
-            if self.dyn.params.mu != 0 and self.dyn.params.ecc == 0. and \
-                    (self.dyn.params.Li == 1 or self.dyn.params.Li == 2 or self.dyn.params.Li == 3):
-                # special case of circular out-of-plane L1, 2 or 3 where analytical solution can be obtained from
-                # 2-body solution by rescaling anomaly
-                return self._circular_oop_L123(BC)
-            else:  # out-of-plane for elliptical 2-body problem or elliptical 3-body around L4 and 5 or circular around L1, 2 and 3
-                z = self.dyn.compute_rhs(BC, analytical=self.prop_ana)
-                (nus, DVs, lamb) = solver_ana(z, self.dyn.params.ecc, self.dyn.params.mean_motion, BC.nu0, BC.nuf)
-                return utils.ControlLaw(BC.half_dim, nus, DVs, lamb)
-
-        elif (BC.half_dim == 3) and (self.p == 1):  # merge analytical and numerical solutions in the case of complete
-            #  dynamics with the 1-norm
-            x0_ip, x0_oop = unstack_state(BC.x0)
-            xf_ip, xf_oop = unstack_state(BC.xf)
-            BC_oop = utils.BoundaryConditions(BC.nu0, BC.nuf, x0_oop, xf_oop)
-            CL_oop = self.run(BC_oop)
-            BC_ip = utils.BoundaryConditions(BC.nu0, BC.nuf, x0_ip, xf_ip)
-            CL_ip = self.run(BC_ip)
-            return utils.merge_control(CL_ip, CL_oop)
-
-        else:  # numerical solving
-            return self._num_approach(BC)
+        if isinstance(self.dyn, body_prob_dyn.BodyProbDyn):
+            return self.solveBodyProbDyn(BC)
+        else:  # not the 2 or 3-body problem
+            return self._num_approach(BC)  # solve numerically by default
 
     def _num_approach(self, BC):
         """Function handling the indirect approach numerically.
@@ -102,6 +83,41 @@ class IndirectSolver(solver.Solver):
 
         return utils.ControlLaw(BC.half_dim, nus, DVs, lamb)
 
+    def solveBodyProbDyn(self, BC):
+        """Wrapper for all solving strategies (analytical, numerical and both) in case of 2 or 3-body problem.
+
+                Args:
+                    BC (utils.BoundaryConditions): constraints for two-point boundary value problem.
+
+                Returns:
+                     (utils.ControlLaw): optimal control law.
+
+        """
+
+        if BC.half_dim == 1 and self.prop_ana:  # out-of-plane analytical solving
+            if self.dyn.params.mu != 0 and self.dyn.params.ecc == 0. and \
+                    (self.dyn.params.Li == 1 or self.dyn.params.Li == 2 or self.dyn.params.Li == 3):
+                # special case of circular out-of-plane L1, 2 or 3 where analytical solution can be obtained from
+                # 2-body solution by rescaling anomaly
+                return self._circular_oop_L123(BC)
+            else:  # out-of-plane for elliptical 2-body problem or elliptical 3-body around L4 and 5 or circular around L1, 2 and 3
+                z = self.dyn.compute_rhs(BC, analytical=self.prop_ana)
+                (nus, DVs, lamb) = solver_ana(z, self.dyn.params.ecc, self.dyn.params.mean_motion, BC.nu0, BC.nuf)
+                return utils.ControlLaw(BC.half_dim, nus, DVs, lamb)
+
+        elif (BC.half_dim == 3) and (self.p == 1):  # merge analytical and numerical solutions in the case of complete
+            #  dynamics with the 1-norm
+            x0_ip, x0_oop = unstack_state(BC.x0)
+            xf_ip, xf_oop = unstack_state(BC.xf)
+            BC_oop = utils.BoundaryConditions(BC.nu0, BC.nuf, x0_oop, xf_oop)
+            CL_oop = self.solveBodyProbDyn(BC_oop)
+            BC_ip = utils.BoundaryConditions(BC.nu0, BC.nuf, x0_ip, xf_ip)
+            CL_ip = self.solveBodyProbDyn(BC_ip)
+            return utils.merge_control(CL_ip, CL_oop)
+
+        else:  # numerical solving
+            return self._num_approach(BC)
+
     def _circular_oop_L123(self, BC):
         """Function computing the optimal control law analytically in the special case of out-of-plane dynamics
         in the circular L1, 2 or 3.
@@ -119,7 +135,7 @@ class IndirectSolver(solver.Solver):
 
         # scaling inputs
         BC_rescaled = utils.BoundaryConditions(BC.nu0 * puls, BC.nuf * puls, BC.x0, BC.xf)
-        dyn_rescaled = dynamical_system.BodyProbDyn(0., 0., self.dyn.params.period / puls, self.dyn.params.sma)
+        dyn_rescaled = body_prob_dyn.BodyProbDyn(0., 0., self.dyn.params.period / puls, self.dyn.params.sma)
         z_rescaled = dyn_rescaled.compute_rhs(BC_rescaled, analytical=True)
 
         # 'classic' call to numerical solver
