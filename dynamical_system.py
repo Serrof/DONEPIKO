@@ -9,6 +9,10 @@
 
 from abc import ABCMeta, abstractmethod
 import numpy
+import math
+import integrators
+import utils
+from config import conf
 
 
 class DynParams:
@@ -74,7 +78,8 @@ class DynamicalSystem:
 
     def evaluate_state_deriv_nonlin(self, nu, x):
         """Function returning the derivative of the state vector w.r.t. the independent variable in the non-linearized
-        dynamics.
+        dynamics. This default implementation implicitly assumes that the dynamics is already linear. For non-linear
+        dynamics, it needs to be overloaded.
 
                 Args:
                     nu (float): value of independent variable.
@@ -130,6 +135,34 @@ class DynamicalSystem:
         pass
 
     @abstractmethod
+    def integrand_phi_inv(self, half_dim):
+        """Function returning the integrand in the integration of the inverse of the fundamental transition matrix
+        associated to the transformed state vector.
+
+                Args:
+                    half_dim (int): half-dimension of state vector.
+
+                Returns:
+                    (): function (in vector form) to be integrated to obtain inverse of fundamental matrix.
+
+        """
+        pass
+
+    @abstractmethod
+    def integrate_Y(self, nus, half_dim):
+        """Function integrating over the independent variable the moment-function.
+
+                Args:
+                    nus (list): grid of values for independent variable.
+                    half_dim (int): half-dimension of state vector.
+
+                Returns:
+                    outputs (list): moment-function integrated on input grid.
+
+        """
+        pass
+
+    @abstractmethod
     def copy(self):
         """Function returning a copy of the object.
 
@@ -165,6 +198,42 @@ class DynamicalSystem:
 
         """
         return self.transformation(x, nu)
+
+    def integrate_phi_inv(self, nus, half_dim):
+        """Function integrating over the independent variable the inverse of the fundamental transition matrix
+        associated to the transformed state vector.
+
+                Args:
+                    nus (list): grid of values for independent variable.
+                    half_dim (int): half-dimension of state vector.
+
+                Returns:
+                    outputs (list): list of inverse fundamental transition matrices integrated on input grid.
+
+        """
+
+        # sanity check(s)
+        if (half_dim != 3) and (half_dim != 2) and (half_dim != 1):
+            print('integrate_Y: half-dimension of state vector should be 1, 2 or 3')
+
+        integ = integrators.RK4(self.integrand_phi_inv(half_dim))
+        outputs = []
+        IC_matrix = numpy.eye(2 * half_dim)
+        outputs.append(IC_matrix)
+        IC_vector = utils.square_matrix_to_vector(IC_matrix, 2 * half_dim)  # initial conditions of matrix system turned into a vector for integration
+        n_step = int(math.ceil(math.fabs(nus[1] - nus[0]) / conf.params_plot["h_min"]))
+
+        for k in range(0, len(nus)-1):
+            (state_hist, nu_hist) = integ.integrate(nus[k], nus[k+1], IC_vector, n_step)
+
+            if half_dim == 1:  # temporary fix
+                outputs.append(numpy.transpose(utils.vector_to_square_matrix(state_hist[-1], 2 * half_dim)))
+            else:  # in-plane or complete dynamics
+                outputs.append(utils.vector_to_square_matrix(state_hist[-1], 2 * half_dim))
+
+            IC_vector = state_hist[-1]  # old final condition becomes initial one
+
+        return outputs
 
 
 class DoubleIntegrator(DynamicalSystem):
@@ -246,11 +315,55 @@ class DoubleIntegrator(DynamicalSystem):
                     u (numpy.array): right-hand side of moment equation.
 
         """
-        M0 = numpy.eye(2 * BC.half_dim)
-        M0[0:BC.half_dim, BC.half_dim: 2 * BC.half_dim] = -BC.nu0 * numpy.eye(BC.half_dim)
-        Mf = numpy.eye(2 * BC.half_dim)
-        Mf[0:BC.half_dim, BC.half_dim: 2 * BC.half_dim] = -BC.nuf * numpy.eye(BC.half_dim)
-        return Mf.dot(BC.xf) - M0.dot(BC.x0)
+        if analytical:
+            M0 = numpy.eye(2 * BC.half_dim)
+            M0[0:BC.half_dim, BC.half_dim: 2 * BC.half_dim] = -BC.nu0 * numpy.eye(BC.half_dim)
+            Mf = numpy.eye(2 * BC.half_dim)
+            Mf[0:BC.half_dim, BC.half_dim: 2 * BC.half_dim] = -BC.nuf * numpy.eye(BC.half_dim)
+            return Mf.dot(BC.xf) - M0.dot(BC.x0)
+
+        else:  # propagation is numerical
+            matrices = self.integrate_phi_inv([BC.nu0, BC.nuf], BC.half_dim)
+            return matrices[-1].dot(BC.xf) - matrices[0].dot(BC.x0)
+
+    def integrand_phi_inv(self, half_dim):
+        """Function returning the integrand in the integration of the inverse of the fundamental transition matrix
+        associated to the transformed state vector.
+
+                Args:
+                    half_dim (int): half-dimension of state vector.
+
+                Returns:
+                    outputs (list): function (in vector form) to be integrated to obtain inverse of fundamental matrix.
+
+        """
+        A = numpy.zeros((2 * half_dim, 2 * half_dim))
+        A[0: half_dim, half_dim: 2 * half_dim] = numpy.eye(half_dim)
+
+        def func(nu, x):
+            x_matrix = utils.vector_to_square_matrix(x, 2 * half_dim)
+            f_matrix = -x_matrix.dot(A)  # right-hand side of matrix differential equation satisfied by phi^-1
+            return utils.square_matrix_to_vector(f_matrix, 2 * half_dim)
+
+        return func
+
+    def integrate_Y(self, nus, half_dim):
+        """Function integrating over the independent variable the moment-function.
+
+                Args:
+                    nus (list): grid of values for independent variable.
+                    half_dim (int): half-dimension of state vector.
+
+                Returns:
+                    outputs (list): moment-function integrated on input grid.
+
+        """
+        matrices = self.integrate_phi_inv(nus, half_dim)
+        Ys = numpy.zeros((2 * half_dim, half_dim * len(nus)))
+        for k in range(0, len(nus)):
+            inter = matrices[k]
+            Ys[:, half_dim * k: half_dim * (k + 1)] = inter[:, half_dim: 2 * half_dim]
+        return Ys
 
     def copy(self):
         """Function returning a copy of the object.

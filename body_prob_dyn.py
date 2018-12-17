@@ -222,22 +222,17 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
             return orbital_mechanics.complete_state_deriv(x, nu, self.params.ecc, self.x_eq_normalized,
                                                             self.params.mu)
 
-    def integrate_phi_inv(self, nus, half_dim):
-        """Function integrating over the true anomaly the inverse of the fundamental transition matrix associated to the
-        transformed state vector.
+    def integrand_phi_inv(self, half_dim):
+        """Function returning the integrand in the integration of the inverse of the fundamental transition matrix
+        associated to the transformed state vector.
 
                 Args:
-                    nus (list): grid of true anomalies.
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    outputs (list): list of inverse fundamental transition matrices integrated on input grid.
+                    (): function (in vector form) to be integrated to obtain inverse of fundamental matrix.
 
         """
-
-        # sanity check(s)
-        if (half_dim != 3) and (half_dim != 2) and (half_dim != 1):
-            print('integrate_Y: half-dimension of state vector should be 1, 2 or 3')
 
         if half_dim == 1:
 
@@ -292,24 +287,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                 f_matrix = -x_matrix.dot(A)  # right-hand side of matrix differential equation satisfied by phi^-1
                 return utils.square_matrix_to_vector(f_matrix, 2 * half_dim)
 
-        integ = integrators.RK4(func)
-        outputs = []
-        IC_matrix = numpy.eye(2 * half_dim)
-        outputs.append(IC_matrix)
-        IC_vector = utils.square_matrix_to_vector(IC_matrix, 2 * half_dim)  # initial conditions of matrix system turned into a vector for integration
-        n_step = int(math.ceil(math.fabs(nus[1] - nus[0]) / conf.params_plot["h_min"]))
-
-        for k in range(0, len(nus)-1):
-            (state_hist, nu_hist) = integ.integrate(nus[k], nus[k+1], IC_vector, n_step)
-
-            if half_dim == 1:  # temporary fix for the out-of-plane only case
-                outputs.append(numpy.transpose(utils.vector_to_square_matrix(state_hist[-1], 2 * half_dim)))
-            else:  # in-plane or complete dynamics
-                outputs.append(utils.vector_to_square_matrix(state_hist[-1], 2 * half_dim))
-
-            IC_vector = state_hist[-1]  # old final condition becomes initial one
-
-        return outputs
+        return func
 
     def integrate_Y(self, nus, half_dim):
         """Function integrating over the true anomaly the moment-function.
