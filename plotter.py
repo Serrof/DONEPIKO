@@ -11,6 +11,7 @@ import numpy
 from numpy import linalg
 import utils
 import dynamical_system
+import body_prob_dyn
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import integrators
@@ -63,10 +64,11 @@ class Plotter:
             self.CL = utils.NoControl(BC.half_dim)
         self.linearized = linearized
         self.anomaly = anomaly
-        if analytical and dyn.params.mu != 0. and dyn.params.ecc != 0. and \
+        if isinstance(dyn, body_prob_dyn.BodyProbDyn):
+            if analytical and dyn.params.mu != 0. and dyn.params.ecc != 0. and \
                 (dyn.params.Li == 1 or dyn.params.Li == 2 or dyn.params.Li == 3 or BC.half_dim > 1):
-            print('WARNING: propagation type within plotter changed to numerical')
-            self.analytical = False
+                print('WARNING: propagation type within plotter changed to numerical')
+                self.analytical = False
         else:  # propagation has to be numerical for elliptical out-of-plane L1, 2 or 3 or elliptical in-plane of any LP
             self.analytical = analytical
 
