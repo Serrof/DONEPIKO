@@ -62,6 +62,20 @@ class DynamicalSystem:
         self.convFromAlterIndVar = identical_var
 
     @abstractmethod
+    def matrix_linear(self, nu, half_dim):
+        """Function returning the matrix appearing in the differential system satisfied by the transformed state vector
+         in the linearized dynamics.
+
+                Args:
+                    nu (float): value of independent variable.
+                    half_dim (int): half-dimension of state vector.
+
+                Returns:
+                    (numpy.array): matrix for transformed state equation in linearized dynamics.
+
+        """
+        pass
+
     def evaluate_state_deriv(self, nu, x):
         """Function returning the derivative of the transformed state vector w.r.t. the independent variable in the
         linearized dynamics.
@@ -74,7 +88,7 @@ class DynamicalSystem:
                     (numpy.array): derivative of transformed state vector in linearized dynamics.
 
         """
-        pass
+        return self.matrix_linear(nu, len(x) / 2).dot(x)
 
     def evaluate_state_deriv_nonlin(self, nu, x):
         """Function returning the derivative of the state vector w.r.t. the independent variable in the non-linearized
@@ -130,20 +144,6 @@ class DynamicalSystem:
 
                 Returns:
                     u (numpy.array): right-hand side of moment equation.
-
-        """
-        pass
-
-    @abstractmethod
-    def integrand_phi_inv(self, half_dim):
-        """Function returning the integrand in the integration of the inverse of the fundamental transition matrix
-        associated to the transformed state vector.
-
-                Args:
-                    half_dim (int): half-dimension of state vector.
-
-                Returns:
-                    (): function (in vector form) to be integrated to obtain inverse of fundamental matrix.
 
         """
         pass
@@ -216,7 +216,12 @@ class DynamicalSystem:
         if (half_dim != 3) and (half_dim != 2) and (half_dim != 1):
             print('integrate_Y: half-dimension of state vector should be 1, 2 or 3')
 
-        integ = integrators.RK4(self.integrand_phi_inv(half_dim))
+        def func(nu, x):
+            x_matrix = utils.vector_to_square_matrix(x, 2 * half_dim)
+            f_matrix = -x_matrix.dot(self.matrix_linear(nu, half_dim))  # right-hand side of matrix differential equation satisfied by phi^-1
+            return utils.square_matrix_to_vector(f_matrix, 2 * half_dim)
+
+        integ = integrators.RK4(func)
         outputs = []
         IC_matrix = numpy.eye(2 * half_dim)
         outputs.append(IC_matrix)
@@ -226,18 +231,15 @@ class DynamicalSystem:
         for k in range(0, len(nus)-1):
             (state_hist, nu_hist) = integ.integrate(nus[k], nus[k+1], IC_vector, n_step)
 
-            if half_dim == 1:  # temporary fix
-                outputs.append(numpy.transpose(utils.vector_to_square_matrix(state_hist[-1], 2 * half_dim)))
-            else:  # in-plane or complete dynamics
-                outputs.append(utils.vector_to_square_matrix(state_hist[-1], 2 * half_dim))
+            outputs.append(utils.vector_to_square_matrix(state_hist[-1], 2 * half_dim))
 
             IC_vector = state_hist[-1]  # old final condition becomes initial one
 
         return outputs
 
 
-class DoubleIntegrator(DynamicalSystem):
-    """Class implementing the double-integrator dynamics i.e. second order state derivative equal to zero, so that
+class ZeroGravity(DynamicalSystem):
+    """Class implementing the dynamics with no acting forces i.e. second order state derivative equal to zero, so that
     uncontrolled trajectories follow a rectilinear motion.
 
 
@@ -248,28 +250,26 @@ class DoubleIntegrator(DynamicalSystem):
 
 
         """
-        DynamicalSystem.__init__(self, "Double Integrator")
+        DynamicalSystem.__init__(self, "Zero Gravity")
 
-    def evaluate_state_deriv(self, nu, x):
-        """Function returning the derivative of the transformed state vector w.r.t. the independent variable in the
-        double-integrator dynamics.
+    def matrix_linear(self, nu, half_dim):
+        """Function returning the matrix appearing in the differential system satisfied by the transformed state vector
+         in the zero-gravity dynamics.
 
                 Args:
                     nu (float): value of independent variable.
-                    x (numpy.array): transformed state vector.
+                    half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    (numpy.array): derivative of transformed state vector in double-integrator dynamics.
+                    (numpy.array): matrix for transformed state equation in linearized dynamics.
 
         """
-        output = numpy.zeros(len(x))
-        half_dim = int(len(x) / 2)
-        for k in range(0, half_dim):
-            output[k] = x[k + half_dim]
-        return output
+        A = numpy.zeros((2 * half_dim, 2 * half_dim))
+        A[0: half_dim, half_dim: 2 * half_dim] = numpy.eye(half_dim)
+        return A
 
     def propagate(self, nu1, nu2, x1):
-        """Function for the propagation of the state vector in double-integrator dynamics.
+        """Function for the propagation of the state vector in zero-gravity dynamics.
 
                 Args:
                     nu1 (float): initial value of independent variable.
@@ -296,7 +296,7 @@ class DoubleIntegrator(DynamicalSystem):
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    (numpy.array): moment-function evaluated at nu in double-integrator dynamics.
+                    (numpy.array): moment-function evaluated at nu in zero-gravity dynamics.
 
         """
         Y = numpy.zeros((2 * half_dim, half_dim))
@@ -305,7 +305,7 @@ class DoubleIntegrator(DynamicalSystem):
         return Y
 
     def compute_rhs(self, BC, analytical):
-        """Function that computes right-hand side of moment equation for the double-integrator dynamics.
+        """Function that computes right-hand side of moment equation for the zero-gravity dynamics.
 
                 Args:
                     BC (utils.BoundaryConditions): constraints for two-point boundary value problem.
@@ -325,27 +325,6 @@ class DoubleIntegrator(DynamicalSystem):
         else:  # propagation is numerical
             matrices = self.integrate_phi_inv([BC.nu0, BC.nuf], BC.half_dim)
             return matrices[-1].dot(BC.xf) - matrices[0].dot(BC.x0)
-
-    def integrand_phi_inv(self, half_dim):
-        """Function returning the integrand in the integration of the inverse of the fundamental transition matrix
-        associated to the transformed state vector.
-
-                Args:
-                    half_dim (int): half-dimension of state vector.
-
-                Returns:
-                    outputs (list): function (in vector form) to be integrated to obtain inverse of fundamental matrix.
-
-        """
-        A = numpy.zeros((2 * half_dim, 2 * half_dim))
-        A[0: half_dim, half_dim: 2 * half_dim] = numpy.eye(half_dim)
-
-        def func(nu, x):
-            x_matrix = utils.vector_to_square_matrix(x, 2 * half_dim)
-            f_matrix = -x_matrix.dot(A)  # right-hand side of matrix differential equation satisfied by phi^-1
-            return utils.square_matrix_to_vector(f_matrix, 2 * half_dim)
-
-        return func
 
     def integrate_Y(self, nus, half_dim):
         """Function integrating over the independent variable the moment-function.
@@ -369,4 +348,4 @@ class DoubleIntegrator(DynamicalSystem):
         """Function returning a copy of the object.
 
         """
-        return DoubleIntegrator()
+        return ZeroGravity()

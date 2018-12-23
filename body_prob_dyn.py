@@ -200,94 +200,51 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         slr = self.params.sma * (1. - self.params.ecc * self.params.ecc)
         return orbital_mechanics.state_deriv_nonlin(x, nu, self.params.ecc, self.x_eq_normalized, self.params.mu, slr)
 
-    def evaluate_state_deriv(self, nu, x):
-        """Function returning the derivative of the transformed state vector w.r.t. the independent variable in the
-        linearized dynamics.
+    def matrix_linear(self, nu, half_dim):
+        """Function returning the matrix appearing in the differential system satisfied by the transformed state vector
+         in the linearized dynamics.
 
                 Args:
-                    nu (float): value of independent variable.
-                    x (numpy.array): transformed state vector.
-
-                Returns:
-                    (numpy.array): derivative of transformed state vector in linearized dynamics.
-
-        """
-        half_dim = len(x) / 2
-
-        if half_dim == 1:
-            return orbital_mechanics.oop_state_deriv(x, nu, self.params.ecc, self.x_eq_normalized, self.params.mu)
-        elif half_dim == 2:
-                return orbital_mechanics.ip_state_deriv(x, nu, self.params.ecc, self.x_eq_normalized, self.params.mu)
-        else:  # complete dynamics
-            return orbital_mechanics.complete_state_deriv(x, nu, self.params.ecc, self.x_eq_normalized,
-                                                            self.params.mu)
-
-    def integrand_phi_inv(self, half_dim):
-        """Function returning the integrand in the integration of the inverse of the fundamental transition matrix
-        associated to the transformed state vector.
-
-                Args:
+                    nu (float): value of true anomaly.
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    (): function (in vector form) to be integrated to obtain inverse of fundamental matrix.
+                    (numpy.array): matrix for transformed state equation in linearized dynamics.
 
         """
+
+        M = numpy.zeros((2 * half_dim, 2 * half_dim))
+        M[0: half_dim, half_dim: 2 * half_dim] = numpy.eye(half_dim)
 
         if half_dim == 1:
 
             if (self.params.mu != 0.) and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
+
                 pulsation = orbital_mechanics.puls_oop_LP(self.x_eq_normalized, self.params.mu)
-
-                if self.params.ecc == 0.:
-
-                    def func(nu, x):  # right-hand side function for integration
-                        return [x[2] * pulsation * pulsation, x[3] * pulsation * pulsation, -x[0], -x[1]]
-
-                else:  # elliptical case 3-body near L1, 2 or 3
-
-                    def func(nu, x):  # right-hand side function for integration
-                        factor = (pulsation * pulsation + self.params.ecc * math.cos(nu)) / rho_func(self.params.ecc, nu)
-                        return [x[2] * factor, x[3] * factor, -x[0], -x[1]]
+                M[1, 0] = -(pulsation * pulsation + self.params.ecc * math.cos(nu)) / rho_func(self.params.ecc, nu)
 
             else:  # out-of-plane elliptical 2-body problem or 3-body near L4 and 5
 
-                def func(nu, x):  # right-hand side function for integration
-                    return [x[2], x[3], -x[0], -x[1]]
+                M[1, 0] = -1.0
 
         else:  # in-plane or complete dynamics
+
+            M[half_dim: half_dim + 2, half_dim: half_dim + 2] = numpy.array([[0.0, 2.0], [-2.0, 0.0]])
 
             if self.params.mu == 0.:
                 H = orbital_mechanics.Hessian_ip2bp(self.x_eq_normalized)
             else:  # restricted three-body case
                 H = orbital_mechanics.Hessian_ip3bp(self.x_eq_normalized, self.params.mu)
 
-            if half_dim == 2:
+            rho = orbital_mechanics.rho_func(self.params.ecc, nu)
+            M[half_dim: half_dim + 2, 0:2] = -H / rho
 
-                A = numpy.array(
-                    [[0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 2.0], [0.0, 0.0, -2.0, 0.0]])
+            if half_dim == 3 and self.params.mu != 0.0 and \
+                    (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
+                pulsation = orbital_mechanics.puls_oop_LP(self.x_eq_normalized, self.params.mu)
+                M[5, 2] = -(pulsation * pulsation + self.params.ecc * math.cos(nu)) / rho
 
-            else:  # complete dynamics
-
-                pulsation = 1.0
-                if self.params.mu != 0.0 and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
-                    pulsation = orbital_mechanics.puls_oop_LP(self.x_eq_normalized, self.params.mu)
-
-                A = numpy.array([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-                                 [0.0, 0.0, 0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 0.0, 2.0, 0.0],
-                                 [0.0, 0.0, 0.0, -2.0, 0.0, 0.0],
-                                 [0.0, 0.0, -pulsation * pulsation, 0.0, 0.0, 0.0]])
-
-            def func(nu, x):  # right-hand side function for integration
-                rho = orbital_mechanics.rho_func(self.params.ecc, nu)
-                if half_dim == 3:
-                    A[5, 2] = -(pulsation * pulsation + self.params.ecc * math.cos(nu)) / rho
-                A[half_dim: half_dim + 2, 0:2] = -H / rho
-                x_matrix = utils.vector_to_square_matrix(x, 2 * half_dim)
-                f_matrix = -x_matrix.dot(A)  # right-hand side of matrix differential equation satisfied by phi^-1
-                return utils.square_matrix_to_vector(f_matrix, 2 * half_dim)
-
-        return func
+        return M
 
     def integrate_Y(self, nus, half_dim):
         """Function integrating over the true anomaly the moment-function.

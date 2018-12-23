@@ -294,7 +294,7 @@ class Plotter:
         else:
             Ys = self.dyn.integrate_Y(self._nus, self.BC.half_dim)
             for k in range(0, self._nb):
-                pv[:, k] = numpy.transpose(Ys[k]) . dot(self.CL.lamb)
+                pv[:, k] = numpy.transpose(Ys[:, k * self.BC.half_dim: (k + 1) * self.BC.half_dim]) . dot(self.CL.lamb)
 
         for k in range(0, self._nb):
             pv_norm.append(linalg.norm(pv[:, k], self._q))
