@@ -19,3 +19,6 @@ December 7, 2018: v1.0.5
 
 December 11, 2018: v1.0.6
  - introduction of Abstract Base Classes and of a "copy" method for various objects
+
+December 23, 2018: v1.0.7
+ - introduction of a "zero-gravity" dynamics and bug-fix for primer vector plot with numerical propagation
