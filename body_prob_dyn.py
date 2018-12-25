@@ -11,7 +11,6 @@ import numpy
 from moments import *
 from numpy import linalg
 import utils
-import integrators
 import orbital_mechanics
 import dynamical_system
 

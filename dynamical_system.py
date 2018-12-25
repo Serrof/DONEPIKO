@@ -88,7 +88,7 @@ class DynamicalSystem:
                     (numpy.array): derivative of transformed state vector in linearized dynamics.
 
         """
-        return self.matrix_linear(nu, len(x) / 2).dot(x)
+        return self.matrix_linear(nu, int(len(x) / 2)).dot(x)
 
     def evaluate_state_deriv_nonlin(self, nu, x):
         """Function returning the derivative of the state vector w.r.t. the independent variable in the non-linearized

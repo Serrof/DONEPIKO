@@ -687,4 +687,3 @@ def complete_state_deriv(x, nu, ecc, x_eq, mu):
     ip_deriv = ip_state_deriv(x_ip, nu, ecc, x_eq, mu)
     oop_deriv = oop_state_deriv(x_oop, nu, ecc, x_eq, mu)
     return utils.stack_state(ip_deriv, oop_deriv)
-
