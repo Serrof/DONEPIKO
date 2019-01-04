@@ -1,5 +1,5 @@
 # dynamical_system.py: class for the dynamical models
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -13,6 +13,7 @@ from numpy import linalg
 import utils
 import orbital_mechanics
 import dynamical_system
+from abc import ABCMeta, abstractmethod
 
 
 class BodyProbParams(dynamical_system.DynParams):
@@ -65,14 +66,15 @@ class BodyProbParams(dynamical_system.DynParams):
 
 
 class BodyProbDyn(dynamical_system.DynamicalSystem):
-    """Class implementing the dynamics of the restricted 2- or 3-body problem.
+    """Abstract class to implement the dynamics of the restricted 2- or 3-body problem.
 
                 Attributes:
                     params (BodyProbParams): parameters characterizing the dynamical system
                     x_eq_normalized (numpy.array): normalized coordinates of equilibrium point.
-                    _A_inv (numpy.array): intermediate matrix only useful when mu !=0.
 
     """
+
+    __metaclass__ = ABCMeta
 
     def __init__(self, mu, ecc, period, sma, Li=None):
         """Constructor.
@@ -86,7 +88,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
         """
 
-        dynamical_system.DynamicalSystem.__init__(self, "N-body problem")
+        dynamical_system.DynamicalSystem.__init__(self, "")
         self.params = BodyProbParams(mu, ecc, period, sma, Li)
 
         def conv(nu0, t0, nu):
@@ -97,42 +99,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
             return orbital_mechanics.dt_to_nu(self.params.ecc, self.params.mean_motion, nu0, t)
         self.convFromAlterIndVar = convInv
 
-        if mu != 0.:
-            # set normalized coordinates of Lagrange point of interest
-            if self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3:
-                if self.params.Li == 1:
-                    self.x_eq_normalized = numpy.array((find_L1(self.params.mu), 0.0, 0.0))
-                elif self.params.Li == 2:
-                    self.x_eq_normalized = numpy.array((find_L2(self.params.mu), 0.0, 0.0))
-                elif self.params.Li == 3:
-                    self.x_eq_normalized = numpy.array((find_L3(self.params.mu), 0.0, 0.0))
-                puls = puls_oop_LP(self.x_eq_normalized, self.params.mu)
-                (gamma_re, gamma_im, c, k) = inter_L123(puls * puls)
-                A = numpy.array([[1.0, 1.0, 1.0, 0.0], [c, -c, 0.0, k], [gamma_re, -gamma_re, 0.0, gamma_im],
-                                 [gamma_re * c, gamma_re * c, - gamma_im * k, 0.0]])
-                self._A_inv = numpy.linalg.inv(A)
-            else:  # Lagrange Point 4 or 5
-                if Li == 4:
-                    self.x_eq_normalized = numpy.array((0.5 * (1.0 - 2.0 * self.params.mu), math.sqrt(3.) / 2., 0., 0.))
-                    kappa = 1.0 - 2.0 * self.params.mu
-                else:  # Li = 5
-                    self.x_eq_normalized = numpy.array((0.5 * (1.0 - 2.0 * self.params.mu), -math.sqrt(3.) / 2., 0., 0.))
-                    kappa = -1.0 + 2.0 * self.params.mu
-                root1, root2, a1, a2, b1, b2, c1, c2, d1, d2 = inter_L45(self.params.mu, kappa)
-                A = numpy.array([[1.0, 0.0, 1.0, 0.0], [a1, a2, c1, c2],
-                                 [0.0, root1, 0.0, root2], [b1 * root1, b2 * root1, d1 * root2, d2 * root2]])
-                self._A_inv = numpy.linalg.inv(A)
-
-        else:  # restricted 2-body problem
-            self.x_eq_normalized = numpy.array([1.0, 0.0, 0.0])
-            self._A_inv = None
-
-    def copy(self):
-        """Function returning a copy of the object.
-
-        """
-
-        return BodyProbDyn(self.params.mu, self.params.ecc, self.params.period, self.params.sma, self.params.Li)
+        self.x_eq_normalized = None
 
     def transformation(self, x, nu):
         """Function converting original state vector to a modified space where propagation is simpler.
@@ -264,8 +231,185 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                                                       orbital_mechanics.rho_func(self.params.ecc, nus[k])
         return Ys
 
+    @abstractmethod
     def evaluate_Y(self, nu, half_dim):
         """Wrapper returning the moment-function involved in the equation satisfied by the control law.
+
+                Args:
+                    nu (float): current true anomaly.
+                    half_dim (int): half-dimension of state vector.
+
+                Returns:
+                    (numpy.array): moment-function.
+
+        """
+
+        pass
+
+    @abstractmethod
+    def transition_ip(self, x1, nu1, nu2):
+        """Function returning the in-plane initial vector propagated to the final true anomaly.
+
+                Args:
+                    x1 (numpy.array): in-plane initial transformed state vector.
+                    nu1 (float): initial true anomaly.
+                    nu2 (float): final true anomaly.
+
+        """
+        pass
+
+    @abstractmethod
+    def u_ip(self, nu1, nu2, x1, x2):
+        """Wrapper for the right-hand side of the moment-equation in the in-plane dynamics.
+
+                Args:
+                    nu1 (float): initial true anomaly.
+                    nu2 (float): final true anomaly.
+                    x1 (numpy.array): initial transformed state vector.
+                    x2 (numpy.array): final transformed state vector.
+
+        """
+        pass
+
+    def propagate(self, nu1, nu2, x1):
+        """Wrapper for the propagation of the state vector.
+
+                Args:
+                    nu1 (float): initial true anomaly.
+                    nu2 (float): final true anomaly.
+                    x1 (numpy.array): initial state vector.
+
+                Returns:
+                    (numpy.array): final state vector.
+
+        """
+
+        half_dim = len(x1) / 2
+
+        if nu1 == nu2:
+            x2 = numpy.zeros(half_dim * 2)
+            for k in range(0, len(x1)):
+                x2[k] = x1[k]
+            return x2
+        else:  # initial and final true anomalies are different
+            if half_dim == 1:
+                x1_bar = self.transformation(x1, nu1)
+                x2_bar = None
+                if self.params.mu != 0 and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
+                    if self.params.ecc == 0.:
+                        phi = phi_harmo(nu2 - nu1, puls_oop_LP(self.x_eq_normalized, self.params.mu))
+                        x2_bar = phi . dot(x1_bar)
+                    else:  # elliptical case
+                        print('PROPAGATE: analytical 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
+                else:  # restricted 2-body problem or L4/5
+                    x2_bar = transition_oop(x1_bar, nu1, nu2)
+                return self.transformation_inv(x2_bar, nu2)
+            elif half_dim == 2:
+                x1_bar = self.transformation(x1, nu1)
+                x2_bar = None
+                if self.params.mu == 0. or self.params.ecc == 0:
+                    x2_bar = self.transition_ip(x1_bar, nu1, nu2)
+                else:
+                    print('PROPAGATE: analytical 3-body elliptical in-plane case not coded yet')
+                return self.transformation_inv(x2_bar, nu2)
+            else:  # complete dynamics
+                x_ip1, x_oop1 = utils.unstack_state(x1)
+                x_oop2 = self.propagate(nu1, nu2, x_oop1)
+                x_ip2 = self.propagate(nu1, nu2, x_ip1)
+                return utils.stack_state(x_ip2, x_oop2)
+
+    def compute_rhs(self, BC, analytical):
+        """Function that computes right-hand side of moment equation.
+
+                Args:
+                    BC (utils.BoundaryConditions): constraints for two-point boundary value problem.
+                    analytical (bool): set to true for analytical propagation of motion, false for integration.
+
+                Returns:
+                    u (numpy.array): right-hand side of moment equation.
+
+        """
+
+        factor = 1.0 - self.params.ecc * self.params.ecc
+        multiplier = self.params.mean_motion / math.sqrt(factor * factor * factor)
+        x1 = self.transformation(BC.x0, BC.nu0)
+        x2 = self.transformation(BC.xf, BC.nuf)
+
+        if analytical:
+            u = numpy.zeros(2 * BC.half_dim)
+
+            if BC.half_dim == 1:
+                if (self.params.mu != 0.) and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
+                    if self.params.ecc == 0.:
+                        u += phi_harmo(-BC.nuf, puls_oop_LP(self.x_eq_normalized, self.params.mu)) . dot(x2)
+                        u -= phi_harmo(-BC.nu0, puls_oop_LP(self.x_eq_normalized, self.params.mu)) . dot(x1)
+                    else:
+                        print('compute_rhs: analytical 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
+                else:  # out-of-plane elliptical 2-body problem or 3-body near L4 and 5
+                    u += phi_harmo(-BC.nuf, 1.0).dot(x2)
+                    u -= phi_harmo(-BC.nu0, 1.0).dot(x1)
+                u[0] *= multiplier
+                u[1] *= multiplier
+
+            elif BC.half_dim == 2:
+                if self.params.mu == 0. or self.params.ecc == 0.:
+                    u = self.u_ip(BC.nu0, BC.nuf, x1, x2)
+                    for i in range(0, len(u)):
+                        u[i] *= multiplier
+                else:  # elliptical in-plane restricted 3-body problem case
+                    print('compute_rhs: analytical elliptical 3-body problem in-plane dynamics case not coded yet')
+
+            else:  # complete dynamics
+                x0_ip, x0_oop = utils.unstack_state(BC.x0)
+                xf_ip, xf_oop = utils.unstack_state(BC.xf)
+                BC_ip = utils.BoundaryConditions(BC.nu0, BC.nuf, x0_ip, xf_ip)
+                BC_oop = utils.BoundaryConditions(BC.nu0, BC.nuf, x0_oop, xf_oop)
+                z_oop = self.compute_rhs(BC_oop, analytical=True)
+                z_ip = self.compute_rhs(BC_ip, analytical=True)
+                u = utils.stack_state(z_ip, z_oop)
+
+        else:  # numerical integration
+
+            matrices = self.integrate_phi_inv([BC.nu0, BC.nuf], BC.half_dim)
+
+            IC_matrix = matrices[0]
+            FC_matrix = matrices[-1]
+
+            u = (FC_matrix.dot(x2) - IC_matrix.dot(x1)) * multiplier
+
+        return u
+
+
+class RestriTwoBodyProb(BodyProbDyn):
+    """Class implementing the dynamics of the restricted 2-body problem.
+
+    """
+
+    def __init__(self, ecc, period, sma):
+        """Constructor.
+
+                Args:
+                    ecc (float): eccentricity.
+                    period (float): orbital period.
+                    sma (float): semi-major axis (must be consistent with period)
+
+        """
+
+        # call to parent constructor
+        BodyProbDyn.__init__(self, 0., ecc, period, sma, Li=None)
+        self.name = "Restricted 2-body problem"
+
+        self.x_eq_normalized = numpy.array([1.0, 0.0, 0.0])
+
+    def copy(self):
+        """Function returning a copy of the object.
+
+        """
+
+        return RestriTwoBodyProb(self.params.ecc, self.params.period, self.params.sma)
+
+    def evaluate_Y(self, nu, half_dim):
+        """Function returning the moment-function involved in the equation satisfied by the control law.
 
                 Args:
                     nu (float): current true anomaly.
@@ -280,10 +424,116 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         if (half_dim != 3) and (half_dim != 2) and (half_dim != 1):
             print('evaluate_Y: half-dimension of state vector should be 1, 2 or 3')
 
-        if self.params.mu == 0.:
-            return Y_2bp(self.params.ecc, self.params.mean_motion, 0., nu, half_dim)
-        else:  # restricted 3-body problem
-            return self._Y_3bp(self.params.ecc, self.params.mean_motion, nu, half_dim)
+        return Y_2bp(self.params.ecc, self.params.mean_motion, 0., nu, half_dim)
+
+    def transition_ip(self, x1, nu1, nu2):
+        """Function returning the in-plane initial vector propagated to the final true anomaly.
+
+                Args:
+                    x1 (numpy.array): in-plane initial transformed state vector.
+                    nu1 (float): initial true anomaly.
+                    nu2 (float): final true anomaly.
+
+        """
+
+        return transition_ip2bp(x1, self.params.ecc, self.params.mean_motion, nu1, nu2)
+
+    def u_ip(self, nu1, nu2, x1, x2):
+        """Wrapper for the right-hand side of the moment-equation in the in-plane restricted 2-body problem.
+
+                Args:
+                    nu1 (float): initial true anomaly.
+                    nu2 (float): final true anomaly.
+                    x1 (numpy.array): initial transformed state vector.
+                    x2 (numpy.array): final transformed state vector.
+
+        """
+
+        u = numpy.zeros(4)
+        if self.params.ecc == 0.:
+            u += exp_HCW(-nu2).dot(x2)
+            u -= exp_HCW(-nu1).dot(x1)
+        else:  # elliptical case
+            M = phi_YA(self.params.ecc, self.params.mean_motion, 0., nu2)
+            u += linalg.inv(M).dot(x2)
+            M = phi_YA(self.params.ecc, self.params.mean_motion, 0., nu1)
+            u -= linalg.inv(M).dot(x1)
+        return u
+
+
+class RestriThreeBodyProb(BodyProbDyn):
+    """Class implementing the dynamics of the restricted 3-body problem.
+
+            Attributes:
+                    _A_inv (numpy.array): intermediate matrix used for some calculations.
+
+    """
+
+    def __init__(self, mu, ecc, period, sma, Li):
+        """Constructor.
+
+                Args:
+                    mu (float): ratio of minor mass over total mass.
+                    ecc (float): eccentricity.
+                    period (float): orbital period.
+                    sma (float): semi-major axis (must be consistent with period)
+                    Li (int): index of Lagrange Point (used only if mu != 0)
+
+        """
+
+        # call to parent constructor
+        BodyProbDyn.__init__(self, mu, ecc, period, sma, Li)
+        self.name = "Restricted 3-body problem"
+
+        # set normalized coordinates of Lagrange point of interest
+        if self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3:
+            if self.params.Li == 1:
+                self.x_eq_normalized = numpy.array((find_L1(self.params.mu), 0.0, 0.0))
+            elif self.params.Li == 2:
+                self.x_eq_normalized = numpy.array((find_L2(self.params.mu), 0.0, 0.0))
+            elif self.params.Li == 3:
+                self.x_eq_normalized = numpy.array((find_L3(self.params.mu), 0.0, 0.0))
+            puls = puls_oop_LP(self.x_eq_normalized, self.params.mu)
+            (gamma_re, gamma_im, c, k) = inter_L123(puls * puls)
+            A = numpy.array([[1.0, 1.0, 1.0, 0.0], [c, -c, 0.0, k], [gamma_re, -gamma_re, 0.0, gamma_im],
+                             [gamma_re * c, gamma_re * c, - gamma_im * k, 0.0]])
+            self._A_inv = numpy.linalg.inv(A)
+        else:  # Lagrange Point 4 or 5
+            if Li == 4:
+                self.x_eq_normalized = numpy.array((0.5 * (1.0 - 2.0 * self.params.mu), math.sqrt(3.) / 2., 0., 0.))
+                kappa = 1.0 - 2.0 * self.params.mu
+            else:  # Li = 5
+                self.x_eq_normalized = numpy.array((0.5 * (1.0 - 2.0 * self.params.mu), -math.sqrt(3.) / 2., 0., 0.))
+                kappa = -1.0 + 2.0 * self.params.mu
+            root1, root2, a1, a2, b1, b2, c1, c2, d1, d2 = inter_L45(self.params.mu, kappa)
+            A = numpy.array([[1.0, 0.0, 1.0, 0.0], [a1, a2, c1, c2],
+                             [0.0, root1, 0.0, root2], [b1 * root1, b2 * root1, d1 * root2, d2 * root2]])
+            self._A_inv = numpy.linalg.inv(A)
+
+    def copy(self):
+        """Function returning a copy of the object.
+
+        """
+
+        return RestriThreeBodyProb(self.params.mu, self.params.ecc, self.params.period, self.params.sma, self.params.Li)
+
+    def evaluate_Y(self, nu, half_dim):
+        """Function returning the moment-function involved in the equation satisfied by the control law.
+
+                Args:
+                    nu (float): current true anomaly.
+                    half_dim (int): half-dimension of state vector.
+
+                Returns:
+                    (numpy.array): moment-function.
+
+        """
+
+        # sanity check(s)
+        if (half_dim != 3) and (half_dim != 2) and (half_dim != 1):
+            print('evaluate_Y: half-dimension of state vector should be 1, 2 or 3')
+
+        return self._Y_3bp(self.params.ecc, self.params.mean_motion, nu, half_dim)
 
     def _Y_3bp(self, e, n, nu, half_dim):
         """Wrapper returning the moment-function involved in the equation satisfied by the control
@@ -437,134 +687,38 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
         return phi
 
-    def propagate(self, nu1, nu2, x1):
-        """Wrapper for the propagation of the state vector.
+    def transition_ip(self, x1, nu1, nu2):
+        """Function returning the in-plane initial vector propagated to the final true anomaly.
+
+                Args:
+                    x1 (numpy.array): in-plane initial transformed state vector.
+                    nu1 (float): initial true anomaly.
+                    nu2 (float): final true anomaly.
+
+        """
+
+        return self.transition_ip3bp(x1, nu1, nu2)
+
+    def u_ip(self, nu1, nu2, x1, x2):
+        """Wrapper for the right-hand side of the moment-equation in the in-plane restricted 3-body problem.
 
                 Args:
                     nu1 (float): initial true anomaly.
                     nu2 (float): final true anomaly.
-                    x1 (numpy.array): initial state vector.
-
-                Returns:
-                    (numpy.array): final state vector.
+                    x1 (numpy.array): initial transformed state vector.
+                    x2 (numpy.array): final transformed state vector.
 
         """
 
-        half_dim = len(x1) / 2
-
-        if nu1 == nu2:
-            x2 = numpy.zeros(half_dim * 2)
-            for k in range(0, len(x1)):
-                x2[k] = x1[k]
-            return x2
-        else:  # initial and final true anomalies are different
-            if half_dim == 1:
-                x1_bar = self.transformation(x1, nu1)
-                x2_bar = None
-                if self.params.mu != 0 and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
-                    if self.params.ecc == 0.:
-                        phi = phi_harmo(nu2 - nu1, puls_oop_LP(self.x_eq_normalized, self.params.mu))
-                        x2_bar = phi . dot(x1_bar)
-                    else:  # elliptical case
-                        print('PROPAGATE: analytical 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
-                else:  # restricted 2-body problem or L4/5
-                    x2_bar = transition_oop(x1_bar, nu1, nu2)
-                return self.transformation_inv(x2_bar, nu2)
-            elif half_dim == 2:
-                x1_bar = self.transformation(x1, nu1)
-                x2_bar = None
-                if self.params.mu == 0.:
-                    x2_bar = transition_ip2bp(x1_bar, self.params.ecc, self.params.mean_motion, nu1, nu2)
-                else:  # in-plane 3-body problem
-                    if self.params.ecc == 0:
-                        x2_bar = self.transition_ip3bp(x1_bar, nu1, nu2)
-                    else:
-                        print('PROPAGATE: analytical 3-body elliptical in-plane case not coded yet')
-                return self.transformation_inv(x2_bar, nu2)
-            else:  # complete dynamics
-                x_ip1, x_oop1 = utils.unstack_state(x1)
-                x_oop2 = self.propagate(nu1, nu2, x_oop1)
-                x_ip2 = self.propagate(nu1, nu2, x_ip1)
-                return utils.stack_state(x_ip2, x_oop2)
-
-    def compute_rhs(self, BC, analytical):
-        """Function that computes right-hand side of moment equation.
-
-                Args:
-                    BC (utils.BoundaryConditions): constraints for two-point boundary value problem.
-                    analytical (bool): set to true for analytical propagation of motion, false for integration.
-
-                Returns:
-                    u (numpy.array): right-hand side of moment equation.
-
-        """
-
-        factor = 1.0 - self.params.ecc * self.params.ecc
-        multiplier = self.params.mean_motion / math.sqrt(factor * factor * factor)
-        x1 = self.transformation(BC.x0, BC.nu0)
-        x2 = self.transformation(BC.xf, BC.nuf)
-
-        if analytical:
-            u = numpy.zeros(2 * BC.half_dim)
-
-            if BC.half_dim == 1:
-                if (self.params.mu != 0.) and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
-                    if self.params.ecc == 0.:
-                        u += phi_harmo(-BC.nuf, puls_oop_LP(self.x_eq_normalized, self.params.mu)) . dot(x2)
-                        u -= phi_harmo(-BC.nu0, puls_oop_LP(self.x_eq_normalized, self.params.mu)) . dot(x1)
-                    else:
-                        print('compute_rhs: analytical 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
-                else:  # out-of-plane elliptical 2-body problem or 3-body near L4 and 5
-                    u += phi_harmo(-BC.nuf, 1.0).dot(x2)
-                    u -= phi_harmo(-BC.nu0, 1.0).dot(x1)
-                u[0] *= multiplier
-                u[1] *= multiplier
-
-            elif BC.half_dim == 2:
-                if self.params.mu == 0.:
-                    if self.params.ecc == 0.:
-                        u += exp_HCW(-BC.nuf) . dot(x2)
-                        u -= exp_HCW(-BC.nu0) . dot(x1)
-                    else:  # elliptical case
-                        M = phi_YA(self.params.ecc, self.params.mean_motion, 0., BC.nuf)
-                        u += linalg.inv(M) . dot(x2)
-                        M = phi_YA(self.params.ecc, self.params.mean_motion, 0., BC.nu0)
-                        u -= linalg.inv(M) . dot(x1)
-                    for i in range(0, len(u)):
-                        u[i] *= multiplier
-                else:  # in-plane restricted 3-body problem
-                    if self.params.ecc == 0.:
-                        if (self.params.Li == 1) or (self.params.Li == 2) or (self.params.Li == 3):
-                            u += self.exp_LP123(-BC.nuf) . dot(x2)
-                            u -= self.exp_LP123(-BC.nu0) . dot(x1)
-                        elif self.params.Li == 4:
-                            u += self.exp_LP45(-BC.nuf, 1. - 2. * self.params.mu) . dot(x2)
-                            u -= self.exp_LP45(-BC.nu0, 1. - 2. * self.params.mu) . dot(x1)
-                        else:  # Li = 5
-                            u += self.exp_LP45(-BC.nuf, -1. + 2. * self.params.mu) . dot(x2)
-                            u -= self.exp_LP45(-BC.nu0, -1. + 2. * self.params.mu) . dot(x1)
-                    else:  # elliptical case
-                        print('compute_rhs: analytical elliptical 3-body problem in-plane dynamics case not coded yet')
-
-                    for i in range(0, len(u)):
-                        u[i] *= multiplier
-
-            else:  # complete dynamics
-                x0_ip, x0_oop = utils.unstack_state(BC.x0)
-                xf_ip, xf_oop = utils.unstack_state(BC.xf)
-                BC_ip = utils.BoundaryConditions(BC.nu0, BC.nuf, x0_ip, xf_ip)
-                BC_oop = utils.BoundaryConditions(BC.nu0, BC.nuf, x0_oop, xf_oop)
-                z_oop = self.compute_rhs(BC_oop, analytical=True)
-                z_ip = self.compute_rhs(BC_ip, analytical=True)
-                u = utils.stack_state(z_ip, z_oop)
-
-        else:  # numerical integration
-
-            matrices = self.integrate_phi_inv([BC.nu0, BC.nuf], BC.half_dim)
-
-            IC_matrix = matrices[0]
-            FC_matrix = matrices[-1]
-
-            u = (FC_matrix.dot(x2) - IC_matrix.dot(x1)) * multiplier
-
+        u = numpy.zeros(4)
+        if self.params.ecc == 0.:
+            if (self.params.Li == 1) or (self.params.Li == 2) or (self.params.Li == 3):
+                u += self.exp_LP123(-nu2).dot(x2)
+                u -= self.exp_LP123(-nu1).dot(x1)
+            elif self.params.Li == 4:
+                u += self.exp_LP45(-nu2, 1. - 2. * self.params.mu).dot(x2)
+                u -= self.exp_LP45(-nu1, 1. - 2. * self.params.mu).dot(x1)
+            else:  # Li = 5
+                u += self.exp_LP45(-nu2, -1. + 2. * self.params.mu).dot(x2)
+                u -= self.exp_LP45(-nu1, -1. + 2. * self.params.mu).dot(x1)
         return u

@@ -1,5 +1,5 @@
 # dynamics_factory.py: set of classes implementing some dynamics of interest
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -12,7 +12,7 @@ import orbital_mechanics
 from config import conf
 
 
-class EllipticalRestricted2BodyProblemEarthFromSMA(body_prob_dyn.BodyProbDyn):
+class EllipticalRestricted2BodyProblemEarthFromSMA(body_prob_dyn.RestriTwoBodyProb):
     """Class implementing the dynamics of a spacecraft w.r.t. a reference, elliptical Earth orbit defined by
     its semi-major axis.
 
@@ -28,12 +28,11 @@ class EllipticalRestricted2BodyProblemEarthFromSMA(body_prob_dyn.BodyProbDyn):
         """
 
         # call to parent constructor
-        body_prob_dyn.BodyProbDyn.__init__(self, 0., ecc,
-                                              orbital_mechanics.sma_to_period(sma, conf.const_grav["Earth_constant"]),
-                                              sma)
+        body_prob_dyn.RestriTwoBodyProb.__init__(self, ecc,
+                                           orbital_mechanics.sma_to_period(sma, conf.const_grav["Earth_constant"]), sma)
 
 
-class EllipticalRestricted2BodyProblemEarthFromPeriod(body_prob_dyn.BodyProbDyn):
+class EllipticalRestricted2BodyProblemEarthFromPeriod(body_prob_dyn.RestriTwoBodyProb):
     """Class implementing the dynamics of a spacecraft w.r.t. a reference, elliptical Earth orbit defined by its period.
 
     """
@@ -48,7 +47,7 @@ class EllipticalRestricted2BodyProblemEarthFromPeriod(body_prob_dyn.BodyProbDyn)
         """
 
         # call to parent constructor
-        body_prob_dyn.BodyProbDyn.__init__(self, 0., ecc, period,
+        body_prob_dyn.RestriTwoBodyProb.__init__(self, ecc, period,
                                               orbital_mechanics.period_to_sma(period,
                                                                                   conf.const_grav["Earth_constant"]))
 
@@ -102,7 +101,7 @@ class GEO(CircularRestricted2BodyProblemEarthFromPeriod):
         CircularRestricted2BodyProblemEarthFromPeriod.__init__(self, 3600. * 24.)
 
 
-class EarthMoonLP(body_prob_dyn.BodyProbDyn):
+class EarthMoonLP(body_prob_dyn.RestriThreeBodyProb):
     """Class implementing the dynamics of a spacecraft w.r.t. a given Lagrange Point in the Earth-Moon system.
 
     """
@@ -117,12 +116,12 @@ class EarthMoonLP(body_prob_dyn.BodyProbDyn):
 
         sma = conf.const_dist["dist_Earth_Moon"]
         # call to parent constructor
-        body_prob_dyn.BodyProbDyn.__init__(self, conf.const_mass["mu_EM"], 0.,
+        body_prob_dyn.RestriThreeBodyProb.__init__(self, conf.const_mass["mu_EM"], 0.,
                                               orbital_mechanics.sma_to_period(sma, conf.const_grav["EM_constant"]),
                                               sma, Li)
 
 
-class SunEarthLP(body_prob_dyn.BodyProbDyn):
+class SunEarthLP(body_prob_dyn.RestriThreeBodyProb):
     """Class implementing the dynamics of a spacecraft w.r.t. a given Lagrange Point in the Sun-Earth system.
 
     """
@@ -137,6 +136,6 @@ class SunEarthLP(body_prob_dyn.BodyProbDyn):
 
         period = 3600.0 * 24.0 * 365.25
         # call to parent constructor
-        body_prob_dyn.BodyProbDyn.__init__(self, conf.const_mass["mu_SE"], 0., period,
+        body_prob_dyn.RestriThreeBodyProb.__init__(self, conf.const_mass["mu_SE"], 0., period,
                                               orbital_mechanics.period_to_sma(period, conf.const_grav["Sun_constant"]),
                                               Li)
