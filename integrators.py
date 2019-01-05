@@ -1,5 +1,5 @@
 # integrators.py: range of classes implementing integrators
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -312,7 +312,7 @@ class MultistepFixedsize(Integrator):
                  _order (int): order of integration scheme.
                  _stepsize (float): step-size.
                  _beta (list): vector of numbers used in integration scheme.
-                 _initializer (): integrator used to initialize the multi-step method.
+                 _initializer (Integrator): integrator used to initialize the multi-step method.
 
     """
 
