@@ -1,4 +1,4 @@
-# dynamical_system.py: class for the dynamical models
+# dynamical_system.py: set of classes for the restricted 2 and 3-body problems
 # Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
@@ -247,7 +247,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         pass
 
     @abstractmethod
-    def transition_ip(self, x1, nu1, nu2):
+    def _transition_ip(self, x1, nu1, nu2):
         """Function returning the in-plane initial vector propagated to the final true anomaly.
 
                 Args:
@@ -259,7 +259,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         pass
 
     @abstractmethod
-    def u_ip(self, nu1, nu2, x1, x2):
+    def _rhs_ip(self, nu1, nu2, x1, x2):
         """Wrapper for the right-hand side of the moment-equation in the in-plane dynamics.
 
                 Args:
@@ -308,7 +308,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                 x1_bar = self.transformation(x1, nu1)
                 x2_bar = None
                 if self.params.mu == 0. or self.params.ecc == 0:
-                    x2_bar = self.transition_ip(x1_bar, nu1, nu2)
+                    x2_bar = self._transition_ip(x1_bar, nu1, nu2)
                 else:
                     print('PROPAGATE: analytical 3-body elliptical in-plane case not coded yet')
                 return self.transformation_inv(x2_bar, nu2)
@@ -353,7 +353,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
             elif BC.half_dim == 2:
                 if self.params.mu == 0. or self.params.ecc == 0.:
-                    u = self.u_ip(BC.nu0, BC.nuf, x1, x2)
+                    u = self._rhs_ip(BC.nu0, BC.nuf, x1, x2)
                     for i in range(0, len(u)):
                         u[i] *= multiplier
                 else:  # elliptical in-plane restricted 3-body problem case
@@ -426,7 +426,7 @@ class RestriTwoBodyProb(BodyProbDyn):
 
         return Y_2bp(self.params.ecc, self.params.mean_motion, 0., nu, half_dim)
 
-    def transition_ip(self, x1, nu1, nu2):
+    def _transition_ip(self, x1, nu1, nu2):
         """Function returning the in-plane initial vector propagated to the final true anomaly.
 
                 Args:
@@ -438,7 +438,7 @@ class RestriTwoBodyProb(BodyProbDyn):
 
         return transition_ip2bp(x1, self.params.ecc, self.params.mean_motion, nu1, nu2)
 
-    def u_ip(self, nu1, nu2, x1, x2):
+    def _rhs_ip(self, nu1, nu2, x1, x2):
         """Wrapper for the right-hand side of the moment-equation in the in-plane restricted 2-body problem.
 
                 Args:
@@ -552,12 +552,12 @@ class RestriThreeBodyProb(BodyProbDyn):
 
         # sanity check(s)
         if (half_dim != 1) and (half_dim != 2) and (half_dim != 3):
-            print('Y_3BP: half-dimension must be 1, 2 or 3')
+            print('_Y_3BP: half-dimension must be 1, 2 or 3')
 
         if half_dim == 1:
             if self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3:
                 if e != 0.:
-                    print('Y_3BP: analytical case not coded yet')
+                    print('_Y_3BP: analytical case not coded yet')
                 else:  # circular case
                     return Y_oop_LP123(nu, self.x_eq_normalized, self.params.mu)
             else:  # Lagrange Point 4 or 5
@@ -592,11 +592,11 @@ class RestriThreeBodyProb(BodyProbDyn):
         if self.params.ecc == 0.:
             Y = numpy.zeros((4, 2))
             if (self.params.Li == 1) or (self.params.Li == 2) or (self.params.Li == 3):
-                phi = self.exp_LP123(-nu)
+                phi = self._exp_LP123(-nu)
             elif self.params.Li == 4:
-                phi = self.exp_LP45(-nu, 1. - 2. * self.params.mu)
+                phi = self._exp_LP45(-nu, 1. - 2. * self.params.mu)
             else:  # Li = 5
-                phi = self.exp_LP45(-nu, -1. + 2. * self.params.mu)
+                phi = self._exp_LP45(-nu, -1. + 2. * self.params.mu)
             Y[:, 0:2] = phi[:, 2:4]
 
             return Y
@@ -624,16 +624,16 @@ class RestriThreeBodyProb(BodyProbDyn):
 
         if self.params.ecc == 0.:
             if self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3:
-                phi = self.exp_LP123(nu2 - nu1)
+                phi = self._exp_LP123(nu2 - nu1)
             elif self.params.Li == 4:
-                phi = self.exp_LP45(nu2 - nu1, 1. - 2. * self.params.mu)
+                phi = self._exp_LP45(nu2 - nu1, 1. - 2. * self.params.mu)
             else:  # Li = 5
-                phi = self.exp_LP45(nu2 - nu1, -1. + 2. * self.params.mu)
+                phi = self._exp_LP45(nu2 - nu1, -1. + 2. * self.params.mu)
             return phi.dot(x1_bar)
         else:  # elliptical case
             print('TRANSITION_IP3BP: analytical elliptical case not coded yet')
 
-    def exp_LP123(self, nu):
+    def _exp_LP123(self, nu):
         """Function computing the exponential of the true anomaly times the matrix involved in the in-plane
         linearized equations around L1, 2 or 3.
 
@@ -647,18 +647,18 @@ class RestriThreeBodyProb(BodyProbDyn):
 
         puls = puls_oop_LP(self.x_eq_normalized, self.params.mu)
         (gamma_re, gamma_im, c, k) = inter_L123(puls * puls)
-        line1 = [math.exp(gamma_re * nu), math.exp(-gamma_re * nu), math.cos(gamma_im * nu), math.sin(gamma_im * nu)]
-        line2 = [c * math.exp(gamma_re * nu), -c * math.exp(-gamma_re * nu),
+        row1 = [math.exp(gamma_re * nu), math.exp(-gamma_re * nu), math.cos(gamma_im * nu), math.sin(gamma_im * nu)]
+        row2 = [c * math.exp(gamma_re * nu), -c * math.exp(-gamma_re * nu),
                  -k * math.sin(gamma_im * nu), k * math.cos(gamma_im * nu)]
-        line3 = [gamma_re * math.exp(gamma_re * nu), -gamma_re * math.exp(-gamma_re * nu),
+        row3 = [gamma_re * math.exp(gamma_re * nu), -gamma_re * math.exp(-gamma_re * nu),
                  -gamma_im * math.sin(gamma_im * nu), gamma_im * math.cos(gamma_im * nu)]
-        line4 = [gamma_re * c * math.exp(gamma_re * nu), gamma_re * c * math.exp(-gamma_re * nu),
+        row4 = [gamma_re * c * math.exp(gamma_re * nu), gamma_re * c * math.exp(-gamma_re * nu),
                  -gamma_im * k * math.cos(gamma_im * nu), -gamma_im * k * math.sin(gamma_im * nu)]
-        phi = numpy.array([line1, line2, line3, line4]).dot(self._A_inv)
+        phi = numpy.array([row1, row2, row3, row4]).dot(self._A_inv)
 
         return phi
 
-    def exp_LP45(self, nu, kappa):
+    def _exp_LP45(self, nu, kappa):
         """Function computing the exponential of the true anomaly times the matrix involved in the in-plane
         linearized equations around L4 or 5.
 
@@ -672,22 +672,22 @@ class RestriThreeBodyProb(BodyProbDyn):
         """
 
         root1, root2, a1, a2, b1, b2, c1, c2, d1, d2 = inter_L45(self.params.mu, kappa)
-        line1 = [math.cos(root1 * nu), math.sin(root1 * nu), math.cos(root2 * nu), math.sin(root2 * nu)]
-        line2 = [a1 * math.cos(root1 * nu) + b1 * math.sin(root1 * nu),
+        row1 = [math.cos(root1 * nu), math.sin(root1 * nu), math.cos(root2 * nu), math.sin(root2 * nu)]
+        row2 = [a1 * math.cos(root1 * nu) + b1 * math.sin(root1 * nu),
                  a2 * math.cos(root1 * nu) + b2 * math.sin(root1 * nu),
                  c1 * math.cos(root2 * nu) + d1 * math.sin(root2 * nu),
                  c2 * math.cos(root2 * nu) + d2 * math.sin(root2 * nu)]
-        line3 = [-root1 * math.sin(root1 * nu), root1 * math.cos(root1 * nu),
+        row3 = [-root1 * math.sin(root1 * nu), root1 * math.cos(root1 * nu),
                  -root2 * math.sin(root2 * nu), root2 * math.cos(root2 * nu)]
-        line4 = [-root1 * a1 * math.sin(root1 * nu) + root1 * b1 * math.cos(root1 * nu),
+        row4 = [-root1 * a1 * math.sin(root1 * nu) + root1 * b1 * math.cos(root1 * nu),
                  -root1 * a2 * math.sin(root1 * nu) + root1 * b2 * math.cos(root1 * nu),
                  -root2 * c1 * math.sin(root2 * nu) + root2 * d1 * math.cos(root2 * nu),
                  -root2 * c2 * math.sin(root2 * nu) + root2 * d2 * math.cos(root2 * nu)]
-        phi = numpy.array([line1, line2, line3, line4]).dot(self._A_inv)
+        phi = numpy.array([row1, row2, row3, row4]).dot(self._A_inv)
 
         return phi
 
-    def transition_ip(self, x1, nu1, nu2):
+    def _transition_ip(self, x1, nu1, nu2):
         """Function returning the in-plane initial vector propagated to the final true anomaly.
 
                 Args:
@@ -699,7 +699,7 @@ class RestriThreeBodyProb(BodyProbDyn):
 
         return self.transition_ip3bp(x1, nu1, nu2)
 
-    def u_ip(self, nu1, nu2, x1, x2):
+    def _rhs_ip(self, nu1, nu2, x1, x2):
         """Wrapper for the right-hand side of the moment-equation in the in-plane restricted 3-body problem.
 
                 Args:
@@ -713,12 +713,12 @@ class RestriThreeBodyProb(BodyProbDyn):
         u = numpy.zeros(4)
         if self.params.ecc == 0.:
             if (self.params.Li == 1) or (self.params.Li == 2) or (self.params.Li == 3):
-                u += self.exp_LP123(-nu2).dot(x2)
-                u -= self.exp_LP123(-nu1).dot(x1)
+                u += self._exp_LP123(-nu2).dot(x2)
+                u -= self._exp_LP123(-nu1).dot(x1)
             elif self.params.Li == 4:
-                u += self.exp_LP45(-nu2, 1. - 2. * self.params.mu).dot(x2)
-                u -= self.exp_LP45(-nu1, 1. - 2. * self.params.mu).dot(x1)
+                u += self._exp_LP45(-nu2, 1. - 2. * self.params.mu).dot(x2)
+                u -= self._exp_LP45(-nu1, 1. - 2. * self.params.mu).dot(x1)
             else:  # Li = 5
-                u += self.exp_LP45(-nu2, -1. + 2. * self.params.mu).dot(x2)
-                u -= self.exp_LP45(-nu1, -1. + 2. * self.params.mu).dot(x1)
+                u += self._exp_LP45(-nu2, -1. + 2. * self.params.mu).dot(x2)
+                u -= self._exp_LP45(-nu1, -1. + 2. * self.params.mu).dot(x1)
         return u

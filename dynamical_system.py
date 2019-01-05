@@ -1,5 +1,5 @@
-# dynamical_system.py: class for the dynamical models
-# Copyright(C) 2018 Romain Serra
+# dynamical_system.py: set of classes for the dynamical models with an example dynamics
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
