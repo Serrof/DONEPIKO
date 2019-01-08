@@ -466,6 +466,12 @@ class Plotter:
         """
         plt.show()
 
+    def close(self):
+        """Function to close all the plots.
+
+        """
+        plt.close("all")
+
     def write_states_to_file(self, file_path):
         """Function writing in a file the history of the states' variables.
 

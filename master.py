@@ -146,6 +146,12 @@ class Master:
         """
         self.plotter.show()
 
+    def close(self):
+        """Function to close all the plots.
+
+        """
+        self.plotter.close()
+
     def write_control_law(self, file_path):
         """Wrapper for writer-method of ControlLaw attribute.
 

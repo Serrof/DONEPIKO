@@ -22,3 +22,6 @@ December 11, 2018: v1.0.6
 
 December 23, 2018: v1.0.7
  - introduction of a "zero-gravity" dynamics and bug-fix for primer vector plot with numerical propagation
+
+January 8, 2019: v.0.8
+ - plots can now be closed via the plotter or master and N-body dynamics inherit from a base class
