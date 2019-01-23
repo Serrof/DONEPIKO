@@ -63,6 +63,9 @@ class Config:
         self.load("default_conf.xml")
 
     def load(self, file):
+        """Function to load configuration from input file.
+
+        """
 
         # get root of XML configuration file
         tree = ET.parse(file)
@@ -155,7 +158,7 @@ class Config:
         self.const_grav["Sun_constant"] = self.const_grav["G"] * self.const_mass["mass_Sun"]
 
     def reset(self):
-        """Function to reset all parameters and constants to initially loaded values.
+        """Function to reset all parameters and constants to last values loaded from file.
 
         """
 
