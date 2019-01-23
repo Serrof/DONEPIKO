@@ -10,7 +10,7 @@
 			<n_check>10000</n_check>
 		</indirect>
 		<direct>
-			<DV_min>1.0e-10</DV_min>
+			<DV_min>1.0e-5</DV_min>
 			<n_grid_1norm>10000</n_grid_1norm>
 			<n_grid_2norm>100</n_grid_2norm>
 			<tol_lin_prog>1.0e-11</tol_lin_prog>

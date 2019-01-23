@@ -42,11 +42,33 @@ class Config:
         """Constructor for class Conf.
 
         """
+        # instantiate configuration
+        self.params_indirect = {}
+        self.params_direct = {}
+        self.params_plot = {}
+        self.params_other = {}
+        self.const_dist = {}
+        self.const_mass = {}
+        self.const_grav = {}
+
+        # instantiate initially loaded config
+        self._params_indirect_init = None
+        self._params_direct_init = None
+        self._params_plot_init = None
+        self._params_other_init = None
+        self._const_dist_init = None
+        self._const_mass_init = None
+        self._const_grav_init = None
+
+        self.load("default_conf.xml")
+
+    def load(self, file):
+
         # get root of XML configuration file
-        tree = ET.parse("default_conf.xml")
+        tree = ET.parse(file)
         root = tree.getroot()
 
-        # instantiate configuration
+        # clean configuration
         self.params_indirect = {}
         self.params_direct = {}
         self.params_plot = {}
@@ -107,7 +129,7 @@ class Config:
         # generate dependent constants
         self.compute_complement()
 
-        # save initial config
+        # save loaded config
         self._params_indirect_init = self.params_indirect.copy()
         self._params_direct_init = self.params_direct.copy()
         self._params_plot_init = self.params_plot.copy()
@@ -133,7 +155,7 @@ class Config:
         self.const_grav["Sun_constant"] = self.const_grav["G"] * self.const_mass["mass_Sun"]
 
     def reset(self):
-        """Function to reset all parameters and constants to initial values.
+        """Function to reset all parameters and constants to initially loaded values.
 
         """
 
