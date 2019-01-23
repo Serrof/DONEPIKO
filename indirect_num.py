@@ -190,7 +190,7 @@ def extract_nus(grid_check, Y_grid, lamb, q):
                     Y_k = Y_grid[:, hd * k: hd * (k + 1)]
                     inter2 = linalg.norm(numpy.transpose(Y_k) . dot(lamb), q)
                     if 1.0 - conf.params_indirect["tol_unit_norm"] < inter2:
-                        if k == n_check:
+                        if k == n_check - 1:
                             lap = False
                         k += 1
                         if inter2 > inter:

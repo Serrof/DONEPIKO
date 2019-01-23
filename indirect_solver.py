@@ -135,7 +135,7 @@ class IndirectSolver(solver.Solver):
 
         # scaling inputs
         BC_rescaled = utils.BoundaryConditions(BC.nu0 * puls, BC.nuf * puls, BC.x0, BC.xf)
-        dyn_rescaled = body_prob_dyn.BodyProbDyn(0., 0., self.dyn.params.period / puls, self.dyn.params.sma)
+        dyn_rescaled = body_prob_dyn.RestriTwoBodyProb(0., self.dyn.params.period / puls, self.dyn.params.sma)
         z_rescaled = dyn_rescaled.compute_rhs(BC_rescaled, analytical=True)
 
         # 'classic' call to numerical solver
