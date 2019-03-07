@@ -113,7 +113,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
         """
 
-        half_dim = len(x) / 2
+        half_dim = int(len(x) / 2)
         inter = 1.0 - self.params.ecc * self.params.ecc
         inter2 = math.sqrt(inter * inter * inter) / self.params.mean_motion
         rho = rho_func(self.params.ecc, nu)
@@ -138,7 +138,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
         """
 
-        half_dim = len(x_bar) / 2
+        half_dim = int(len(x_bar) / 2)
         inter = 1.0 - self.params.ecc * self.params.ecc
         inter2 = math.sqrt(inter * inter * inter) / self.params.mean_motion
         rho = rho_func(self.params.ecc, nu)
@@ -284,7 +284,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
         """
 
-        half_dim = len(x1) / 2
+        half_dim = int(len(x1) / 2)
 
         if nu1 == nu2:
             x2 = numpy.zeros(half_dim * 2)

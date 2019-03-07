@@ -20,7 +20,7 @@ class Master:
                 BC (utils.BoundaryConditions): boundary conditions.
                 plotter (plotter.Plotter): plotter object for plotting.
                 CL (utils.ControlLaw): control law.
-                solver (solver.Solver): trajectory solver.
+                _solver (solver.Solver): trajectory solver.
 
     """
 

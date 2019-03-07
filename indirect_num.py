@@ -100,7 +100,7 @@ def find_max_pv(Y_grid, lamb, q):
 
     """
 
-    hd = len(lamb) / 2
+    hd = int(len(lamb) / 2)
     n_check = int(len(Y_grid[0, :]) / hd)
     index_max = 0
     val_max = 0.0
@@ -134,7 +134,7 @@ def remove_nus(Y_grid, q, grid_work, indices_work, lamb):
 
     """
 
-    hd = len(lamb) / 2
+    hd = int(len(lamb) / 2)
     grid = []
     indices = []
     for k, nu in enumerate(grid_work):
@@ -170,7 +170,7 @@ def extract_nus(grid_check, Y_grid, lamb, q):
 
     # pre-computations
     d = len(lamb)
-    hd = d / 2
+    hd = int(d / 2)
     n_check = len(grid_check)
 
     # extracting optimal nus from primer vector
@@ -304,7 +304,7 @@ def solve_primal_1norm(grid_check, Y_grid, z):
 
     # pre-computations
     d = len(z)
-    hd = d / 2
+    hd = int(d / 2)
 
     # initializing sparser grid for norm checks within optimization
     (grid_work, indices_work) = initialize_iterative_grid(grid_check)
@@ -423,7 +423,7 @@ def solve_primal_2norm(grid_check, Y_grid, z):
 
     # pre-computations
     d = len(z)
-    hd = d / 2
+    hd = int(d / 2)
 
     # initializing sparser grid for norm checks within optimization
     (grid_work, indices_work) = initialize_iterative_grid(grid_check)
