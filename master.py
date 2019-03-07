@@ -137,7 +137,7 @@ class Master:
 
         self.plotter.plot_states()
         self.plotter.plot_traj()
-        if self.CL.lamb != []:
+        if len(self.CL.lamb) != 0:
             self.plotter.plot_pv()
 
     def show(self):

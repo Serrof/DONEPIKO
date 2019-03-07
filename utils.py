@@ -317,7 +317,7 @@ def merge_control(CL_ip, CL_oop):
     for k in range(0, len(nus)):
         DVs[k, :] = DV_conc[indices_nodupli[k], :]
 
-    if CL_ip.lamb != [] and CL_oop.lamb != []:
+    if len(CL_ip.lamb) != 0 and len(CL_oop.lamb) != 0:
         lamb = stack_state(CL_ip.lamb, CL_oop.lamb)
     else:  # coefficients of sub-primer vectors are not all provided
         lamb = None
