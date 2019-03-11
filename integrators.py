@@ -9,6 +9,7 @@
 
 from abc import ABCMeta, abstractmethod
 import numpy
+import math
 
 
 class Integrator:
