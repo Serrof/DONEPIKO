@@ -8,7 +8,6 @@
 # If not, see < https://www.gnu.org/licenses/>.
 
 from abc import ABCMeta, abstractmethod
-import mathpoly as math
 import numpy
 
 
