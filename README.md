@@ -16,7 +16,7 @@ In short, it solves first a finite-dimension problem that is the primal to the o
 More details can be found about the methods in the documents listed in the bibliography.
 
 PREREQUISITES:
-You can run DONEPIKO on Linux-like OS. It requires Python 2 or 3 with Numpy, Matplotlib and Scipy. You also need CVXOPT.
+You can run DONEPIKO on Linux-like OS. It requires Python 2 or 3 with tk. You also need Numpy, Matplotlib, Scipy and CVXOPT that you can install with pip for instance.
 
 TUTORIAL:
 DONEPIKO is a toolbox and as such a script should be written to make calls to it.
