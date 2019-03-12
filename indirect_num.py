@@ -227,7 +227,7 @@ def solve_alphas(M, z, n_alphas):
     else:  # system of equations is either over or under-determined
         if conf.params_other["verbose"]:
             print('non-square case')
-        alphas = linalg.lstsq(M, z, rcond=None)[0]
+        alphas = linalg.lstsq(M, z)[0]
 
     return alphas
 
