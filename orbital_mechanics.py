@@ -558,7 +558,7 @@ def state_deriv_nonlin(x, nu, ecc, x_eq, mu, slr):
 
     """
 
-    half_dim = len(x) / 2
+    half_dim = int(len(x) / 2)
     Y = x[0:half_dim] + slr * x_eq[0:half_dim]
     grad = pot_grad(Y, mu, slr)
     rho = rho_func(ecc, nu)
