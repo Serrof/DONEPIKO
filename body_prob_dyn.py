@@ -25,11 +25,11 @@ class BodyProbParams(dynamical_system.DynParams):
                     period (float): orbital period.
                     mean_motion(float): mean motion.
                     sma (float): semi-major axis (must be consistent with period)
-                    Li (int): index of Lagrange Point (used only if mu != 0)
+                    Li (int): index of Lagrange Point (required only if mu != 0)
 
     """
 
-    def __init__(self, mu, ecc, period, sma, Li):
+    def __init__(self, mu, ecc, period, sma, Li=None):
         """Constructor.
 
                 Args:
@@ -37,7 +37,7 @@ class BodyProbParams(dynamical_system.DynParams):
                     ecc (float): eccentricity.
                     period (float): orbital period.
                     sma (float): semi-major axis (must be consistent with period)
-                    Li (int): index of Lagrange Point (used only if mu != 0)
+                    Li (int): index of Lagrange Point (relevant only if mu != 0)
 
         """
         # sanity checks
@@ -48,14 +48,14 @@ class BodyProbParams(dynamical_system.DynParams):
         if period <= 0.:
             print('BodyProbParams: orbital period must be non negative')
         if mu != 0. and Li != 1 and Li != 2 and Li != 3 and Li != 4 and Li != 5:
-            print('BodyProbParams: for 3-body problem, valid index of Lagrange Point must be provided')
+                print('BodyProbParams: for 3-body problem, valid index of Lagrange Point must be provided')
 
         self.mu = mu
         self.ecc = ecc
         self.period = period
         self.sma = sma
-        self.Li = Li
         self.mean_motion = 2. * math.pi / period
+        self.Li = Li
 
     def copy(self):
         """Function returning a copy of the object.
@@ -84,7 +84,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                     ecc (float): eccentricity.
                     period (float): orbital period.
                     sma (float): semi-major axis (must be consistent with period)
-                    Li (int): index of Lagrange Point (used only if mu != 0)
+                    Li (int): index of Lagrange Point (required only if mu != 0)
 
         """
 
@@ -396,7 +396,7 @@ class RestriTwoBodyProb(BodyProbDyn):
         """
 
         # call to parent constructor
-        BodyProbDyn.__init__(self, 0., ecc, period, sma, Li=None)
+        BodyProbDyn.__init__(self, 0., ecc, period, sma)
         self.name = "Restricted 2-body problem"
 
         self.x_eq_normalized = numpy.array([1.0, 0.0, 0.0])
