@@ -90,7 +90,7 @@ class Solver:
 
         """
 
-        self.dyn = (dyn.params.mu, dyn.params.ecc, dyn.params.period, dyn.params.Li)
+        self.dyn = dyn.copy()
 
     def grid_Y(self, grid, half_dim):
         """Function computing the value of the moment-function on the given list of true anomalies.
