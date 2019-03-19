@@ -117,12 +117,12 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         inter = 1.0 - self.params.ecc * self.params.ecc
         inter2 = math.sqrt(inter * inter * inter) / self.params.mean_motion
         rho = rho_func(self.params.ecc, nu)
-        x_bar = numpy.zeros(2 * half_dim)
+        x_bar = []
         for k in range(0, len(x)):
             if k < half_dim:
-                x_bar[k] = rho * x[k]
+                x_bar.append(rho * x[k])
             else:  # indices for velocity components of state vector
-                x_bar[k] = -self.params.ecc * math.sin(nu) * x[k-half_dim] + inter2 * x[k] / rho
+                x_bar.append(-self.params.ecc * math.sin(nu) * x[k-half_dim] + inter2 * x[k] / rho)
 
         return x_bar
 
@@ -142,12 +142,12 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         inter = 1.0 - self.params.ecc * self.params.ecc
         inter2 = math.sqrt(inter * inter * inter) / self.params.mean_motion
         rho = rho_func(self.params.ecc, nu)
-        x = numpy.zeros(2 * half_dim)
-        for k in range(0, len(x)):
+        x = []
+        for k in range(0, len(x_bar)):
             if k < half_dim:
-                x[k] = x_bar[k] / rho
+                x.append(x_bar[k] / rho)
             else:  # indices for velocity components of state vector
-                x[k] = (self.params.ecc * math.sin(nu) * x_bar[k-half_dim] + rho * x_bar[k]) / inter2
+                x.append((self.params.ecc * math.sin(nu) * x_bar[k-half_dim] + rho * x_bar[k]) / inter2)
 
         return x
 

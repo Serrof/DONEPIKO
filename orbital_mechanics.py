@@ -38,7 +38,7 @@ def find_L1(mu):
     """
 
     # initialization
-    gamma0 = math.pow(mu * (1.0 - mu), 1.0 / 3.0)
+    gamma0 = (mu * (1.0 - mu)) ** (1.0 / 3.0)
     gamma = gamma0 + 1.0
 
     iter = 0
@@ -62,7 +62,7 @@ def find_L2(mu):
     """
 
     # initialization
-    gamma0 = math.pow(mu * (1.0 - mu), 1.0 / 3.0)
+    gamma0 = (mu * (1.0 - mu)) ** (1.0 / 3.0)
     gamma = gamma0 + 1.0
 
     iter = 0
@@ -86,7 +86,7 @@ def find_L3(mu):
     """
 
     # initialization
-    gamma0 = math.pow(mu * (1.0 - mu), 1.0 / 3.0)
+    gamma0 = (mu * (1.0 - mu)) ** (1.0 / 3.0)
     gamma = gamma0 + 1.0
 
     iter = 0
@@ -212,7 +212,7 @@ def period_to_sma(T, planetary_constant):
     if T <= 0.0:
         print('period_to_sma: orbital period cannot be negative')
 
-    return math.pow(T * T * planetary_constant, 1./3.) / (2. * math.pi)
+    return ((T * T * planetary_constant) ** (1./3.)) / (2. * math.pi)
 
 
 def nu_to_dt(e, n, nu0, nu):
@@ -533,7 +533,9 @@ def pot_grad(x, mu, slr):
     r2 = math.sqrt(r2sq)
     r2cube = r2sq * r2
     pcube = slr * slr * slr
-    gr = numpy.zeros(len(x))
+    gr = []
+    for i in range(0, len(x)):
+        gr.append(0.)
     gr[0] = -pcube * ((1. - mu) * (x[0] + slr * mu) / r1cube + mu * (x[0] - slr + slr * mu) / r2cube)
     gr[1] = -pcube * ((1. - mu) * x[1] / r1cube + mu * x[1] / r2cube)
     if len(x) > 2:
