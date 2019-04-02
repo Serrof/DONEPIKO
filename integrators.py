@@ -699,27 +699,27 @@ class VariableStepIntegrator(Integrator):
         Xs.append(x0_copy)
 
         t = t0
-        while t < tf:
+        while t != tf:
             # check and possibly decrease step-size
-            if h > self._max_stepsize:
-                h = self._max_stepsize
-            if t + h > tf:
+            if math.fabs(h) > self._max_stepsize:
+                if tf >= t0:
+                    h = self._max_stepsize
+                else:
+                    h = -self._max_stepsize
+            if (t + h > tf and tf >= t0) or (t + h < tf and tf < t0):
                 h = tf - t
 
             x, err = self.integration_step(t, Xs[-1], h)
 
             # check viability of integration step
             self._last_step_ok = True
-            max_abs_err = 0.
-            index_max = 0
+            max_err_ratio = 0.
             for i in range(0, len(err)):
-                if self._abs_tol[i] < numpy.inf:
-                    inter = math.fabs(err[i])
-                    if inter > max_abs_err:
-                        max_abs_err = inter
-                        index_max = i
-                        if max_abs_err > self._abs_tol[i]:
-                            self._last_step_ok = False
+                inter = math.fabs(err[i]) / self._abs_tol[i]
+                if inter > max_err_ratio:
+                    max_err_ratio = inter
+                    if max_err_ratio > 1.:
+                        self._last_step_ok = False
 
             if self._last_step_ok:
                 t += h
@@ -727,7 +727,7 @@ class VariableStepIntegrator(Integrator):
                 Xs.append(x)
                 factor = self._step_multiplier
             else:  # step was not successful
-                factor = 0.9 * (self._abs_tol[index_max] / max_abs_err) ** (1. / float(self._order))
+                factor = 0.9 * (1. / max_err_ratio) ** (1. / float(self._order))
 
             # step-size update
             h *= factor
