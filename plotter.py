@@ -217,11 +217,10 @@ class Plotter:
                 def propagate_num(nu1, nu2, IC):
                     if nu1 == nu2:
                         pts_inter = [nu1]
-                        states_inter = []
                         state0 = numpy.zeros(2*self.BC.half_dim)
                         for j in range(0, 2*self.BC.half_dim):
                             state0[j] = IC[j]
-                        states_inter.append(state0)
+                        states_inter = [state0]
                         return states_inter, pts_inter
                     else:  # initial and final true anomaly are different
                         IC_transformed = self.dyn.transformation(IC, nu1)

@@ -72,13 +72,11 @@ def initialize_iterative_grid_randomly(n_points, grid):
 
     """
 
-    indices = []
-    points = []
-    indices.append(random.randint(0, len(grid) - 1))
-    points.append(grid[indices[0]])
+    indices = [random.randint(0, len(grid) - 1)]
+    points = [grid[indices[0]]]
 
     while len(points) < n_points:
-        index_drawn = random.randint(0,len(grid) - 1)
+        index_drawn = random.randint(0, len(grid) - 1)
         if index_drawn not in indices:  # true anomaly has not been selected yet
             points.append(grid[index_drawn])
             indices.append(index_drawn)

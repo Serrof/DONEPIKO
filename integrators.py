@@ -86,13 +86,11 @@ class FixedstepIntegrator(Integrator):
         """
 
         h = (tf - t0) / float(n_step)
-        Ts = []
-        Xs = []
-        Ts.append(t0)
+        Ts = [t0]
         x0_copy = []
         for i in range(0, len(x0)):
             x0_copy.append(x0[i])
-        Xs.append(x0_copy)
+        Xs = [x0_copy]
         for k in range(0, n_step):
             Xs.append(self.integration_step(Ts[-1], Xs[-1], h))
             Ts.append(Ts[-1] + h)
@@ -250,16 +248,14 @@ class BS(FixedstepIntegrator):
         """
         Integrator.__init__(self, func, order)
 
-        sequence = []
-        for i in range(0, self._order):
-            sequence.append(2)
-            if self._order > 1:
-                sequence.append(4)
-            if self._order > 2:
-                sequence.append(6)
-            if self._order > 3:
-                for k in range(3, self._order):
-                    sequence.append(2 * sequence[-2])
+        sequence = [2]
+        if self._order > 1:
+            sequence.append(4)
+        if self._order > 2:
+            sequence.append(6)
+        if self._order > 3:
+            for k in range(3, self._order):
+                sequence.append(2 * sequence[-2])
         self.sequence = sequence
 
     def integration_step(self, t, x, H):
@@ -501,13 +497,11 @@ class MultistepIntegrator(FixedstepIntegrator):
             (Xs, Ts) = self.initialize(t0, x0, h)
             n_start = self._order - 1
         else:  # step-size has not changed and there are available saved steps
-            Ts = []
-            Xs = []
-            Ts.append(t0)
+            Ts = [t0]
             x0_copy = []
             for i in range(0, len(x0)):
                 x0_copy.append(x0[i])
-            Xs.append(x0_copy)
+            Xs = [x0_copy]
             n_start = 0
 
         for k in range(n_start, n_step):
@@ -623,7 +617,7 @@ class VariableStepIntegrator(Integrator):
         self._last_step_ok = True
 
         default_step_multiplier = 2.
-        if not step_multiplier:
+        if step_multiplier is None:
             self._step_multiplier = default_step_multiplier
         else:
             if step_multiplier <= 5. and step_multiplier >= 1.:
@@ -633,14 +627,14 @@ class VariableStepIntegrator(Integrator):
                       + str(default_step_multiplier))
                 self._step_multiplier = default_step_multiplier
 
-        if not max_stepsize:
+        if max_stepsize is None:
             self._max_stepsize = numpy.inf
         else:
             self._max_stepsize = max_stepsize
 
         default_abs_tol = 1.e-8
         self._abs_tol = []
-        if not abs_error_tol:
+        if abs_error_tol is None:
             for i in range(0, self._dim_state):
                 self._abs_tol.append(default_abs_tol)
         else:
@@ -690,16 +684,14 @@ class VariableStepIntegrator(Integrator):
         # initial guess for step-size
         h = (tf - t0) / float(n_step)
 
-        Ts = []
-        Xs = []
-        Ts.append(t0)
+        Ts = [t0]
         x0_copy = []
         for i in range(0, self._dim_state):
             x0_copy.append(x0[i])
-        Xs.append(x0_copy)
+        Xs = [x0_copy]
 
         t = t0
-        while t != tf:
+        while math.fabs(t - t0) < math.fabs(tf - t0):
             # check and possibly decrease step-size
             if math.fabs(h) > self._max_stepsize:
                 if tf >= t0:
@@ -796,10 +788,11 @@ class RKF45(VariableStepIntegrator):
         x_hat = []
         err = []
         for k in range(0, self._dim_state):
-            xf.append(h * (f1[k] * 25. / 216. + f3[k] * 1408. / 2565. + f4[k] * 2197. / 4104. - f5[k] / 5.))
-            x_hat.append(h * (f1[k] * 16. / 135. + f3[k] * 6656. / 12825. + f4[k] * 28561. / 56430. - f5[k] * 9. / 50.
-                              + f6[k] * 2. / 55.))
-            err.append(xf[k] - x_hat[k])
+            inter1 = f1[k] * 25. / 216. + f3[k] * 1408. / 2565. + f4[k] * 2197. / 4104. - f5[k] / 5.
+            xf.append(h * inter1)
+            inter2 = f1[k] * 16. / 135. + f3[k] * 6656. / 12825. + f4[k] * 28561. / 56430. - f5[k] * 9. / 50. + f6[k] * 2. / 55.
+            x_hat.append(h * inter2)
+            err.append(h * (inter1 - inter2))
             xf[k] += x[k]
             x_hat[k] += x[k]
 

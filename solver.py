@@ -169,10 +169,7 @@ class Solver:
                     lamb = numpy.transpose(inv_mat).dot(inter2)
 
                 else:  # p = 1
-                    indices = []
-                    for i, el in enumerate(inter):
-                        if el != 0.:
-                            indices.append(i)
+                    indices = inter != 0.
                     if len(indices) == 2 * BC.half_dim:
                         inter2 = numpy.zeros(2 * BC.half_dim)
                         for i in range(0, 2 * BC.half_dim):
