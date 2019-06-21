@@ -1,5 +1,5 @@
 # solver.py: abstract class for optimal solvers
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -41,7 +41,7 @@ class Solver:
 
         # sanity check(s)
         if p != 1 and p != 2:
-            print('solver: type of norm to minimized must be 1 or 2')
+            raise ValueError('solver: type of norm to minimized must be 1 or 2')
 
         self.dyn = dyn.copy()
         self._indirect = indirect
@@ -181,9 +181,8 @@ class Solver:
                 return utils.ControlLaw(BC.half_dim, [BC.nu0, BC.nuf], DVs, lamb)
 
             else:  # there is no unique solution to the two-impulse boundary control
-                print("No two-impulse boundary control was found.")
-                return utils.NoControl(BC.half_dim)
+                return Exception("No two-impulse boundary control was found.")
 
         else:
-            print("The computation of two-impulse boundary control laws is not implemented for that dynamics.")
-            return utils.NoControl(BC.half_dim)
+            return NotImplementedError("The computation of two-impulse boundary control laws is not implemented "
+                                       "for that dynamics.")

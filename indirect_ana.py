@@ -1,5 +1,5 @@
 # indirect_ana.py: routines to analytically solve for the out-of-plane optimal trajectory
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -31,13 +31,13 @@ def solver_ana(u, e, n, nu_0, nu_f):
 
 	# sanity check(s)
 	if(len(u) != 2):
-		print('SOLVER_ANA: input vector needs to be two-dimensional')
+		return ValueError('SOLVER_ANA: input vector needs to be two-dimensional')
 	if(e >= 1.0) or (e < 0.0):
-		print('SOLVER_ANA: eccentricity must be larger or equal to 0 and strictly less than 1')
+		return ValueError('SOLVER_ANA: eccentricity must be larger or equal to 0 and strictly less than 1')
 	if(n < 0.0):
-		print('SOLVER_ANA: mean motion cannot be smaller than 0')
+		return ValueError('SOLVER_ANA: mean motion cannot be smaller than 0')
 	if(nu_f <= nu_0):
-		print('SOLVER_ANA: initial true anomaly cannot be larger than final one')
+		return ValueError('SOLVER_ANA: initial true anomaly cannot be larger than final one')
 
 	lamb = numpy.array([0.0, 0.0])  # vector to store Lagrange coefficients
 	DVs = []  # vector to store DVs magnitude

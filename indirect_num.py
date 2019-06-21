@@ -1,5 +1,5 @@
 # indirect_num.py: functions involved in the numerical solving by the indirect approach
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -29,7 +29,7 @@ def dual_to_primal_norm_type(p):
 
     # sanity check(s)
     if (p != 1) and (p != 2):
-        print('dual_to_primal_norm_type: dual norm must be 1 or 2')
+        return ValueError('dual_to_primal_norm_type: dual norm must be 1 or 2')
 
     q = p
     if p == 1:
@@ -247,7 +247,7 @@ def solve_primal(grid_check, Y_grid, z, p):
 
     # sanity check(s)
     if (p != 1) and (p != 2):
-        print('SOLVE_PRIMAL: norm in cost function must be 1 or 2')
+        return ValueError('SOLVE_PRIMAL: norm in cost function must be 1 or 2')
 
     if p == 1:
         lamb = solve_primal_1norm(grid_check, Y_grid, z)
@@ -276,7 +276,7 @@ def primal_to_dual(grid_check, Y_grid, lamb, z, p):
 
     # sanity check(s)
     if (p != 1) and (p != 2):
-        print('PRIMAL_TO_DUAL: norm in cost function must be 1 or 2')
+        return ValueError('PRIMAL_TO_DUAL: norm in cost function must be 1 or 2')
 
     if p == 1:
         (nus, DV) = primal_to_dual_1norm(grid_check, Y_grid, lamb, z)

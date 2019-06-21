@@ -1,5 +1,5 @@
 # utils.py: set of various functions and classes used by the toolbox
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -25,9 +25,9 @@ def stack_state(x_ip, x_oop):
 
     # sanity check(s)
     if len(x_ip) != 4:
-        print('STACK_STATE: in-plane vector must be 4-dimensional')
+        return ValueError('STACK_STATE: in-plane vector must be 4-dimensional')
     if len(x_oop) != 2:
-        print('STACK_STATE: out-of-plane vector must be 2-dimensional')
+        return ValueError('STACK_STATE: out-of-plane vector must be 2-dimensional')
 
     x = numpy.zeros(6)
     x[0:2] = x_ip[0:2]
@@ -52,7 +52,7 @@ def unstack_state(x):
 
     # sanity check(s)
     if len(x) != 6:
-        print('UNSTACK_STATE: complete state vector must be 6-dimensional')
+        return ValueError('UNSTACK_STATE: complete state vector must be 6-dimensional')
 
     # out-of-plane part
     x_oop = numpy.zeros(2)
@@ -128,7 +128,7 @@ class BoundaryConditions:
         """
 
         if len(x0) != len(xf):
-            print('BoundaryConditions: miss-match between size of initial and final state vectors')
+            raise ValueError('BoundaryConditions: miss-match between size of initial and final state vectors')
 
         self.nu0 = nu0
         self.nuf = nuf
@@ -280,9 +280,9 @@ def merge_control(CL_ip, CL_oop):
 
     # sanity check(s)
     if CL_ip.half_dim != 2:
-        print('merge_control: in-plane control vector must have 2 components')
+        return ValueError('merge_control: in-plane control vector must have 2 components')
     if CL_oop.half_dim != 1:
-        print('merge_control: out-of-plane control vector must have 1 component')
+        return ValueError('merge_control: out-of-plane control vector must have 1 component')
 
     # merge nus and corresponding impulses
     nus_unsorted = numpy.concatenate((CL_ip.nus, CL_oop.nus), axis=0)

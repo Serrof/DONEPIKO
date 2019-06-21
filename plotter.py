@@ -1,5 +1,5 @@
 # plotter.py: class handling the plots
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -198,7 +198,7 @@ class Plotter:
 
         else:  # dynamics for plots has to be numerically simulated
             if self.BC.half_dim == 1 and not self.linearized:
-                print('_compute_states: non-linear dynamics cannot be only out-of-plane')
+                return ValueError('_compute_states: non-linear dynamics cannot be only out-of-plane')
 
             else:  # linearized dynamics or in-plane or complete non-linear dynamics
 

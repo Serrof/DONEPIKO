@@ -8,10 +8,12 @@
 # If not, see < https://www.gnu.org/licenses/>.
 
 import numpy
-from moments import *
+import math
+from moments import rho_func, Y_2bp, Y_oop, Y_oop_LP123, phi_harmo
 from numpy import linalg
 import utils
-import orbital_mechanics
+from orbital_mechanics import nu_to_dt, dt_to_nu, puls_oop_LP, exp_HCW, Hessian_ip2bp, Hessian_ip3bp, inter_L45, \
+    inter_L123, find_L1, find_L2, find_L3, phi_YA, transition_ip2bp, transition_oop, state_deriv_nonlin
 import dynamical_system
 from abc import ABCMeta, abstractmethod
 
@@ -42,13 +44,13 @@ class BodyProbParams(dynamical_system.DynParams):
         """
         # sanity checks
         if mu < 0. or mu >= 1.:
-            print('BodyProbParams: mass ratio must be between 0 and 1')
+            raise ValueError('BodyProbParams: mass ratio must be between 0 and 1')
         if ecc < 0. or ecc >= 1.:
-            print('BodyProbParams: eccentricity must be between 0 and 1')
+            raise ValueError('BodyProbParams: eccentricity must be between 0 and 1')
         if period <= 0.:
-            print('BodyProbParams: orbital period must be non negative')
+            raise ValueError('BodyProbParams: orbital period must be non negative')
         if mu != 0. and Li != 1 and Li != 2 and Li != 3 and Li != 4 and Li != 5:
-                print('BodyProbParams: for 3-body problem, valid index of Lagrange Point must be provided')
+            raise ValueError('BodyProbParams: for 3-body problem, valid index of Lagrange Point must be provided')
 
         self.mu = mu
         self.ecc = ecc
@@ -92,11 +94,11 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         self.params = BodyProbParams(mu, ecc, period, sma, Li)
 
         def conv(nu0, t0, nu):
-            return orbital_mechanics.nu_to_dt(self.params.ecc, self.params.mean_motion, nu0, nu)
+            return nu_to_dt(self.params.ecc, self.params.mean_motion, nu0, nu)
         self.convToAlterIndVar = conv
 
         def convInv(nu0, t0, t):
-            return orbital_mechanics.dt_to_nu(self.params.ecc, self.params.mean_motion, nu0, t)
+            return dt_to_nu(self.params.ecc, self.params.mean_motion, nu0, t)
         self.convFromAlterIndVar = convInv
 
         self.x_eq_normalized = None
@@ -164,7 +166,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
         """
         slr = self.params.sma * (1. - self.params.ecc * self.params.ecc)
-        return orbital_mechanics.state_deriv_nonlin(x, nu, self.params.ecc, self.x_eq_normalized, self.params.mu, slr)
+        return state_deriv_nonlin(x, nu, self.params.ecc, self.x_eq_normalized, self.params.mu, slr)
 
     def matrix_linear(self, nu, half_dim):
         """Function returning the matrix appearing in the differential system satisfied by the transformed state vector
@@ -186,7 +188,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
             if (self.params.mu != 0.) and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
 
-                pulsation = orbital_mechanics.puls_oop_LP(self.x_eq_normalized, self.params.mu)
+                pulsation = puls_oop_LP(self.x_eq_normalized, self.params.mu)
                 M[1, 0] = -(pulsation * pulsation + self.params.ecc * math.cos(nu)) / rho_func(self.params.ecc, nu)
 
             else:  # out-of-plane elliptical 2-body problem or 3-body near L4 and 5
@@ -198,16 +200,16 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
             M[half_dim: half_dim + 2, half_dim: half_dim + 2] = numpy.array([[0.0, 2.0], [-2.0, 0.0]])
 
             if self.params.mu == 0.:
-                H = orbital_mechanics.Hessian_ip2bp(self.x_eq_normalized)
+                H = Hessian_ip2bp(self.x_eq_normalized)
             else:  # restricted three-body case
-                H = orbital_mechanics.Hessian_ip3bp(self.x_eq_normalized, self.params.mu)
+                H = Hessian_ip3bp(self.x_eq_normalized, self.params.mu)
 
-            rho = orbital_mechanics.rho_func(self.params.ecc, nu)
+            rho = rho_func(self.params.ecc, nu)
             M[half_dim: half_dim + 2, 0:2] = -H / rho
 
             if half_dim == 3 and self.params.mu != 0.0 and \
                     (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
-                pulsation = orbital_mechanics.puls_oop_LP(self.x_eq_normalized, self.params.mu)
+                pulsation = puls_oop_LP(self.x_eq_normalized, self.params.mu)
                 M[5, 2] = -(pulsation * pulsation + self.params.ecc * math.cos(nu)) / rho
 
         return M
@@ -228,7 +230,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         for k in range(0, len(nus)):
             inter = matrices[k]
             Ys[:, half_dim * k: half_dim * (k + 1)] = inter[:, half_dim: 2 * half_dim] / \
-                                                      orbital_mechanics.rho_func(self.params.ecc, nus[k])
+                                                      rho_func(self.params.ecc, nus[k])
         return Ys
 
     @abstractmethod
@@ -300,7 +302,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                         phi = phi_harmo(nu2 - nu1, puls_oop_LP(self.x_eq_normalized, self.params.mu))
                         x2_bar = phi . dot(x1_bar)
                     else:  # elliptical case
-                        print('PROPAGATE: analytical 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
+                        return NotImplementedError('PROPAGATE: analytical 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
                 else:  # restricted 2-body problem or L4/5
                     x2_bar = transition_oop(x1_bar, nu1, nu2)
                 return self.transformation_inv(x2_bar, nu2)
@@ -310,7 +312,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                 if self.params.mu == 0. or self.params.ecc == 0:
                     x2_bar = self._transition_ip(x1_bar, nu1, nu2)
                 else:
-                    print('PROPAGATE: analytical 3-body elliptical in-plane case not coded yet')
+                    return NotImplementedError('PROPAGATE: analytical 3-body elliptical in-plane case not coded yet')
                 return self.transformation_inv(x2_bar, nu2)
             else:  # complete dynamics
                 x_ip1, x_oop1 = utils.unstack_state(x1)
@@ -344,7 +346,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                         u += phi_harmo(-BC.nuf, puls_oop_LP(self.x_eq_normalized, self.params.mu)) . dot(x2)
                         u -= phi_harmo(-BC.nu0, puls_oop_LP(self.x_eq_normalized, self.params.mu)) . dot(x1)
                     else:
-                        print('compute_rhs: analytical 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
+                        return NotImplementedError('compute_rhs: analytical 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
                 else:  # out-of-plane elliptical 2-body problem or 3-body near L4 and 5
                     u += phi_harmo(-BC.nuf, 1.0).dot(x2)
                     u -= phi_harmo(-BC.nu0, 1.0).dot(x1)
@@ -357,7 +359,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                     for i in range(0, len(u)):
                         u[i] *= multiplier
                 else:  # elliptical in-plane restricted 3-body problem case
-                    print('compute_rhs: analytical elliptical 3-body problem in-plane dynamics case not coded yet')
+                    return NotImplementedError('compute_rhs: analytical elliptical 3-body problem in-plane dynamics case not coded yet')
 
             else:  # complete dynamics
                 x0_ip, x0_oop = utils.unstack_state(BC.x0)
@@ -422,7 +424,7 @@ class RestriTwoBodyProb(BodyProbDyn):
 
         # sanity check(s)
         if (half_dim != 3) and (half_dim != 2) and (half_dim != 1):
-            print('evaluate_Y: half-dimension of state vector should be 1, 2 or 3')
+            return ValueError('evaluate_Y: half-dimension of state vector should be 1, 2 or 3')
 
         return Y_2bp(self.params.ecc, self.params.mean_motion, 0., nu, half_dim)
 
@@ -531,7 +533,7 @@ class RestriThreeBodyProb(BodyProbDyn):
 
         # sanity check(s)
         if (half_dim != 3) and (half_dim != 2) and (half_dim != 1):
-            print('evaluate_Y: half-dimension of state vector should be 1, 2 or 3')
+            return ValueError('evaluate_Y: half-dimension of state vector should be 1, 2 or 3')
 
         return self._Y_3bp(self.params.ecc, self.params.mean_motion, nu, half_dim)
 
@@ -552,12 +554,12 @@ class RestriThreeBodyProb(BodyProbDyn):
 
         # sanity check(s)
         if (half_dim != 1) and (half_dim != 2) and (half_dim != 3):
-            print('_Y_3BP: half-dimension must be 1, 2 or 3')
+            return ValueError('_Y_3BP: half-dimension must be 1, 2 or 3')
 
         if half_dim == 1:
             if self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3:
                 if e != 0.:
-                    print('_Y_3BP: analytical case not coded yet')
+                    return NotImplementedError('_Y_3BP: analytical case not coded yet')
                 else:  # circular case
                     return Y_oop_LP123(nu, self.x_eq_normalized, self.params.mu)
             else:  # Lagrange Point 4 or 5
@@ -601,7 +603,7 @@ class RestriThreeBodyProb(BodyProbDyn):
 
             return Y
         else:  # elliptical case
-            print('_Y_ip3bp_ds: analytical elliptical case not coded yet')
+            return NotImplementedError('_Y_ip3bp_ds: analytical elliptical case not coded yet')
 
     def transition_ip3bp(self, x1_bar, nu1, nu2):
         """Wrapper for the propagation of the transformed vector in the in-plane 3-body problem.
@@ -618,9 +620,9 @@ class RestriThreeBodyProb(BodyProbDyn):
 
         # sanity check(s)
         if len(x1_bar) != 4:
-            print('TRANSITION_IP3BP: in-plane initial conditions need to be four-dimensional')
+            return ValueError('TRANSITION_IP3BP: in-plane initial conditions need to be four-dimensional')
         if (self.params.ecc >= 1.0) or (self.params.ecc < 0.0):
-            print('TRANSITION_IP3BP: eccentricity must be larger or equal to 0 and strictly less than 1')
+            return ValueError('TRANSITION_IP3BP: eccentricity must be larger or equal to 0 and strictly less than 1')
 
         if self.params.ecc == 0.:
             if self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3:
@@ -631,7 +633,7 @@ class RestriThreeBodyProb(BodyProbDyn):
                 phi = self._exp_LP45(nu2 - nu1, -1. + 2. * self.params.mu)
             return phi.dot(x1_bar)
         else:  # elliptical case
-            print('TRANSITION_IP3BP: analytical elliptical case not coded yet')
+            return NotImplementedError('TRANSITION_IP3BP: analytical elliptical case not coded yet')
 
     def _exp_LP123(self, nu):
         """Function computing the exponential of the true anomaly times the matrix involved in the in-plane

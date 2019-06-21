@@ -620,7 +620,7 @@ class VariableStepIntegrator(Integrator):
         if step_multiplier is None:
             self._step_multiplier = default_step_multiplier
         else:
-            if step_multiplier <= 5. and step_multiplier >= 1.:
+            if 1. <= step_multiplier <= 5.:
                 self._step_multiplier = float(step_multiplier)
             else:
                 print("input step multiplier is not in [1, 5], switching to default value of"
@@ -639,8 +639,8 @@ class VariableStepIntegrator(Integrator):
                 self._abs_tol.append(default_abs_tol)
         else:
             if len(abs_error_tol) != self._dim_state:
-                print("wrong input in VariableStepIntegrator: tolerance on absolute error must have same dimension "
-                      "than state vector")
+                raise ValueError("wrong input in VariableStepIntegrator: tolerance on absolute error must have same "
+                      "dimension than state vector")
             for i, el in enumerate(abs_error_tol):
                 if el <= 0.:
                     print("input tolerance on absolute error is negative, switching to default value of"

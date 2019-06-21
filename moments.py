@@ -1,5 +1,5 @@
 # moments.py: functions related to moment equations and constraints in Neustadt's formalism of fuel-optimal trajectories
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -7,7 +7,9 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see < https://www.gnu.org/licenses/>.
 
-from orbital_mechanics import *
+import numpy
+import math
+from orbital_mechanics import nu_to_dt, rho_func, phi_harmo, puls_oop_LP, exp_HCW
 
 
 def Y_oop(e, nu):
@@ -90,7 +92,7 @@ def Y_ip_elliptical2bp(e, n, nu0, nu):
 
     # sanity check(s)
     if (e >= 1.0) or (e < 0.0):
-        print('Y_IP_ELLIPTICAL2BP: eccentricity must be larger or equal to 0 and strictly less than 1')
+        return ValueError('Y_IP_ELLIPTICAL2BP: eccentricity must be larger or equal to 0 and strictly less than 1')
 
     Y = numpy.zeros((4, 2))
     rho = rho_func(e, nu)
@@ -151,7 +153,7 @@ def Y_2bp(e, n, nu0, nu, m):
 
     # sanity check(s)
     if (m != 1) and (m != 2) and (m != 3):
-        print('Y_2BP: half-dimension must be 1, 2 or 3')
+        return ValueError('Y_2BP: half-dimension must be 1, 2 or 3')
 
     if m == 1:
         return Y_oop(e, nu)

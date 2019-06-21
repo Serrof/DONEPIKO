@@ -1,5 +1,5 @@
 # indirect_solver.py: class implementing indirect solvers
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -10,9 +10,9 @@
 import numpy
 from numpy import linalg
 import utils
-from utils import *
-from indirect_num import *
-from indirect_ana import *
+from utils import unstack_state
+from indirect_num import primal_to_dual, solve_primal
+from indirect_ana import solver_ana
 import solver
 import orbital_mechanics
 import body_prob_dyn
@@ -71,7 +71,7 @@ class IndirectSolver(solver.Solver):
             z[i] /= scale
 
         # building grid for norm checks
-        grid_check = numpy.linspace(BC.nu0, BC.nuf, conf.params_indirect["n_check"])
+        grid_check = list(numpy.linspace(BC.nu0, BC.nuf, conf.params_indirect["n_check"]))
         Y_grid = self.grid_Y(grid_check, BC.half_dim)
 
         lamb = solve_primal(grid_check, Y_grid, z, self.p)

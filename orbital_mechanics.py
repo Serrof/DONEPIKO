@@ -1,5 +1,5 @@
 # orbital_mechanics.py: functions specific to astrodynamics
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -192,7 +192,7 @@ def sma_to_period(a, planetary_constant):
 
     # sanity check(s)
     if a <= 0.0:
-        print('sma_to_period: semi-major axis cannot be negative')
+        return ValueError('sma_to_period: semi-major axis cannot be negative')
 
     return 2. * math.pi * math.sqrt(a * a * a / planetary_constant)
 
@@ -210,7 +210,7 @@ def period_to_sma(T, planetary_constant):
     """
     # sanity check(s)
     if T <= 0.0:
-        print('period_to_sma: orbital period cannot be negative')
+        return ValueError('period_to_sma: orbital period cannot be negative')
 
     return ((T * T * planetary_constant) ** (1./3.)) / (2. * math.pi)
 
@@ -231,9 +231,9 @@ def nu_to_dt(e, n, nu0, nu):
 
     # sanity check(s)
     if (e > 1.0) or (e < 0.0):
-        print('nu_to_dt: eccentricity must be between 0 and 1')
+        return ValueError('nu_to_dt: eccentricity must be between 0 and 1')
     if n <= 0.0:
-        print('nu_to_dt: mean motion cannot be negative')
+        return ValueError('nu_to_dt: mean motion cannot be negative')
 
     if nu < nu0:
         return -nu_to_dt(e, n, nu, nu0)
@@ -273,9 +273,9 @@ def dt_to_nu(e, n, nu0, dt):
 
     # sanity check(s)
     if (e > 1.0) or (e < 0.0):
-        print('dt_to_nu: eccentricity must be between 0 and 1')
+        return ValueError('dt_to_nu: eccentricity must be between 0 and 1')
     if n <= 0.0:
-        print('dt_to_nu: mean motion cannot be negative')
+        return ValueError('dt_to_nu: mean motion cannot be negative')
 
     if (nu0 < 0.) or (nu0 >= 2.0 * math.pi):
         n_mod = math.floor(nu0 / (2.0 * math.pi))
@@ -373,7 +373,7 @@ def transition_oop(x1_bar, nu1, nu2):
 
     # sanity check(s)
     if len(x1_bar) != 2:
-        print('TRANSITION_OOP: out-of-plane initial conditions need to be two-dimensional')
+        return ValueError('TRANSITION_OOP: out-of-plane initial conditions need to be two-dimensional')
 
     return phi_harmo(nu2 - nu1, 1.0) . dot(x1_bar)
 
@@ -426,7 +426,7 @@ def phi_YA(e, n, nu0, nu):
 
     # sanity check(s)
     if (e >= 1.0) or (e < 0.0):
-        print('PHI_YA: eccentricity must be larger or equal to 0 and strictly less than 1')
+        return ValueError('PHI_YA: eccentricity must be larger or equal to 0 and strictly less than 1')
 
     # pre-computations
     rho = rho_func(e, nu)
@@ -474,11 +474,11 @@ def transition_ip2bp(x1_bar, e, n, nu1, nu2):
 
     # sanity check(s)
     if len(x1_bar) != 4:
-        print('TRANSITION_IP2BP: in-plane initial conditions need to be four-dimensional')
+        return ValueError('TRANSITION_IP2BP: in-plane initial conditions need to be four-dimensional')
     if (e >= 1.0) or (e < 0.0):
-        print('TRANSITION_IP2BP: eccentricity must be larger or equal to 0 and strictly less than 1')
+        return ValueError('TRANSITION_IP2BP: eccentricity must be larger or equal to 0 and strictly less than 1')
     if n < 0.0:
-        print('TRANSITION_IP2BP: mean motion cannot be smaller than 0')
+        return ValueError('TRANSITION_IP2BP: mean motion cannot be smaller than 0')
 
     if e == 0.:
         phi = exp_HCW(nu2 - nu1)

@@ -214,7 +214,7 @@ class DynamicalSystem:
 
         # sanity check(s)
         if (half_dim != 3) and (half_dim != 2) and (half_dim != 1):
-            print('integrate_Y: half-dimension of state vector should be 1, 2 or 3')
+            return ValueError('integrate_Y: half-dimension of state vector should be 1, 2 or 3')
 
         def func(nu, x):
             x_matrix = utils.vector_to_square_matrix(x, 2 * half_dim)
