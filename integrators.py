@@ -678,8 +678,8 @@ class VariableStepIntegrator(Integrator):
         """
 
         if len(x0) != self._dim_state:
-            print("wrong input in integrate: state vector has different dimension than the one given when the "
-                  "integrator was instantiated")
+            return ValueError("wrong input in integrate: state vector has different dimension than the one given when "
+                  "the integrator was instantiated")
 
         # initial guess for step-size
         h = (tf - t0) / float(n_step)
