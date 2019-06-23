@@ -792,7 +792,7 @@ class RKF45(VariableStepIntegrator):
             xf.append(h * inter1)
             inter2 = f1[k] * 16. / 135. + f3[k] * 6656. / 12825. + f4[k] * 28561. / 56430. - f5[k] * 9. / 50. + f6[k] * 2. / 55.
             x_hat.append(h * inter2)
-            err.append(h * (inter1 - inter2))
+            err.append(xf[k] - x_hat[k])
             xf[k] += x[k]
             x_hat[k] += x[k]
 
