@@ -170,7 +170,7 @@ class DynamicalSystem:
         pass
 
     def transformation(self, x, nu):
-        """Method to be overwritten is there is a transformation to be performed to obtain a state vector that has an
+        """Method to be overwritten if there is a transformation to be performed to obtain a state vector that has an
         analytical formula to be propagated.
 
                 Args:
@@ -181,9 +181,9 @@ class DynamicalSystem:
                     (numpy.array): transformed state vector.
 
         """
-        y = numpy.zeros(len(x))
+        y = []
         for k in range(0, len(x)):
-            y[k] = x[k]
+            y.append(x[k])
         return y
 
     def transformation_inv(self, x, nu):
