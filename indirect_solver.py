@@ -67,8 +67,7 @@ class IndirectSolver(solver.Solver):
         z = self.dyn.compute_rhs(BC, self.prop_ana)
         # scaling the right-hand side of the moment equation
         scale = linalg.norm(z)
-        for i in range(0, 2 * BC.half_dim):
-            z[i] /= scale
+        z /= scale
 
         # building grid for norm checks
         grid_check = list(numpy.linspace(BC.nu0, BC.nuf, conf.params_indirect["n_check"]))
@@ -77,9 +76,7 @@ class IndirectSolver(solver.Solver):
         lamb = solve_primal(grid_check, Y_grid, z, self.p)
         (nus, DVs) = primal_to_dual(grid_check, Y_grid, lamb, z, self.p)
 
-        for j in range(0, len(nus)):
-            for i in range(0, BC.half_dim):
-                DVs[j, i] *= scale
+        DVs *= scale
 
         return utils.ControlLaw(BC.half_dim, nus, DVs, lamb)
 
@@ -146,7 +143,6 @@ class IndirectSolver(solver.Solver):
         # un-scaling
         for k in range(0, len(nus)):
             nus[k] /= puls
-        for k in range(0, len(lamb)):
-            lamb[k] /= factor
+        lamb /= factor
 
         return utils.ControlLaw(BC.half_dim, nus, DVs, lamb)

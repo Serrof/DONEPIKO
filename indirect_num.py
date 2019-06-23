@@ -100,15 +100,13 @@ def find_max_pv(Y_grid, lamb, q):
 
     hd = int(len(lamb) / 2)
     n_check = int(len(Y_grid[0, :]) / hd)
-    index_max = 0
-    val_max = 0.0
     unit_norm = True
+    norms = numpy.zeros(n_check)
     for k in range(0, n_check):
         Y_k = Y_grid[:, hd * k: hd * (k + 1)]
-        inter = linalg.norm(numpy.transpose(Y_k).dot(lamb), q)
-        if val_max < inter:
-            val_max = inter
-            index_max = k
+        norms[k] = linalg.norm(numpy.transpose(Y_k).dot(lamb), q)
+    index_max = numpy.argmax(norms)
+    val_max = norms[index_max]
     if val_max > 1.0 + conf.params_indirect["tol_unit_norm"]:
         unit_norm = False
 
@@ -440,7 +438,8 @@ def solve_primal_2norm(grid_check, Y_grid, z):
         for j in range(0, len(grid_work)):
             Y = Y_grid[:, hd * indices_work[j]: hd * (indices_work[j] + 1)]
             if hd == 1:
-                B = [[0.0, Y[0, 0], Y[0, 0], 0.0], [0.0, Y[1, 0], Y[1, 0], 0.0]]
+                B = [[0.0, Y[0, 0], Y[0, 0], 0.0],
+                     [0.0, Y[1, 0], Y[1, 0], 0.0]]
             elif hd == 2:
                 B = [[0.0, Y[0, 0], Y[0, 1], Y[0, 0], 0.0, 0.0, Y[0, 1], 0.0, 0.0],
                      [0.0, Y[1, 0], Y[1, 1], Y[1, 0], 0.0, 0.0, Y[1, 1], 0.0, 0.0],
@@ -462,9 +461,7 @@ def solve_primal_2norm(grid_check, Y_grid, z):
 
         solution = solvers.sdp(matrix(-z), Gs=A, hs=h)
         x = numpy.array(solution['x'])
-
-        for k, x_k in enumerate(x):
-            lamb[k] = x_k[0]
+        lamb[:] = x[:, 0]
 
         (converged, index_max) = find_max_pv(Y_grid, lamb, 2)
         if not converged:
@@ -514,9 +511,8 @@ def primal_to_dual_2norm(grid_check, Y_grid, lamb, z):
     for i in range(0, len(nus)):
         aux = Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]
         inter = numpy.transpose(aux) . dot(lamb)
-        for j in range(0, len(inter)):
-            directions[i, j] = inter[j] / linalg.norm(inter, p)
-            M[:, i] += aux[:, j] * directions[i, j]
+        directions[i, :] = inter[:] / linalg.norm(inter, p)
+        M[:, i] += aux.dot(directions[i, :])
 
     alphas = solve_alphas(M, z, len(nus))
     if conf.params_other["verbose"]:
@@ -525,7 +521,6 @@ def primal_to_dual_2norm(grid_check, Y_grid, lamb, z):
     # reconstructing velocity jumps
     DVs = numpy.zeros((len(nus), hd))
     for i in range(0, len(nus)):
-        for j in range(0, hd):
-            DVs[i, j] = directions[i, j] * alphas[i]
+        DVs[i, :] = directions[i, :] * alphas[i]
 
     return nus, DVs

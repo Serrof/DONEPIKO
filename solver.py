@@ -163,17 +163,14 @@ class Solver:
                 # build and solve system of equations for corresponding primer vector
                 if self.p == 2:
                     inter2 = numpy.zeros(2 * BC.half_dim)
-                    for i in range(0, BC.half_dim):
-                        inter2[i] = inter[i] / numpy.linalg.norm(DVs[0, :], self.p)
-                        inter2[i+BC.half_dim] = inter[i+BC.half_dim] / numpy.linalg.norm(DVs[1, :], self.p)
+                    inter2[:BC.half_dim] = inter[:BC.half_dim] / numpy.linalg.norm(DVs[0, :], self.p)
+                    inter2[BC.half_dim:] = inter[BC.half_dim:] / numpy.linalg.norm(DVs[1, :], self.p)
                     lamb = numpy.transpose(inv_mat).dot(inter2)
 
                 else:  # p = 1
                     indices = inter != 0.
                     if len(indices) == 2 * BC.half_dim:
-                        inter2 = numpy.zeros(2 * BC.half_dim)
-                        for i in range(0, 2 * BC.half_dim):
-                            inter2[i] = numpy.sign(inter[i])
+                        inter2 = numpy.sign(inter)
                         lamb = numpy.transpose(inv_mat).dot(inter2)
                     else:  # no unique solution for coefficients of primer vector
                         lamb = None

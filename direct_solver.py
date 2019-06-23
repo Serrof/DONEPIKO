@@ -1,5 +1,5 @@
 # direct_solver.py: class implementing direct solvers
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -50,8 +50,7 @@ class DirectSolver(solver.Solver):
         z = self.dyn.compute_rhs(BC, self.prop_ana)
         # scaling the right-hand side of the moment equation
         scale = linalg.norm(z)
-        for i in range(0, d):
-            z[i] /= scale
+        z /= scale
 
         # building grid on possible impulses' location
         if self.p == 1:
@@ -59,7 +58,7 @@ class DirectSolver(solver.Solver):
         else:  # p = 2
             n_grid = conf.params_direct["n_grid_2norm"]
         grid = numpy.linspace(BC.nu0, BC.nuf, n_grid)
-        Y_grid = self.grid_Y(grid, BC.half_dim)
+        Y_grid = self.grid_Y(list(grid), BC.half_dim)
 
         if self.p == 1:
 
@@ -171,8 +170,6 @@ class DirectSolver(solver.Solver):
                                 n_grid + BC.half_dim * indices[k] + BC.half_dim]
 
         # un-scaling
-        for j in range(0, len(nus)):
-            for i in range(0, BC.half_dim):
-                DVs[j, i] *= scale
+        DVs *= scale
 
         return utils.ControlLaw(BC.half_dim, nus, DVs)

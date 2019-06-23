@@ -217,9 +217,7 @@ class Plotter:
                 def propagate_num(nu1, nu2, IC):
                     if nu1 == nu2:
                         pts_inter = [nu1]
-                        state0 = numpy.zeros(2*self.BC.half_dim)
-                        for j in range(0, 2*self.BC.half_dim):
-                            state0[j] = IC[j]
+                        state0 = numpy.array(IC[:])
                         states_inter = [state0]
                         return states_inter, pts_inter
                     else:  # initial and final true anomaly are different
@@ -233,16 +231,13 @@ class Plotter:
 
                 states = []
                 pts = []
-                state0 = numpy.zeros(2 * self.BC.half_dim)
                 for k in range(0, self.CL.N):
                     if k == 0:
-                        for j in range(0, 2 * self.BC.half_dim):
-                            state0[j] = self.BC.x0[j]
+                        state0 = numpy.array(self.BC.x0[:])
                         date0 = self.BC.nu0
                         datef = self.CL.nus[0]
                     else:  # not first loop
-                        for j in range(0, 2*self.BC.half_dim):
-                            state0[j] = states[-1][j]
+                        state0 = numpy.array(states[-1])
                         date0 = pts[-1]
                         datef = self.CL.nus[k]
 
@@ -272,9 +267,7 @@ class Plotter:
                     self._pts = []
                     for nu in self._nus:
                         self._pts.append(self.dyn.convToAlterIndVar(self.BC.nu0, 0., nu))
-                self._states = numpy.zeros((dim, self._nb))
-                for k in range(0, self._nb):
-                    self._states[:, k] = states[k]
+                self._states = numpy.array(states[:]).transpose()
 
     def plot_pv(self):
         """Function plotting primer vector's components and norm as functions of the independent variable.

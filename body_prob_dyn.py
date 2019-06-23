@@ -289,18 +289,14 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         half_dim = int(len(x1) / 2)
 
         if nu1 == nu2:
-            x2 = numpy.zeros(half_dim * 2)
-            for k in range(0, len(x1)):
-                x2[k] = x1[k]
-            return x2
+            return numpy.array(x1[:])
         else:  # initial and final true anomalies are different
             if half_dim == 1:
                 x1_bar = self.transformation(x1, nu1)
-                x2_bar = None
                 if self.params.mu != 0 and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
                     if self.params.ecc == 0.:
                         phi = phi_harmo(nu2 - nu1, puls_oop_LP(self.x_eq_normalized, self.params.mu))
-                        x2_bar = phi . dot(x1_bar)
+                        x2_bar = phi.dot(x1_bar)
                     else:  # elliptical case
                         return NotImplementedError('PROPAGATE: analytical 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
                 else:  # restricted 2-body problem or L4/5
@@ -308,12 +304,11 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                 return self.transformation_inv(x2_bar, nu2)
             elif half_dim == 2:
                 x1_bar = self.transformation(x1, nu1)
-                x2_bar = None
                 if self.params.mu == 0. or self.params.ecc == 0:
                     x2_bar = self._transition_ip(x1_bar, nu1, nu2)
+                    return self.transformation_inv(x2_bar, nu2)
                 else:
                     return NotImplementedError('PROPAGATE: analytical 3-body elliptical in-plane case not coded yet')
-                return self.transformation_inv(x2_bar, nu2)
             else:  # complete dynamics
                 x_ip1, x_oop1 = utils.unstack_state(x1)
                 x_oop2 = self.propagate(nu1, nu2, x_oop1)
@@ -350,14 +345,12 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                 else:  # out-of-plane elliptical 2-body problem or 3-body near L4 and 5
                     u += phi_harmo(-BC.nuf, 1.0).dot(x2)
                     u -= phi_harmo(-BC.nu0, 1.0).dot(x1)
-                u[0] *= multiplier
-                u[1] *= multiplier
+                u *= multiplier
 
             elif BC.half_dim == 2:
                 if self.params.mu == 0. or self.params.ecc == 0.:
                     u = self._rhs_ip(BC.nu0, BC.nuf, x1, x2)
-                    for i in range(0, len(u)):
-                        u[i] *= multiplier
+                    u *= multiplier
                 else:  # elliptical in-plane restricted 3-body problem case
                     return NotImplementedError('compute_rhs: analytical elliptical 3-body problem in-plane dynamics case not coded yet')
 

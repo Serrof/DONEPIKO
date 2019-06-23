@@ -280,12 +280,10 @@ class ZeroGravity(DynamicalSystem):
                     x2 (numpy.array): final state vector.
 
         """
-        x2 = numpy.zeros(len(x1))
+        x2 = numpy.array(x1[:])
         dnu = nu2 - nu1
         half_dim = int(len(x1) / 2)
-        for k in range(0, half_dim):
-            x2[k] = x1[k] + dnu * x1[k + half_dim]
-            x2[k + half_dim] = x1[k + half_dim]
+        x2[:half_dim] += dnu * x1[half_dim:]
         return x2
 
     def evaluate_Y(self, nu, half_dim):

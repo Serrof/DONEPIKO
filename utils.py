@@ -98,8 +98,7 @@ def square_matrix_to_vector(x_matrix, n):
     """
     x_vector = numpy.zeros(n * n)
     for i in range(0, n):
-        for j in range(0, n):
-            x_vector[i * n + j] = x_matrix[i, j]
+        x_vector[i * n: (i + 1) * n] = x_matrix[i, :]
 
     return x_vector
 
@@ -133,11 +132,8 @@ class BoundaryConditions:
         self.nu0 = nu0
         self.nuf = nuf
         self.half_dim = int(len(x0) / 2)
-        self.x0 = numpy.zeros(2 * self.half_dim)
-        self.xf = numpy.zeros(2 * self.half_dim)
-        for i in range(0, len(x0)):
-            self.x0[i] = x0[i]
-            self.xf[i] = xf[i]
+        self.x0 = numpy.array(x0[:])
+        self.xf = numpy.array(xf[:])
 
     def copy(self):
         """Function returning a copy of the object.
@@ -194,9 +190,7 @@ class ControlLaw:
 
         self.N = len(nus)
         self.half_dim = half_dim
-        self.nus = numpy.zeros(self.N)
-        for i in range(0, self.N):
-            self.nus[i] = nus[i]
+        self.nus = numpy.array(nus[:])
         self.DVs = numpy.zeros((self.N, half_dim))
         for i in range(0, self.N):
             if self.half_dim == 1:
@@ -205,9 +199,7 @@ class ControlLaw:
                 self.DVs[i, :] = DVs[i, :]
 
         if lamb is not None:
-            self.lamb = numpy.zeros(len(lamb))
-            for i in range(0, len(lamb)):
-                self.lamb[i] = lamb[i]
+            self.lamb = numpy.array(lamb[:])
         else:  # no coefficients of primer vector were provided as inputs
             self.lamb = []
 
@@ -313,9 +305,7 @@ def merge_control(CL_ip, CL_oop):
             del indices_nodupli[k - removed]
             DV_conc[k, :] += DV_conc[k+1, :]
             removed += 1
-    DVs = numpy.zeros((len(nus), 3))
-    for k in range(0, len(nus)):
-        DVs[k, :] = DV_conc[indices_nodupli[k], :]
+    DVs = DV_conc[indices_nodupli, :]
 
     if len(CL_ip.lamb) != 0 and len(CL_oop.lamb) != 0:
         lamb = stack_state(CL_ip.lamb, CL_oop.lamb)
