@@ -698,7 +698,7 @@ class VariableStepIntegrator(Integrator):
                     h = self._max_stepsize
                 else:
                     h = -self._max_stepsize
-            if (t + h > tf and tf >= t0) or (t + h < tf and tf < t0):
+            if (t + h > tf >= t0) or (t + h < tf < t0):
                 h = tf - t
 
             x, err = self.integration_step(t, Xs[-1], h)
