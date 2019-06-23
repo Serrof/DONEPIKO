@@ -38,7 +38,7 @@ def find_L1(mu):
     """
 
     # initialization
-    gamma0 = (mu * (1.0 - mu)) ** (1.0 / 3.0)
+    gamma0 = pow(mu * (1.0 - mu), 1.0 / 3.0)
     gamma = gamma0 + 1.0
 
     iter = 0
@@ -62,7 +62,7 @@ def find_L2(mu):
     """
 
     # initialization
-    gamma0 = (mu * (1.0 - mu)) ** (1.0 / 3.0)
+    gamma0 = pow(mu * (1.0 - mu), 1.0 / 3.0)
     gamma = gamma0 + 1.0
 
     iter = 0
@@ -86,7 +86,7 @@ def find_L3(mu):
     """
 
     # initialization
-    gamma0 = (mu * (1.0 - mu)) ** (1.0 / 3.0)
+    gamma0 = pow(mu * (1.0 - mu), 1.0 / 3.0)
     gamma = gamma0 + 1.0
 
     iter = 0
@@ -136,8 +136,9 @@ def inter_L123(puls2):
     """
     beta1 = 1. - puls2 / 2.
     beta2 = math.sqrt(2. * puls2 * puls2 - puls2 - 1.)
-    gamma_re = math.sqrt(-beta1 + math.sqrt(beta1 * beta1 + beta2 * beta2))
-    gamma_im = math.sqrt(beta1 + math.sqrt(beta1 * beta1 + beta2 * beta2))
+    inter = math.sqrt(beta1 * beta1 + beta2 * beta2)
+    gamma_re = math.sqrt(-beta1 + inter)
+    gamma_im = math.sqrt(beta1 + inter)
     c = (gamma_re * gamma_re - 1. - 2. * puls2) / (2. * gamma_re)
     k = (gamma_im * gamma_im + 1. + 2. * puls2) / (2. * gamma_im)
     return gamma_re, gamma_im, c, k
@@ -165,16 +166,20 @@ def inter_L45(mu, kappa):
 
     """
 
-    root1 = math.sqrt(0.5 * (1.0 - math.sqrt(1.0 - 27.0 * mu * (1.0 - mu))))
-    root2 = math.sqrt(0.5 * (1.0 + math.sqrt(1.0 - 27.0 * mu * (1.0 - mu))))
-    a1 = -3. * math.sqrt(3.) * kappa / (9. + 4. * root1 * root1)
-    a2 = 8. * root1 / (9. + 4. * root1 * root1)
-    b1 = -8. * root1 / (9. + 4. * root1 * root1)
-    b2 = -3. * math.sqrt(3.) * kappa / (9. + 4. * root1 * root1)
-    c1 = -3. * math.sqrt(3.) * kappa / (9. + 4. * root2 * root2)
-    c2 = 8. * root2 / (9. + 4. * root2 * root2)
-    d1 = -8. * root2 / (9. + 4. * root2 * root2)
-    d2 = -3. * math.sqrt(3.) * kappa / (9. + 4. * root2 * root2)
+    inter = math.sqrt(1.0 - 27.0 * mu * (1.0 - mu))
+    root1 = math.sqrt(0.5 * (1.0 - inter))
+    root2 = math.sqrt(0.5 * (1.0 + inter))
+    factor = -3. * math.sqrt(3.) * kappa
+    inter1 = 9. + 4. * root1 * root1
+    inter2 = 9. + 4. * root2 * root2
+    a1 = factor / inter1
+    a2 = 8. * root1 / inter1
+    b1 = -a2
+    b2 = a1
+    c1 = factor / inter2
+    c2 = 8. * root2 / inter2
+    d1 = -c2
+    d2 = c1
     return root1, root2, a1, a2, b1, b2, c1, c2, d1, d2
 
 
@@ -348,8 +353,9 @@ def phi_harmo(nu, pulsation):
     """
 
     phi = numpy.zeros((2, 2))
-    c = math.cos(pulsation * nu)
-    s = math.sin(pulsation * nu)
+    angle = pulsation * nu
+    c = math.cos(angle)
+    s = math.sin(angle)
     phi[0, 0] = c
     phi[0, 1] = s / pulsation
     phi[1, 0] = - s * pulsation
@@ -375,7 +381,7 @@ def transition_oop(x1_bar, nu1, nu2):
     if len(x1_bar) != 2:
         return ValueError('TRANSITION_OOP: out-of-plane initial conditions need to be two-dimensional')
 
-    return phi_harmo(nu2 - nu1, 1.0) . dot(x1_bar)
+    return phi_harmo(nu2 - nu1, 1.0).dot(x1_bar)
 
 
 def exp_HCW(nu):
@@ -431,6 +437,7 @@ def phi_YA(e, n, nu0, nu):
     # pre-computations
     rho = rho_func(e, nu)
     rho_sq = rho * rho
+    rho_inv = 1.0 / rho
     s = math.sin(nu)
     c = math.cos(nu)
     c2 = math.cos(2.0 * nu)
@@ -441,8 +448,8 @@ def phi_YA(e, n, nu0, nu):
 
     phi = numpy.zeros((4, 4))
     phi[0, 0] = 1.0
-    phi[0, 1] = -cr * (1.0 + 1.0 / rho)
-    phi[0, 2] = sr * (1.0 + 1.0 / rho)
+    phi[0, 1] = -cr * (1.0 + rho_inv)
+    phi[0, 2] = sr * (1.0 + rho_inv)
     phi[0, 3] = 3.0 * J * rho_sq
     phi[1, 1] = sr
     phi[1, 2] = cr
@@ -482,7 +489,7 @@ def transition_ip2bp(x1_bar, e, n, nu1, nu2):
 
     if e == 0.:
         phi = exp_HCW(nu2 - nu1)
-        return phi . dot(x1_bar)
+        return phi.dot(x1_bar)
     else:  # elliptical case
         phi2 = phi_YA(e, n, nu1, nu2)
         rho1 = rho_func(e, nu1)
@@ -490,24 +497,26 @@ def transition_ip2bp(x1_bar, e, n, nu1, nu2):
         c1 = math.cos(nu1)
         sr1 = s1 * rho1
         cr1 = c1 * rho1
-        factor = 1.0 / (1.0 - e * e)
+        esq = e * e
+        factor = 1.0 / (1.0 - esq)
         phi_inv1 = numpy.zeros((4, 4))
-        phi_inv1[0, 0] = 1.0
-        phi_inv1[0, 1] = (3.0 * e * s1 * (1.0 + 1.0 / rho1)) * factor
-        phi_inv1[0, 2] = -e * (s1 + sr1) * factor
-        phi_inv1[0, 3] = (-e * cr1 + 2.0) * factor
-        phi_inv1[1, 1] = (-3.0 * (rho1 + e * e) * s1 / rho1) * factor
-        phi_inv1[1, 2] = (s1 + sr1) * factor
-        phi_inv1[1, 3] = (cr1 - 2.0 * e) * factor
-        phi_inv1[2, 1] = (-3.0 * (e + c1)) * factor
-        phi_inv1[2, 2] = (e + c1 + cr1) * factor
-        phi_inv1[2, 3] = -sr1 * factor
-        phi_inv1[3, 1] = 3.0 * rho1 * factor - 1.0
-        phi_inv1[3, 2] = -rho1 * rho1 * factor
-        phi_inv1[3, 3] = e * sr1 * factor
+        phi_inv1[0, 0] = 1.0 / factor
+        phi_inv1[0, 1] = 3.0 * e * s1 * (1.0 + 1.0 / rho1)
+        phi_inv1[0, 2] = -e * (s1 + sr1)
+        phi_inv1[0, 3] = -e * cr1 + 2.0
+        phi_inv1[1, 1] = -3.0 * (rho1 + esq) * s1 / rho1
+        phi_inv1[1, 2] = s1 + sr1
+        phi_inv1[1, 3] = cr1 - 2.0 * e
+        phi_inv1[2, 1] = -3.0 * (e + c1)
+        phi_inv1[2, 2] = e + c1 + cr1
+        phi_inv1[2, 3] = -sr1
+        phi_inv1[3, 1] = 3.0 * rho1 - phi_inv1[0, 0]
+        phi_inv1[3, 2] = -rho1 * rho1
+        phi_inv1[3, 3] = e * sr1
+        phi_inv1 *= factor
         phi_inv1 = swap.dot(phi_inv1.dot(swap_inv))
-        Phi = phi2 . dot(phi_inv1)
-        return Phi . dot(x1_bar)
+        Phi = phi2.dot(phi_inv1)
+        return Phi.dot(x1_bar)
 
 
 def pot_grad(x, mu, slr):
@@ -526,20 +535,19 @@ def pot_grad(x, mu, slr):
     r1sq = (x[0] + slr * mu) * (x[0] + slr * mu) + x[1] * x[1]
     r2sq = (x[0] - slr + slr * mu) * (x[0] - slr + slr * mu) + x[1] * x[1]
     if len(x) > 2:
-        r1sq += x[2] * x[2]
-        r2sq += x[2] * x[2]
+        inter = x[2] * x[2]
+        r1sq += inter
+        r2sq += inter
     r1 = math.sqrt(r1sq)
     r1cube = r1sq * r1
     r2 = math.sqrt(r2sq)
     r2cube = r2sq * r2
     pcube = slr * slr * slr
-    gr = []
-    for i in range(0, len(x)):
-        gr.append(0.)
-    gr[0] = -pcube * ((1. - mu) * (x[0] + slr * mu) / r1cube + mu * (x[0] - slr + slr * mu) / r2cube)
-    gr[1] = -pcube * ((1. - mu) * x[1] / r1cube + mu * x[1] / r2cube)
+    slrmu = slr * mu
+    gr = [-pcube * ((1. - mu) * (x[0] + slrmu) / r1cube + mu * (x[0] - slr + slrmu) / r2cube),
+          -pcube * ((1. - mu) * x[1] / r1cube + mu * x[1] / r2cube)]
     if len(x) > 2:
-        gr[2] = -pcube * ((1. - mu) * x[2] / r1cube + mu * x[2] / r2cube)
+        gr.append(-pcube * ((1. - mu) * x[2] / r1cube + mu * x[2] / r2cube))
 
     return gr
 
@@ -607,14 +615,17 @@ def Hessian_ip2bp(x):
 
     """
 
-    r1sq = x[0] * x[0] + x[1] * x[1]
+    x0sq = x[0] * x[0]
+    x1sq = x[1] * x[1]
+    r1sq = x0sq + x1sq
     r1 = math.sqrt(r1sq)
-    r1cube = r1 * r1 * r1
+    r1cube = r1 * r1sq
+    r1pow5 = r1cube * r1sq
     H = numpy.zeros((2, 2))
-    H[0, 0] = -1.0 + 1.0 / r1cube - 3.0 * x[0] * x[0] / (r1cube * r1sq)
-    H[0, 1] = -3.0 * x[1] * x[0] / (r1cube * r1sq)
+    H[0, 0] = -1.0 + 1.0 / r1cube - 3.0 * x0sq / r1pow5
+    H[0, 1] = -3.0 * x[1] * x[0] / r1pow5
     H[1, 0] = H[0, 1]
-    H[1, 1] = -1.0 + 1.0 / r1cube - 3.0 * x[1] * x[1] / (r1cube * r1sq)
+    H[1, 1] = -1.0 + 1.0 / r1cube - 3.0 * x1sq / r1pow5
 
     return H
 
@@ -631,17 +642,20 @@ def Hessian_ip3bp(x, mu):
 
     """
 
-    r1sq = (x[0] + mu) * (x[0] + mu) + x[1] * x[1]
+    x1sq = x[1] * x[1]
+    r1sq = (x[0] + mu) * (x[0] + mu) + x1sq
     r1 = math.sqrt(r1sq)
-    r1cube = r1 * r1 * r1
-    r2sq = (x[0] - 1.0 + mu) * (x[0] - 1.0 + mu) + x[1] * x[1]
+    r1cube = r1 * r1sq
+    r1pow5 = r1cube * r1sq
+    r2sq = (x[0] - 1.0 + mu) * (x[0] - 1.0 + mu) + x1sq
     r2 = math.sqrt(r2sq)
-    r2cube = r2 * r2 * r2
+    r2cube = r2 * r2sq
+    r2pow5 = r2cube * r2sq
     H = numpy.zeros((2, 2))
-    H[0, 0] = -1.0 + (1.0 - mu) / r1cube - 3.0 * (1.0 - mu) * (x[0] + mu) * (x[0] + mu) / (r1cube * r1sq) + mu / r2cube - 3.0 * mu * (x[0] - 1.0 + mu) * (x[0] - 1.0 + mu) / (r2cube * r2sq)
-    H[0, 1] = -3.0 * (1.0 - mu) * x[1] * (x[0] + mu) / (r1cube * r1sq) - 3.0 * mu * x[1] * (x[0] - 1.0 + mu) / (r2cube * r2sq)
+    H[0, 0] = -1.0 + (1.0 - mu) / r1cube - 3.0 * (1.0 - mu) * (x[0] + mu) * (x[0] + mu) / r1pow5 + mu / r2cube - 3.0 * mu * (x[0] - 1.0 + mu) * (x[0] - 1.0 + mu) / r2pow5
+    H[0, 1] = -3.0 * (1.0 - mu) * x[1] * (x[0] + mu) / r1pow5 - 3.0 * mu * x[1] * (x[0] - 1.0 + mu) / r2pow5
     H[1, 0] = H[0, 1]
-    H[1, 1] = -1.0 + (1.0 - mu) / r1cube - 3.0 * (1.0 - mu) * x[1] * x[1] / (r1cube * r1sq) + mu / r2cube - 3.0 * mu * x[1] * x[1] / (r2cube * r2sq)
+    H[1, 1] = -1.0 + (1.0 - mu) / r1cube - 3.0 * (1.0 - mu) * x1sq / r1pow5 + mu / r2cube - 3.0 * mu * x1sq / r2pow5
 
     return H
 
@@ -660,7 +674,7 @@ def ip_state_deriv(x, nu, ecc, x_eq, mu):
                 (list): state derivative.
 
     """
-    if mu ==0:
+    if mu == 0:
         Hessian = Hessian_ip2bp(x_eq)
     else:  # restricted three-body case
         Hessian = Hessian_ip3bp(x_eq, mu)

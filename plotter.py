@@ -282,11 +282,11 @@ class Plotter:
         pv_norm = []
         if self.analytical:
             for k in range(0, self._nb):
-                pv[:, k] = numpy.transpose(self.dyn.evaluate_Y(self._nus[k], self.BC.half_dim)) . dot(self.CL.lamb)
+                pv[:, k] = numpy.transpose(self.dyn.evaluate_Y(self._nus[k], self.BC.half_dim)).dot(self.CL.lamb)
         else:
             Ys = self.dyn.integrate_Y(self._nus, self.BC.half_dim)
             for k in range(0, self._nb):
-                pv[:, k] = numpy.transpose(Ys[:, k * self.BC.half_dim: (k + 1) * self.BC.half_dim]) . dot(self.CL.lamb)
+                pv[:, k] = numpy.transpose(Ys[:, k * self.BC.half_dim: (k + 1) * self.BC.half_dim]).dot(self.CL.lamb)
 
         for k in range(0, self._nb):
             pv_norm.append(linalg.norm(pv[:, k], self._q))
@@ -297,10 +297,8 @@ class Plotter:
         if self.BC.half_dim == 1:
             ax1.plot(self._pts, pv[0, :], color='black', ls='dashed', label='$\delta z$-axis', linewidth=2)
         else:  # in-plane or complete dynamics
-            if numpy.min(pv[1, :]) < min_pv:
-                min_pv = numpy.min(pv[1, :])
-            if numpy.max(pv[1, :]) > max_pv:
-                max_pv = numpy.max(pv[1, :])
+            min_pv = min(numpy.min(pv[1, :]), min_pv)
+            max_pv = max(numpy.max(pv[1, :]), max_pv)
             if self.BC.half_dim == 2:
                 ax1.plot(self._pts, pv[0, :], color='blue', ls='dashed', label='$\delta x$-axis', linewidth=2)
                 ax1.plot(self._pts, pv[1, :], color='red', ls='dashed', label='$\delta y$-axis', linewidth=2)
@@ -308,10 +306,8 @@ class Plotter:
                 ax1.plot(self._pts, pv[0, :], color='blue', ls='dashed', label='$\delta x$-axis', linewidth=2)
                 ax1.plot(self._pts, pv[1, :], color='red', ls='dashed', label='$\delta y$-axis', linewidth=2)
                 ax1.plot(self._pts, pv[2, :], color='black', ls='dashed', label='$\delta z$-axis', linewidth=2)
-                if numpy.min(pv[2, :]) < min_pv:
-                    min_pv = numpy.min(pv[2, :])
-                if numpy.max(pv[2, :]) > max_pv:
-                    max_pv = numpy.max(pv[2, :])
+                min_pv = min(numpy.min(pv[2, :]), min_pv)
+                max_pv = max(numpy.max(pv[2, :]), max_pv)
 
         ax2.plot(self._pts, pv_norm, color='green', linewidth=2)
 

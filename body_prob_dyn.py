@@ -333,24 +333,22 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         x2 = self.transformation(BC.xf, BC.nuf)
 
         if analytical:
-            u = numpy.zeros(2 * BC.half_dim)
 
             if BC.half_dim == 1:
                 if (self.params.mu != 0.) and (self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3):
                     if self.params.ecc == 0.:
-                        u += phi_harmo(-BC.nuf, puls_oop_LP(self.x_eq_normalized, self.params.mu)) . dot(x2)
-                        u -= phi_harmo(-BC.nu0, puls_oop_LP(self.x_eq_normalized, self.params.mu)) . dot(x1)
+                        u = phi_harmo(-BC.nuf, puls_oop_LP(self.x_eq_normalized, self.params.mu)).dot(x2)
+                        u -= phi_harmo(-BC.nu0, puls_oop_LP(self.x_eq_normalized, self.params.mu)).dot(x1)
                     else:
                         return NotImplementedError('compute_rhs: analytical 3-body elliptical out-of-plane near L1, 2 and 3 not coded yet')
                 else:  # out-of-plane elliptical 2-body problem or 3-body near L4 and 5
-                    u += phi_harmo(-BC.nuf, 1.0).dot(x2)
+                    u = phi_harmo(-BC.nuf, 1.0).dot(x2)
                     u -= phi_harmo(-BC.nu0, 1.0).dot(x1)
                 u *= multiplier
 
             elif BC.half_dim == 2:
                 if self.params.mu == 0. or self.params.ecc == 0.:
-                    u = self._rhs_ip(BC.nu0, BC.nuf, x1, x2)
-                    u *= multiplier
+                    u = self._rhs_ip(BC.nu0, BC.nuf, x1, x2) * multiplier
                 else:  # elliptical in-plane restricted 3-body problem case
                     return NotImplementedError('compute_rhs: analytical elliptical 3-body problem in-plane dynamics case not coded yet')
 
@@ -366,10 +364,8 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         else:  # numerical integration
 
             matrices = self.integrate_phi_inv([BC.nu0, BC.nuf], BC.half_dim)
-
             IC_matrix = matrices[0]
             FC_matrix = matrices[-1]
-
             u = (FC_matrix.dot(x2) - IC_matrix.dot(x1)) * multiplier
 
         return u
@@ -444,13 +440,12 @@ class RestriTwoBodyProb(BodyProbDyn):
 
         """
 
-        u = numpy.zeros(4)
         if self.params.ecc == 0.:
-            u += exp_HCW(-nu2).dot(x2)
+            u = exp_HCW(-nu2).dot(x2)
             u -= exp_HCW(-nu1).dot(x1)
         else:  # elliptical case
             M = phi_YA(self.params.ecc, self.params.mean_motion, 0., nu2)
-            u += linalg.inv(M).dot(x2)
+            u = linalg.inv(M).dot(x2)
             M = phi_YA(self.params.ecc, self.params.mean_motion, 0., nu1)
             u -= linalg.inv(M).dot(x1)
         return u
@@ -705,15 +700,16 @@ class RestriThreeBodyProb(BodyProbDyn):
 
         """
 
-        u = numpy.zeros(4)
         if self.params.ecc == 0.:
             if (self.params.Li == 1) or (self.params.Li == 2) or (self.params.Li == 3):
-                u += self._exp_LP123(-nu2).dot(x2)
+                u = self._exp_LP123(-nu2).dot(x2)
                 u -= self._exp_LP123(-nu1).dot(x1)
             elif self.params.Li == 4:
-                u += self._exp_LP45(-nu2, 1. - 2. * self.params.mu).dot(x2)
+                u = self._exp_LP45(-nu2, 1. - 2. * self.params.mu).dot(x2)
                 u -= self._exp_LP45(-nu1, 1. - 2. * self.params.mu).dot(x1)
             else:  # Li = 5
-                u += self._exp_LP45(-nu2, -1. + 2. * self.params.mu).dot(x2)
+                u = self._exp_LP45(-nu2, -1. + 2. * self.params.mu).dot(x2)
                 u -= self._exp_LP45(-nu1, -1. + 2. * self.params.mu).dot(x1)
+        else:
+            return NotImplementedError
         return u

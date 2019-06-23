@@ -175,7 +175,7 @@ def extract_nus(grid_check, Y_grid, lamb, q):
     k = 0
     while k < n_check:
         Y_k = Y_grid[:, hd * k: hd * (k + 1)]
-        inter = linalg.norm(numpy.transpose(Y_k) . dot(lamb), q)
+        inter = linalg.norm(numpy.transpose(Y_k).dot(lamb), q)
         if 1.0 - conf.params_indirect["tol_unit_norm"] < inter:
             k += 1
             i_nu = k - 1
@@ -184,7 +184,7 @@ def extract_nus(grid_check, Y_grid, lamb, q):
                 lap = True
                 while lap:
                     Y_k = Y_grid[:, hd * k: hd * (k + 1)]
-                    inter2 = linalg.norm(numpy.transpose(Y_k) . dot(lamb), q)
+                    inter2 = linalg.norm(numpy.transpose(Y_k).dot(lamb), q)
                     if 1.0 - conf.params_indirect["tol_unit_norm"] < inter2:
                         if k == n_check - 1:
                             lap = False
@@ -369,7 +369,7 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
     directions = numpy.zeros((len(nus), hd))
     n_alphas = 0
     for i in range(0, len(nus)):
-        inter = numpy.transpose(Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]) . dot(lamb)
+        inter = numpy.transpose(Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]).dot(lamb)
         for j in range(0, hd):
             if math.fabs(inter[j]) > 1.0 - conf.params_indirect["tol_unit_norm"]:
                 directions[i, j] = numpy.sign(inter[j])
@@ -437,26 +437,21 @@ def solve_primal_2norm(grid_check, Y_grid, z):
         h = None
         for j in range(0, len(grid_work)):
             Y = Y_grid[:, hd * indices_work[j]: hd * (indices_work[j] + 1)]
-            if hd == 1:
-                B = [[0.0, Y[0, 0], Y[0, 0], 0.0],
-                     [0.0, Y[1, 0], Y[1, 0], 0.0]]
-            elif hd == 2:
-                B = [[0.0, Y[0, 0], Y[0, 1], Y[0, 0], 0.0, 0.0, Y[0, 1], 0.0, 0.0],
-                     [0.0, Y[1, 0], Y[1, 1], Y[1, 0], 0.0, 0.0, Y[1, 1], 0.0, 0.0],
-                     [0.0, Y[2, 0], Y[2, 1], Y[2, 0], 0.0, 0.0, Y[2, 1], 0.0, 0.0],
-                     [0.0, Y[3, 0], Y[3, 1], Y[3, 0], 0.0, 0.0, Y[3, 1], 0.0, 0.0]]
-            else:  # case of complete dynamics
-                B = [[0.0, Y[0, 0], Y[0, 1], Y[0, 2], Y[0, 0], 0.0, 0.0, 0.0, Y[0, 1], 0.0, 0.0, 0.0, Y[0, 2], 0.0, 0.0, 0.0],
-                     [0.0, Y[1, 0], Y[1, 1], Y[1, 2], Y[1, 0], 0.0, 0.0, 0.0, Y[1, 1], 0.0, 0.0, 0.0, Y[1, 2], 0.0, 0.0, 0.0],
-                     [0.0, Y[2, 0], Y[2, 1], Y[2, 2], Y[2, 0], 0.0, 0.0, 0.0, Y[2, 1], 0.0, 0.0, 0.0, Y[2, 2], 0.0, 0.0, 0.0],
-                     [0.0, Y[3, 0], Y[3, 1], Y[3, 2], Y[3, 0], 0.0, 0.0, 0.0, Y[3, 1], 0.0, 0.0, 0.0, Y[3, 2], 0.0, 0.0, 0.0],
-                     [0.0, Y[4, 0], Y[4, 1], Y[4, 2], Y[4, 0], 0.0, 0.0, 0.0, Y[4, 1], 0.0, 0.0, 0.0, Y[4, 2], 0.0, 0.0, 0.0],
-                     [0.0, Y[5, 0], Y[5, 1], Y[5, 2], Y[5, 0], 0.0, 0.0, 0.0, Y[5, 1], 0.0, 0.0, 0.0, Y[5, 2], 0.0, 0.0, 0.0]]
+            # construction of matrix in numpy.array form
+            inter = numpy.zeros((d, (hd + 1) * (hd + 1)))
+            for i in range(0, hd):
+                inter[:, 1 + i] = Y[:, i]
+                inter[:, 1 + hd + i * (hd + 1)] = Y[:, i]
+            # conversion to matrix type
+            B = []
+            for el in inter:
+                B.append(list(el))
+            B = matrix(B)
             if j == 0:
-                A = [-matrix(B)]
+                A = [-B]
                 h = [matrix(numpy.eye(hd + 1))]
             else:  # A and h are already not None
-                A += [-matrix(B)]
+                A += [-B]
                 h += [matrix(numpy.eye(hd + 1))]
 
         solution = solvers.sdp(matrix(-z), Gs=A, hs=h)
@@ -510,7 +505,7 @@ def primal_to_dual_2norm(grid_check, Y_grid, lamb, z):
     directions = numpy.zeros((len(nus), hd))
     for i in range(0, len(nus)):
         aux = Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]
-        inter = numpy.transpose(aux) . dot(lamb)
+        inter = numpy.transpose(aux).dot(lamb)
         directions[i, :] = inter[:] / linalg.norm(inter, p)
         M[:, i] += aux.dot(directions[i, :])
 

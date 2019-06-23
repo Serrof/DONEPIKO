@@ -79,8 +79,7 @@ def vector_to_square_matrix(x_vector, n):
     """
     x_matrix = numpy.zeros((n, n))
     for i in range(0, n):
-        for j in range(0, n):
-            x_matrix[i, j] = x_vector[i * n + j]
+        x_matrix[i, :] = x_vector[i * n: (i + 1) * n]
 
     return x_matrix
 

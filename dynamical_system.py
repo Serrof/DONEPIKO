@@ -337,9 +337,8 @@ class ZeroGravity(DynamicalSystem):
         """
         matrices = self.integrate_phi_inv(nus, half_dim)
         Ys = numpy.zeros((2 * half_dim, half_dim * len(nus)))
-        for k in range(0, len(nus)):
-            inter = matrices[k]
-            Ys[:, half_dim * k: half_dim * (k + 1)] = inter[:, half_dim: 2 * half_dim]
+        for k, matrix in enumerate(matrices):
+            Ys[:, half_dim * k: half_dim * (k + 1)] = matrix[:, half_dim: 2 * half_dim]
         return Ys
 
     def copy(self):
