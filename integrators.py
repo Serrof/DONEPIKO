@@ -43,7 +43,7 @@ class Integrator:
                 Args:
                      t0 (float): initial time.
                      tf (int): final time.
-                     x0 (list): initial conditions.
+                     x0 (iterable): initial conditions.
                      n_step (int): number of integrations steps
 
         """
@@ -64,7 +64,7 @@ class FixedstepIntegrator(Integrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (list): state vector at t.
+                    x (iterable): state vector at t.
                     h (float): step-size.
 
         """
@@ -76,7 +76,7 @@ class FixedstepIntegrator(Integrator):
                 Args:
                     t0 (float): initial value of independent variable.
                     tf (float): final value of independent variable.
-                    x0 (): state vector at t0.
+                    x0 (iterable): state vector at t0.
                     n_step (int): number of integration steps to be performed.
 
                 Returns:
@@ -87,10 +87,7 @@ class FixedstepIntegrator(Integrator):
 
         h = (tf - t0) / float(n_step)
         Ts = [t0]
-        x0_copy = []
-        for i in range(0, len(x0)):
-            x0_copy.append(x0[i])
-        Xs = [x0_copy]
+        Xs = [x0]
         for k in range(0, n_step):
             Xs.append(self.integration_step(Ts[-1], Xs[-1], h))
             Ts.append(Ts[-1] + h)
@@ -118,21 +115,15 @@ class Euler(FixedstepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (list): state vector at t.
+                    x (iterable): state vector at t.
                     h (float): step-size.
 
                 Returns:
-                    xf (list): state vector at t + h.
+                    xf (iterable): state vector at t + h.
 
         """
 
-        f = self._func(t, x)  # function call
-
-        xf = []
-        for k in range(0, len(x)):
-            xf.append(x[k] + h * f[k])
-
-        return xf
+        return x + h * self._func(t, x)
 
 
 class Heun(FixedstepIntegrator):
@@ -155,26 +146,20 @@ class Heun(FixedstepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (list): state vector at t.
+                    x (iterable): state vector at t.
                     h (float): step-size.
 
                 Returns:
-                    xf (list): state vector at t + h.
+                    xf (iterable): state vector at t + h.
 
         """
 
         f1 = self._func(t, x)  # function call
 
-        x1 = []
-        for k in range(0, len(x)):
-            x1.append(x[k] + h * f1[k])
+        x1 = x + h * f1
         f2 = self._func(t + h, x1)  # function call
 
-        xf = []
-        for k in range(0, len(x)):
-            xf.append(x[k] + h * (f1[k] + f2[k]) / 2.)
-
-        return xf
+        return x + 0.5 * h * (f1 + f2)
 
 
 class RK4(FixedstepIntegrator):
@@ -197,37 +182,28 @@ class RK4(FixedstepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (list): state vector at t.
+                    x (iterable): state vector at t.
                     h (float): step-size.
 
                 Returns:
-                    xf (list): state vector at t + h.
+                    xf (iterable): state vector at t + h.
 
         """
 
-        dim = len(x)
+        half_step = h / 2.
+        middle_time = t + half_step
 
         f1 = self._func(t, x)  # function call
-        x1 = []
-        for k in range(0, dim):
-            x1.append(x[k] + h / 2. * f1[k])
-        f2 = self._func(t + h / 2., x1)  # function call
+        x1 = x + half_step * f1
+        f2 = self._func(middle_time, x1)  # function call
 
-        x2 = []
-        for k in range(0, dim):
-            x2.append(x[k] + h / 2. * f2[k])
-        f3 = self._func(t + h / 2., x2)  # function call
+        x2 = x + half_step * f2
+        f3 = self._func(middle_time, x2)  # function call
 
-        x3 = []
-        for k in range(0, dim):
-            x3.append(x[k] + h * f3[k])
+        x3 = x + h * f3
         f4 = self._func(t + h, x3)  # function call
 
-        xf = []
-        for k in range(0, dim):
-            xf.append(x[k] + h * (f1[k] + 2. * f2[k] + 2. * f3[k] + f4[k]) / 6.)
-
-        return xf
+        return x + h / 6. * (f1 + 2. * (f2 + f3) + f4)
 
 
 class BS(FixedstepIntegrator):
@@ -251,11 +227,11 @@ class BS(FixedstepIntegrator):
         sequence = [2]
         if self._order > 1:
             sequence.append(4)
-        if self._order > 2:
-            sequence.append(6)
-        if self._order > 3:
-            for k in range(3, self._order):
-                sequence.append(2 * sequence[-2])
+            if self._order > 2:
+                sequence.append(6)
+                if self._order > 3:
+                    for k in range(3, self._order):
+                        sequence.append(2 * sequence[-2])
         self.sequence = sequence
 
     def integration_step(self, t, x, H):
@@ -264,11 +240,11 @@ class BS(FixedstepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (list): state vector at t.
+                    x (iterable): state vector at t.
                     H (float): step-size.
 
                 Returns:
-                     (list): state vector at t + H.
+                     (iterable): state vector at t + H.
 
         """
 
@@ -293,42 +269,19 @@ class BS(FixedstepIntegrator):
         h = H / float(n)
         h2 = 2. * h
 
-        u0 = []
-        for el in y:
-            u0.append(el)
+        u0 = None
 
-        u1 = []
         f1 = self._func(t, y)  # function call
-        for i in range(0, len(y)):
-            u1.append(y[i] + h * f1[i])
+        u1 = y + h * f1
 
-        u2 = []
         f2 = self._func(t + h, u1)  # function call
-        for i in range(0, len(y)):
-            u2.append(y[i] + h2 * f2[i])
-
-        v = []
-        w = []
-        for el in y:
-            v.append(el)
-            w.append(el)
+        u2 = y + h2 * f2
 
         for j in range(2, n + 1):
-            for i in range(0, len(y)):
-                v[i] = u2[i]
-                u2[i] = u1[i]
-            f = self._func(t + j * h, v)  # function call
-            for i in range(0, len(y)):
-                u2[i] += h2 * f[i]
-                w[i] = u1[i]
-                u1[i] = v[i]
-                u0[i] = w[i]
+            f = self._func(t + j * h, u2)  # function call
+            u2, u1, u0 = u1 + h2 * f, u2, u1
 
-        eta = []
-        for i in range(0, len(y)):
-            eta.append(u0[i] / 4. + u1[i] / 2. + u2[i] / 4.)
-
-        return eta
+        return (u0 + u1 * 2. + u2) / 4.
 
     def _extrapolation(self, i, H, y, t):
         """Function performing the extrapolation according to the Bulirsch-Stoer algorithm.
@@ -354,8 +307,7 @@ class BS(FixedstepIntegrator):
                 M.append(eta)
                 aux1 = float(self.sequence[i-1]) / float(self.sequence[i-1-j])
                 aux2 = aux1 * aux1 - 1.
-                for k in range(0, len(y)):
-                    M[j][k] += (eta[k] - Mp[j-1][k]) / aux2
+                M[j] += (eta - Mp[j-1]) / aux2
 
         return M
 
@@ -366,8 +318,8 @@ class MultistepIntegrator(FixedstepIntegrator):
             Attributes:
                  saved_steps (list): values of state derivative at previous steps.
                  _stepsize (float): step-size.
-                 _beta (list): vector of numbers used in integration scheme.
-                 _initializer (): integrator used to initialize the multi-step method.
+                 _beta (numpy.array): vector of numbers used in integration scheme.
+                 _initializer (Integrator): integrator used to initialize the multi-step method.
 
     """
 
@@ -378,7 +330,7 @@ class MultistepIntegrator(FixedstepIntegrator):
 
                 Args:
                      func (function): function to be integrated.
-                     order (integer): order of integrator.
+                     order (int): order of integrator.
 
         """
         Integrator.__init__(self, func, order)
@@ -393,7 +345,7 @@ class MultistepIntegrator(FixedstepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (list): state vector at t.
+                    x (iterable): state vector at t.
 
         """
 
@@ -412,31 +364,29 @@ class MultistepIntegrator(FixedstepIntegrator):
         """Function propagating the state vector over one integration step.
 
                 Args:
-                    x (list): current state vector.
+                    x (iterable): current state vector.
 
                 Returns:
-                    xf (list): state vector at next integration step.
+                    xf (iterable): state vector at next integration step.
 
         """
 
-        xf = []
-        for i in range(0, len(x)):
-            xf.append(x[i])
-            for j in range(0, self._order):
-                xf[i] += self._stepsize * self._beta[j] * self.saved_steps[j][i]
+        dx = self.saved_steps[0] * self._beta[0]
+        for j in range(1, self._order):
+            dx += self.saved_steps[j] * self._beta[j]
 
-        return xf
+        return x + self._stepsize * dx
 
     def integration_step(self, t, x, h=None):
         """Function performing a single integration step.
 
                 Args:
                     t (float): current value of independent variable.
-                    x (list): state vector at t.
+                    x (iterable): state vector at t.
                     h (float): step-size (dummy variable in multi-step integrator here to match parent signature)
 
                 Returns:
-                    xf (list): state vector at t + self._stepsize.
+                    xf (iterable): state vector at t + self._stepsize.
 
         """
 
@@ -451,7 +401,7 @@ class MultistepIntegrator(FixedstepIntegrator):
 
                 Args:
                     t0 (float): initial value of independent variable.
-                    x0 (list): state vector at t0.
+                    x0 (iterable): state vector at t0.
                     h (float): step-size
 
                 Returns:
@@ -476,7 +426,7 @@ class MultistepIntegrator(FixedstepIntegrator):
                 Args:
                     t0 (float): initial value of independent variable.
                     tf (float): final value of independent variable.
-                    x0 (list): state vector at t0.
+                    x0 (iterable): state vector at t0.
                     n_step (int): number of integration steps to be performed.
                     saved_steps (list): past values of self._func.
 
@@ -498,10 +448,7 @@ class MultistepIntegrator(FixedstepIntegrator):
             n_start = self._order - 1
         else:  # step-size has not changed and there are available saved steps
             Ts = [t0]
-            x0_copy = []
-            for i in range(0, len(x0)):
-                x0_copy.append(x0[i])
-            Xs = [x0_copy]
+            Xs = [x0]
             n_start = 0
 
         for k in range(n_start, n_step):
@@ -526,8 +473,7 @@ class AB8(MultistepIntegrator):
 
         MultistepIntegrator.__init__(self, func, 8)
 
-        self._beta = [-36799. / 120960., 295767. / 120960., -1041723. / 120960., 2102243. / 120960.,
-                      -2664477. / 120960., 2183877. / 120960., -1152169. / 120960., 434241. / 120960.]
+        self._beta = numpy.array([-36799., 295767., -1041723., 2102243., -2664477., 2183877., -1152169., 434241.]) / 120960.
         self._initializer = BS(self._func, int((self._order + 1) / 2))
 
 
@@ -545,8 +491,7 @@ class ABM8(MultistepIntegrator):
 
         MultistepIntegrator.__init__(self, func, 8)
 
-        self._beta = [1375. / 120960., -11351. / 120960., 41499. / 120960., -88547. / 120960.,
-                      123133. / 120960., -121797. / 120960., 139849. / 120960., 36799. / 120960.]
+        self._beta = numpy.array([1375., -11351., 41499., -88547., 123133., -121797., 139849., 36799.]) / 120960.
         self._predictor = AB8(self._func)
         self._initializer = self._predictor
 
@@ -555,11 +500,11 @@ class ABM8(MultistepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (list): state vector at t.
+                    x (iterable): state vector at t.
                     h (float): step-size (dummy variable in multi-step integrator here to match parent signature)
 
                 Returns:
-                    xf (list): state vector at t + self._stepsize.
+                    xf (iterable): state vector at t + self._stepsize.
 
         """
 
@@ -585,7 +530,7 @@ class VariableStepIntegrator(Integrator):
                 _dim_state (int): dimension of state vector.
                 _last_step_ok (bool): false if last step didn't satisfy the constraint on the absolute error, true
                 otherwise.
-                _abs_tol (list): tolerance vector on estimated absolute error. Should have same number of
+                _abs_tol (iterable): tolerance vector on estimated absolute error. Should have same number of
                 components than there are state variables. Default is 1.e-8 for each.
                 _max_stepsize (float): maximum step-size allowed. Default is + infinity.
                 _step_multiplier (float): multiplicative factor to increase step-size when an integration step has
@@ -600,9 +545,9 @@ class VariableStepIntegrator(Integrator):
 
                 Args:
                      func (function): function to be integrated.
-                     order (integer): order of integrator.
+                     order (int): order of integrator.
                      dim_state (int): dimension of state factor.
-                     abs_error_tol (list): tolerance vector on estimated absolute error. Should have same number of
+                     abs_error_tol (iterable): tolerance vector on estimated absolute error. Should have same number of
                      components than there are state variables. Default is 1.e-8 for each.
                      max_stepsize (float): maximum step-size allowed. Default is + infinity.
                      step_multiplier (float): multiplicative factor to increase step-size when an integration step has
@@ -633,21 +578,17 @@ class VariableStepIntegrator(Integrator):
             self._max_stepsize = max_stepsize
 
         default_abs_tol = 1.e-8
-        self._abs_tol = []
-        if abs_error_tol is None:
-            for i in range(0, self._dim_state):
-                self._abs_tol.append(default_abs_tol)
-        else:
+        self._abs_tol = numpy.ones(self._dim_state) * default_abs_tol
+        if abs_error_tol is not None:
             if len(abs_error_tol) != self._dim_state:
                 raise ValueError("wrong input in VariableStepIntegrator: tolerance on absolute error must have same "
                       "dimension than state vector")
-            for i, el in enumerate(abs_error_tol):
-                if el <= 0.:
+            for i in range(0, len(abs_error_tol)):
+                if abs_error_tol[i] <= 0.:
                     print("input tolerance on absolute error is negative, switching to default value of"
                           + str(default_abs_tol) + "with state variable" + str(i))
-                    self._abs_tol.append(default_abs_tol)
                 else:
-                    self._abs_tol.append(el)
+                    self._abs_tol[i] = abs_error_tol[i]
 
     @abstractmethod
     def integration_step(self, t, x, h):
@@ -656,7 +597,7 @@ class VariableStepIntegrator(Integrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (list): state vector at t.
+                    x (iterable): state vector at t.
                     h (float): current step-size.
 
         """
@@ -685,10 +626,7 @@ class VariableStepIntegrator(Integrator):
         h = (tf - t0) / float(n_step)
 
         Ts = [t0]
-        x0_copy = []
-        for i in range(0, self._dim_state):
-            x0_copy.append(x0[i])
-        Xs = [x0_copy]
+        Xs = [x0]
 
         t = t0
         while math.fabs(t - t0) < math.fabs(tf - t0):
@@ -740,12 +678,12 @@ class RKF45(VariableStepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (list): state vector at t.
+                    x (iterable): state vector at t.
                     h (float): current step-size.
 
                 Returns:
-                    xf (list): tentative state vector at t + h.
-                    err (list): estimated error vector.
+                    xf (iterable): tentative state vector at t + h.
+                    err (iterable): estimated error vector.
 
         """
         # values of independent variable where the model will be evaluated
@@ -758,42 +696,25 @@ class RKF45(VariableStepIntegrator):
 
         f1 = self._func(t1, x)  # function call
 
-        x1 = []
-        for k in range(0, self._dim_state):
-            x1.append(x[k] + h / 4. * f1[k])
+        x1 = x + (h / 4.) * f1
         f2 = self._func(t2, x1)  # function call
 
-        x2 = []
-        for k in range(0, self._dim_state):
-            x2.append(x[k] + h * (f1[k] * 3. / 32. + f2[k] * 9. / 32.))
+        x2 = x + h * (3. / 32.) * (f1 + f2 * 3.)
         f3 = self._func(t3, x2)  # function call
 
-        x3 = []
-        for k in range(0, self._dim_state):
-            x3.append(x[k] + h * (f1[k] * 1932. / 2197. - f2[k] * 7200. / 2197. + f3[k] * 7296. / 2197.))
+        x3 = x + (h / 2197.) * (f1 * 1932. + f2 * (-7200.) + f3 * 7296.)
         f4 = self._func(t4, x3)  # function call
 
-        x4 = []
-        for k in range(0, self._dim_state):
-            x4.append(x[k] + h * (f1[k] * 439. / 216. - f2[k] * 8. + f3[k] * 3680. / 513. - f4[k] * 845. / 4104.))
+        x4 = x + h * (f1 * (439. / 216.) + f2 * (-8.) + f3 * (3680. / 513.) + f4 * (-845. / 4104.))
         f5 = self._func(t5, x4)  # function call
 
-        x5 = []
-        for k in range(0, self._dim_state):
-            x5.append(x[k] + h * (-f1[k] * 8. / 27. + f2[k] * 2. - f3[k] * 3544. / 2565. + f4[k] * 1859. / 4104.
-                                  - f5[k] * 11. / 40.))
+        x5 = x + h * (f1 * (-8. / 27.) + f2 * 2. + f3 * (-3544. / 2565.) + f4 * (1859. / 4104.) + f5 * (-11. / 40.))
         f6 = self._func(t6, x5)  # function call
 
-        xf = []
-        x_hat = []
-        err = []
-        for k in range(0, self._dim_state):
-            inter1 = f1[k] * 25. / 216. + f3[k] * 1408. / 2565. + f4[k] * 2197. / 4104. - f5[k] / 5.
-            xf.append(h * inter1)
-            inter2 = f1[k] * 16. / 135. + f3[k] * 6656. / 12825. + f4[k] * 28561. / 56430. - f5[k] * 9. / 50. + f6[k] * 2. / 55.
-            x_hat.append(h * inter2)
-            err.append(xf[k] - x_hat[k])
-            xf[k] += x[k]
-            x_hat[k] += x[k]
-
+        inter1 = f1 * (25. / 216.) + f3 * (1408. / 2565.) + f4 * (2197. / 4104.) + f5 * (-1. / 5.)
+        xf = h * inter1
+        inter2 = f1 * (16. / 135.) + f3 * (6656. / 12825.) + f4 * (28561. / 56430.) + f5 * (-9. / 50.) + f6 * (2. / 55.)
+        x_hat = h * inter2
+        err = xf - x_hat
+        xf += x
         return xf, err

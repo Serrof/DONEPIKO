@@ -210,7 +210,7 @@ class Plotter:
                 else:  # non-linear dynamics
 
                     def func(nu, x):  # right-hand side function for integration
-                        return self.dyn.evaluate_state_deriv_nonlin(nu, x)
+                        return numpy.array(self.dyn.evaluate_state_deriv_nonlin(nu, x))
 
                 integrator = integrators.ABM8(func)
 
