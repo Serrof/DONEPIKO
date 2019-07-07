@@ -25,6 +25,7 @@ class BodyProbParams(dynamical_system.DynParams):
                     mu (float): ratio of minor mass over total mass.
                     ecc (float): eccentricity.
                     period (float): orbital period.
+                    slr (float): semi-latus rectum.
                     mean_motion(float): mean motion.
                     sma (float): semi-major axis (must be consistent with period)
                     Li (int): index of Lagrange Point (required only if mu != 0)
@@ -56,6 +57,7 @@ class BodyProbParams(dynamical_system.DynParams):
         self.ecc = ecc
         self.period = period
         self.sma = sma
+        self.slr = self.sma * (1. - self.ecc * self.ecc)
         self.mean_motion = 2. * math.pi / period
         self.Li = Li
 
@@ -165,8 +167,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                     (numpy.array): derivative of transformed state vector in non-linear dynamics.
 
         """
-        slr = self.params.sma * (1. - self.params.ecc * self.params.ecc)
-        return state_deriv_nonlin(x, nu, self.params.ecc, self.x_eq_normalized, self.params.mu, slr)
+        return state_deriv_nonlin(x, nu, self.params.ecc, self.x_eq_normalized, self.params.mu, self.params.slr)
 
     def matrix_linear(self, nu, half_dim):
         """Function returning the matrix appearing in the differential system satisfied by the transformed state vector
