@@ -106,11 +106,11 @@ def Y_ip_elliptical2bp(e, n, nu0, nu):
     Js = J * s
     Jrho = J * rho
     inter = 1.0 + rho_inv
-    Y[1, 1] = (3.0 * Jrho - s * e * inter)
+    Y[1, 1] = 3.0 * Jrho - s * e * inter
     Y[1, 0] = -(-3.0 * Js * e + (-rho + 2.0) * inter)
     Y[0, 1] = -(-3.0 * Jrho * e + s * inter)
-    Y[0, 0] = (3.0 * e_sq * Js + c - 2.0 * e * rho_inv)
-    Y[3, 1] = (c + (c + e) * rho_inv)
+    Y[0, 0] = 3.0 * e_sq * Js + c - 2.0 * e * rho_inv
+    Y[3, 1] = c + (c + e) * rho_inv
     Y[3, 0] = s
     Y[2, 1] = rho
     Y[2, 0] = s * e

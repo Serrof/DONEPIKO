@@ -316,8 +316,8 @@ def solve_primal_1norm(grid_check, Y_grid, z):
         A = numpy.zeros((d * n_work, d))
         for j in range(0, len(grid_work)):
             tY = numpy.transpose(Y_grid[:, hd * indices_work[j]: hd * (indices_work[j] + 1)])
-            A[d * j: d * j + hd, :] = tY
-            A[d * j + hd: d * (j + 1), :] = -tY
+            A[d * j: d * j + hd, :] += tY
+            A[d * j + hd: d * (j + 1), :] -= tY
 
         res = linprog(-z, A_ub=A, b_ub=numpy.ones(d * n_work), bounds=(-numpy.inf, numpy.inf),
                       options={"disp": conf.params_other["verbose"], "tol": conf.params_indirect["tol_lin_prog"]})
@@ -375,15 +375,14 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
                 directions[i, j] = numpy.sign(inter[j])
                 n_alphas += 1
 
-        # building matrix for linear system
+    # building matrix for linear system
     M = numpy.zeros((d, n_alphas))
     count = 0
     for i in range(0, len(nus)):
         aux = Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]
         for j in range(0, hd):
             if math.fabs(directions[i, j]) > 0.0:
-                direc = directions[i, j]
-                M[:, count] = direc * aux[:, j]
+                M[:, count] = directions[i, j] * aux[:, j]
                 count += 1
 
     # solve for the alphas
@@ -439,14 +438,11 @@ def solve_primal_2norm(grid_check, Y_grid, z):
             Y = Y_grid[:, hd * indices_work[j]: hd * (indices_work[j] + 1)]
             # construction of matrix in numpy.array form
             inter = numpy.zeros((d, (hd + 1) * (hd + 1)))
+            inter[:, 1:1+hd] += Y
             for i in range(0, hd):
-                inter[:, 1 + i] = Y[:, i]
                 inter[:, 1 + hd + i * (hd + 1)] = Y[:, i]
             # conversion to matrix type
-            B = []
-            for el in inter:
-                B.append(list(el))
-            B = matrix(B)
+            B = matrix([list(el) for el in inter])
             if j == 0:
                 A = [-B]
                 h = [matrix(numpy.eye(hd + 1))]

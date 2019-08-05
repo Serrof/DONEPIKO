@@ -121,12 +121,12 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         inter = 1.0 - self.params.ecc * self.params.ecc
         inter2 = math.sqrt(inter * inter * inter) / self.params.mean_motion
         rho = rho_func(self.params.ecc, nu)
+        es = self.params.ecc * math.sin(nu)
         x_bar = []
-        for k in range(0, len(x)):
-            if k < half_dim:
-                x_bar.append(rho * x[k])
-            else:  # indices for velocity components of state vector
-                x_bar.append(-self.params.ecc * math.sin(nu) * x[k-half_dim] + inter2 * x[k] / rho)
+        for k in range(0, half_dim):
+            x_bar.append(rho * x[k])
+        for k in range(0, half_dim):
+            x_bar.append(-es * x[k] + inter2 * x[k + half_dim] / rho)
 
         return x_bar
 
@@ -146,12 +146,12 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         inter = 1.0 - self.params.ecc * self.params.ecc
         inter2 = math.sqrt(inter * inter * inter) / self.params.mean_motion
         rho = rho_func(self.params.ecc, nu)
+        es = self.params.ecc * math.sin(nu)
         x = []
-        for k in range(0, len(x_bar)):
-            if k < half_dim:
-                x.append(x_bar[k] / rho)
-            else:  # indices for velocity components of state vector
-                x.append((self.params.ecc * math.sin(nu) * x_bar[k-half_dim] + rho * x_bar[k]) / inter2)
+        for k in range(0, half_dim):
+            x.append(x_bar[k] / rho)
+        for k in range(0, half_dim):
+            x.append((es * x_bar[k] + rho * x_bar[k + half_dim]) / inter2)
 
         return x
 
@@ -228,9 +228,8 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         """
         matrices = self.integrate_phi_inv(nus, half_dim)
         Ys = numpy.zeros((2 * half_dim, half_dim * len(nus)))
-        for k in range(0, len(nus)):
-            inter = matrices[k]
-            Ys[:, half_dim * k: half_dim * (k + 1)] = inter[:, half_dim: 2 * half_dim] / \
+        for k, matrix in enumerate(matrices):
+            Ys[:, half_dim * k: half_dim * (k + 1)] = matrix[:, half_dim: 2 * half_dim] / \
                                                       rho_func(self.params.ecc, nus[k])
         return Ys
 
@@ -638,13 +637,18 @@ class RestriThreeBodyProb(BodyProbDyn):
 
         puls = puls_oop_LP(self.x_eq_normalized, self.params.mu)
         (gamma_re, gamma_im, c, k) = inter_L123(puls * puls)
-        row1 = [math.exp(gamma_re * nu), math.exp(-gamma_re * nu), math.cos(gamma_im * nu), math.sin(gamma_im * nu)]
-        row2 = [c * math.exp(gamma_re * nu), -c * math.exp(-gamma_re * nu),
-                 -k * math.sin(gamma_im * nu), k * math.cos(gamma_im * nu)]
-        row3 = [gamma_re * math.exp(gamma_re * nu), -gamma_re * math.exp(-gamma_re * nu),
-                 -gamma_im * math.sin(gamma_im * nu), gamma_im * math.cos(gamma_im * nu)]
-        row4 = [gamma_re * c * math.exp(gamma_re * nu), gamma_re * c * math.exp(-gamma_re * nu),
-                 -gamma_im * k * math.cos(gamma_im * nu), -gamma_im * k * math.sin(gamma_im * nu)]
+        exp_inter = math.exp(gamma_re * nu)
+        inv_exp = 1. / exp_inter
+        gamma_im_times_nu = gamma_im * nu
+        cos_inter = math.cos(gamma_im_times_nu)
+        sin_inter = math.sin(gamma_im_times_nu)
+        row1 = [exp_inter, inv_exp, cos_inter, sin_inter]
+        row2 = [c * exp_inter, -c * inv_exp,
+                 -k * sin_inter, k * cos_inter]
+        row3 = [gamma_re * exp_inter, -gamma_re * inv_exp,
+                 -gamma_im * sin_inter, gamma_im * cos_inter]
+        row4 = [gamma_re * c * exp_inter, gamma_re * c * inv_exp,
+                 -gamma_im * k * cos_inter, -gamma_im * k * sin_inter]
         phi = numpy.array([row1, row2, row3, row4]).dot(self._A_inv)
 
         return phi
@@ -663,17 +667,23 @@ class RestriThreeBodyProb(BodyProbDyn):
         """
 
         root1, root2, a1, a2, b1, b2, c1, c2, d1, d2 = inter_L45(self.params.mu, kappa)
-        row1 = [math.cos(root1 * nu), math.sin(root1 * nu), math.cos(root2 * nu), math.sin(root2 * nu)]
-        row2 = [a1 * math.cos(root1 * nu) + b1 * math.sin(root1 * nu),
-                 a2 * math.cos(root1 * nu) + b2 * math.sin(root1 * nu),
-                 c1 * math.cos(root2 * nu) + d1 * math.sin(root2 * nu),
-                 c2 * math.cos(root2 * nu) + d2 * math.sin(root2 * nu)]
-        row3 = [-root1 * math.sin(root1 * nu), root1 * math.cos(root1 * nu),
-                 -root2 * math.sin(root2 * nu), root2 * math.cos(root2 * nu)]
-        row4 = [-root1 * a1 * math.sin(root1 * nu) + root1 * b1 * math.cos(root1 * nu),
-                 -root1 * a2 * math.sin(root1 * nu) + root1 * b2 * math.cos(root1 * nu),
-                 -root2 * c1 * math.sin(root2 * nu) + root2 * d1 * math.cos(root2 * nu),
-                 -root2 * c2 * math.sin(root2 * nu) + root2 * d2 * math.cos(root2 * nu)]
+        root1_times_nu = root1 * nu
+        root2_times_nu = root2 * nu
+        cos1 = math.cos(root1_times_nu)
+        sin1 = math.sin(root1_times_nu)
+        cos2 = math.cos(root2_times_nu)
+        sin2 = math.sin(root2_times_nu)
+        row1 = [cos1, sin1, cos2, sin2]
+        row2 = [a1 * cos1 + b1 * sin1,
+                 a2 * cos1 + b2 * sin1,
+                 c1 * cos2 + d1 * sin2,
+                 c2 * cos2 + d2 * sin2]
+        row3 = [-root1 * sin1, root1 * cos1,
+                 -root2 * sin2, root2 * cos2]
+        row4 = [-root1 * a1 * sin1 + root1 * b1 * cos1,
+                 -root1 * a2 * sin1 + root1 * b2 * cos1,
+                 -root2 * c1 * sin2 + root2 * d1 * cos2,
+                 -root2 * c2 * sin2 + root2 * d2 * cos2]
         phi = numpy.array([row1, row2, row3, row4]).dot(self._A_inv)
 
         return phi
@@ -706,11 +716,13 @@ class RestriThreeBodyProb(BodyProbDyn):
                 u = self._exp_LP123(-nu2).dot(x2)
                 u -= self._exp_LP123(-nu1).dot(x1)
             elif self.params.Li == 4:
-                u = self._exp_LP45(-nu2, 1. - 2. * self.params.mu).dot(x2)
-                u -= self._exp_LP45(-nu1, 1. - 2. * self.params.mu).dot(x1)
+                arg2 = 1. - 2. * self.params.mu
+                u = self._exp_LP45(-nu2, arg2).dot(x2)
+                u -= self._exp_LP45(-nu1, arg2).dot(x1)
             else:  # Li = 5
-                u = self._exp_LP45(-nu2, -1. + 2. * self.params.mu).dot(x2)
-                u -= self._exp_LP45(-nu1, -1. + 2. * self.params.mu).dot(x1)
+                arg2 = -1. + 2. * self.params.mu
+                u = self._exp_LP45(-nu2, arg2).dot(x2)
+                u -= self._exp_LP45(-nu1, arg2).dot(x1)
         else:
             return NotImplementedError
         return u

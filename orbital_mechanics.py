@@ -112,10 +112,10 @@ def puls_oop_LP(x, mu_ratio):
 
     r1sq = (x[0] + mu_ratio) * (x[0] + mu_ratio) + x[1] * x[1]
     r1 = math.sqrt(r1sq)
-    r1cube = r1 * r1 * r1
+    r1cube = r1sq * r1
     r2sq = (x[0] - 1.0 + mu_ratio) * (x[0] - 1.0 + mu_ratio) + x[1] * x[1]
     r2 = math.sqrt(r2sq)
-    r2cube = r2 * r2 * r2
+    r2cube = r2sq * r2
 
     return math.sqrt((1.0 - mu_ratio) / r1cube + mu_ratio / r2cube)
 
@@ -598,7 +598,7 @@ def oop_state_deriv(x, nu, ecc, x_eq, mu):
     if mu != 0.:
         pulsation = puls_oop_LP(x_eq, mu)
         factor = (pulsation * pulsation + ecc * math.cos(nu)) / rho_func(ecc, nu)
-        return [x[0], -x[1] * factor]
+        return [x[1], -x[0] * factor]
 
     else:  # out-of-plane elliptical 2-body problem
         return [x[1], -x[0]]

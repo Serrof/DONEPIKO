@@ -181,10 +181,7 @@ class DynamicalSystem:
                     (numpy.array): transformed state vector.
 
         """
-        y = []
-        for k in range(0, len(x)):
-            y.append(x[k])
-        return y
+        return [el for el in x]
 
     def transformation_inv(self, x, nu):
         """Method to be overwritten by inverse of transformation if the latter is different from (x, nu) -> x.

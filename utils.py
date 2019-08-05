@@ -191,11 +191,11 @@ class ControlLaw:
         self.half_dim = half_dim
         self.nus = numpy.array(nus[:])
         self.DVs = numpy.zeros((self.N, half_dim))
-        for i in range(0, self.N):
-            if self.half_dim == 1:
+        if self.half_dim == 1:
+            for i in range(0, self.N):
                 self.DVs[i, :] = DVs[i]
-            else:  # in-plane or complete dynamics
-                self.DVs[i, :] = DVs[i, :]
+        else:  # in-plane or complete dynamics
+            self.DVs += DVs
 
         if lamb is not None:
             self.lamb = numpy.array(lamb[:])

@@ -224,9 +224,8 @@ class Plotter:
                         IC_transformed = self.dyn.transformation(IC, nu1)
                         n_int = int(math.ceil((nu2 - nu1) / conf.params_plot["h_min"]))
                         (states_transformed, pts_inter) = integrator.integrate(nu1, nu2, IC_transformed, n_int)
-                        states_inter = []
-                        for i, state in enumerate(states_transformed):
-                            states_inter.append(self.dyn.transformation_inv(state, pts_inter[i]))
+                        states_inter = [self.dyn.transformation_inv(states_transformed[j], pts_inter[j])
+                                        for j in range(0, len(pts_inter))]
                         return states_inter, pts_inter
 
                 states = []
@@ -264,9 +263,7 @@ class Plotter:
                 if self.anomaly:
                     self._pts = pts
                 else:  # the independent variable is time
-                    self._pts = []
-                    for nu in self._nus:
-                        self._pts.append(self.dyn.convToAlterIndVar(self.BC.nu0, 0., nu))
+                    self._pts = [self.dyn.convToAlterIndVar(self.BC.nu0, 0., nu) for nu in pts]
                 self._states = numpy.array(states[:]).transpose()
 
     def plot_pv(self):
@@ -279,7 +276,6 @@ class Plotter:
 
         # generating primer vector 
         pv = numpy.zeros((self.BC.half_dim, self._nb))
-        pv_norm = []
         if self.analytical:
             for k in range(0, self._nb):
                 pv[:, k] = numpy.transpose(self.dyn.evaluate_Y(self._nus[k], self.BC.half_dim)).dot(self.CL.lamb)
@@ -288,8 +284,7 @@ class Plotter:
             for k in range(0, self._nb):
                 pv[:, k] = numpy.transpose(Ys[:, k * self.BC.half_dim: (k + 1) * self.BC.half_dim]).dot(self.CL.lamb)
 
-        for k in range(0, self._nb):
-            pv_norm.append(linalg.norm(pv[:, k], self._q))
+        pv_norm = [linalg.norm(pv[:, k], self._q) for k in range(0, self._nb)]
 
         # plotting primer vector 
         min_pv = numpy.min(pv[0, :])
