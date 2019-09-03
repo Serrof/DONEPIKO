@@ -56,6 +56,17 @@ class FixedstepIntegrator(Integrator):
     """
 
     __metaclass__ = ABCMeta
+    
+        def __init__(self, func, order):
+        """Constructor for class FixedstepIntegrator.
+
+                Args:
+                     func (function): function to be integrated.
+                     order (int): order of integration scheme.
+
+        """
+
+        Integrator.__init__(self, func, order)
 
     @abstractmethod
     def integration_step(self, t, x, h):
