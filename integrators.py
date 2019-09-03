@@ -56,8 +56,8 @@ class FixedstepIntegrator(Integrator):
     """
 
     __metaclass__ = ABCMeta
-    
-        def __init__(self, func, order):
+
+    def __init__(self, func, order):
         """Constructor for class FixedstepIntegrator.
 
                 Args:
@@ -91,8 +91,8 @@ class FixedstepIntegrator(Integrator):
                     n_step (int): number of integration steps to be performed.
 
                 Returns:
-                    Xs (list): history of state vectors at integration steps.
-                    Ts (list): values taken by the independent variable at successive integration steps.
+                    Xs (iterable): history of state vectors at integration steps.
+                    Ts (iterable): values taken by the independent variable at successive integration steps.
 
         """
 
@@ -118,7 +118,7 @@ class Euler(FixedstepIntegrator):
                      func (function): function to be integrated.
 
         """
-        Integrator.__init__(self, func, 1)
+        FixedstepIntegrator.__init__(self, func, 1)
 
     def integration_step(self, t, x, h):
         """Function performing a single integration step i.e. given the state vector at the current value t of
@@ -149,7 +149,7 @@ class Heun(FixedstepIntegrator):
                      func (function): function to be integrated.
 
         """
-        Integrator.__init__(self, func, 2)
+        FixedstepIntegrator.__init__(self, func, 2)
 
     def integration_step(self, t, x, h):
         """Function performing a single integration step i.e. given the state vector at the current value t of
@@ -185,7 +185,7 @@ class RK4(FixedstepIntegrator):
                      func (function): function to be integrated.
 
         """
-        Integrator.__init__(self, func, 4)
+        FixedstepIntegrator.__init__(self, func, 4)
 
     def integration_step(self, t, x, h):
         """Function performing a single integration step i.e. given the state vector at the current value t of
@@ -233,7 +233,7 @@ class BS(FixedstepIntegrator):
                      order (int): order of integrator.
 
         """
-        Integrator.__init__(self, func, order)
+        FixedstepIntegrator.__init__(self, func, order)
 
         sequence = [2]
         if self._order > 1:
@@ -329,8 +329,8 @@ class MultistepIntegrator(FixedstepIntegrator):
             Attributes:
                  saved_steps (list): values of state derivative at previous steps.
                  _stepsize (float): step-size.
-                 _beta (numpy.array): vector of numbers used in integration scheme.
-                 _initializer (Integrator): integrator used to initialize the multi-step method.
+                 _beta (array): vector of numbers used in integration scheme.
+                 _initializer (FixedstepIntegrator): integrator used to initialize the multi-step method.
 
     """
 
@@ -344,7 +344,7 @@ class MultistepIntegrator(FixedstepIntegrator):
                      order (int): order of integrator.
 
         """
-        Integrator.__init__(self, func, order)
+        FixedstepIntegrator.__init__(self, func, order)
 
         self._stepsize = 0.
         self.saved_steps = []
@@ -556,7 +556,7 @@ class VariableStepIntegrator(Integrator):
 
                 Args:
                      func (function): function to be integrated.
-                     order (int): order of integrator.
+                     order (integer): order of integrator.
                      dim_state (int): dimension of state factor.
                      abs_error_tol (iterable): tolerance vector on estimated absolute error. Should have same number of
                      components than there are state variables. Default is 1.e-8 for each.
@@ -624,8 +624,8 @@ class VariableStepIntegrator(Integrator):
                     n_step (int): initial guess for number of integration steps.
 
                 Returns:
-                    Xs (list): history of state vectors at integration steps.
-                    Ts (list): values taken by the independent variable at successive integration steps.
+                    Xs (iterable): history of state vectors at integration steps.
+                    Ts (iterable): values taken by the independent variable at successive integration steps.
 
         """
 
