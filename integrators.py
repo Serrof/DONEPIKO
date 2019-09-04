@@ -659,8 +659,7 @@ class VariableStepIntegrator(Integrator):
                 inter = math.fabs(err[i]) / self._abs_tol[i]
                 if inter > max_err_ratio:
                     max_err_ratio = inter
-                    if max_err_ratio > 1.:
-                        self._last_step_ok = False
+            self._last_step_ok = max_err_ratio <= 1.
 
             if self._last_step_ok:
                 t += h
