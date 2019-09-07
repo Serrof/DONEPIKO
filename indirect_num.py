@@ -9,7 +9,7 @@
 
 import math
 import random
-import numpy
+import numpy as np
 from numpy import linalg
 from scipy.optimize import linprog
 from cvxopt import matrix, solvers
@@ -33,7 +33,7 @@ def dual_to_primal_norm_type(p):
 
     q = p
     if p == 1:
-        q = numpy.inf
+        q = np.inf
     return q
 
 
@@ -88,8 +88,8 @@ def find_max_pv(Y_grid, lamb, q):
     """Function checking if the maximum q-norm of the primer vector on a grid is less than one.
 
             Args:
-                Y_grid (numpy.array): grid of moment-function components for norm evaluation of primer vector.
-                lamb (numpy.array): coefficients of primer vector.
+                Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
+                lamb (np.array): coefficients of primer vector.
                 q (int): norm for primer vector.
 
             Returns:
@@ -101,11 +101,11 @@ def find_max_pv(Y_grid, lamb, q):
     hd = int(len(lamb) / 2)
     n_check = int(len(Y_grid[0, :]) / hd)
     unit_norm = True
-    norms = numpy.zeros(n_check)
+    norms = np.zeros(n_check)
     for k in range(0, n_check):
         Y_k = Y_grid[:, hd * k: hd * (k + 1)]
-        norms[k] = linalg.norm(numpy.transpose(Y_k).dot(lamb), q)
-    index_max = numpy.argmax(norms)
+        norms[k] = linalg.norm(np.transpose(Y_k).dot(lamb), q)
+    index_max = np.argmax(norms)
     val_max = norms[index_max]
     if val_max > 1.0 + conf.params_indirect["tol_unit_norm"]:
         unit_norm = False
@@ -117,12 +117,12 @@ def remove_nus(Y_grid, q, grid_work, indices_work, lamb):
     """Function removing from a grid the true anomalies where the candidate primer vector has a norm smaller than one.
 
             Args:
-                Y_grid (numpy.array): grid of moment-function components for norm computation of candidate primer vector.
+                Y_grid (np.array): grid of moment-function components for norm computation of candidate primer vector.
                 q (int): type of norm for primer vector.
                 grid_work (list): input grid where to trim true anomalies where norm of primer vector is smaller than 1.
                 indices_work (list): indices of elements of grid_work in thinner grid of true anomalies used for post-
                 process norm checks.
-                lamb (numpy.array): coefficients of candidate primer vector.
+                lamb (np.array): coefficients of candidate primer vector.
 
             Returns:
                  grid (list): filtered grid w.r.t. input one.
@@ -138,7 +138,7 @@ def remove_nus(Y_grid, q, grid_work, indices_work, lamb):
         indices.append(indices_work[k])
     removed_nus = 0
     for k in range(0, len(grid)):
-        pv = numpy.transpose(Y_grid[:, hd * indices[k - removed_nus]: hd * (indices[k - removed_nus] + 1)]).dot(lamb)
+        pv = np.transpose(Y_grid[:, hd * indices[k - removed_nus]: hd * (indices[k - removed_nus] + 1)]).dot(lamb)
         pv_norm = linalg.norm(pv, q)
         if pv_norm < 1.0 - conf.params_indirect["tol_unit_norm"]:
             del grid[k - removed_nus]
@@ -154,8 +154,8 @@ def extract_nus(grid_check, Y_grid, lamb, q):
             Args:
                 grid_check (): grid of true anomalies where norm of candidate primer vector is compared to 1 to
                 check convergence.
-                Y_grid (numpy.array): grid of moment-function components for norm evaluation of candidate primer vector.
-                lamb (numpy.array): coefficients of candidate primer vector.
+                Y_grid (np.array): grid of moment-function components for norm evaluation of candidate primer vector.
+                lamb (np.array): coefficients of candidate primer vector.
                 q (int): norm for primer vector.
 
             Returns:
@@ -175,7 +175,7 @@ def extract_nus(grid_check, Y_grid, lamb, q):
     k = 0
     while k < n_check:
         Y_k = Y_grid[:, hd * k: hd * (k + 1)]
-        inter = linalg.norm(numpy.transpose(Y_k).dot(lamb), q)
+        inter = linalg.norm(np.transpose(Y_k).dot(lamb), q)
         if 1.0 - conf.params_indirect["tol_unit_norm"] < inter:
             k += 1
             i_nu = k - 1
@@ -184,7 +184,7 @@ def extract_nus(grid_check, Y_grid, lamb, q):
                 lap = True
                 while lap:
                     Y_k = Y_grid[:, hd * k: hd * (k + 1)]
-                    inter2 = linalg.norm(numpy.transpose(Y_k).dot(lamb), q)
+                    inter2 = linalg.norm(np.transpose(Y_k).dot(lamb), q)
                     if 1.0 - conf.params_indirect["tol_unit_norm"] < inter2:
                         if k == n_check - 1:
                             lap = False
@@ -206,12 +206,12 @@ def solve_alphas(M, z, n_alphas):
     """Function solving linear system of equations satisfied by the impulses' norm.
 
             Args:
-                M (numpy.array): matrix such that M * alphas = z.
-                z (numpy.array): right-hand side of moment equation.
+                M (np.array): matrix such that M * alphas = z.
+                z (np.array): right-hand side of moment equation.
                 n_alphas (int): number of impulses (p=2) or of non-zero components of impulses (p=1).
 
             Returns:
-                alphas (numpy.array): vector made of magnitudes of impulses (p=2) or impulses' components (p=1).
+                alphas (np.array): vector made of magnitudes of impulses (p=2) or impulses' components (p=1).
 
     """
 
@@ -234,12 +234,12 @@ def solve_primal(grid_check, Y_grid, z, p):
             Args:
                 grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
                 check convergence.
-                Y_grid (numpy.array): grid of moment-function components for norm evaluation of primer vector.
-                z (numpy.array): right-hand side of moment equation.
+                Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
+                z (np.array): right-hand side of moment equation.
                 p (int): type of norm to be minimized.
 
             Returns:
-                 lamb (numpy.array): coefficients of primer vector.
+                 lamb (np.array): coefficients of primer vector.
 
     """
 
@@ -261,14 +261,14 @@ def primal_to_dual(grid_check, Y_grid, lamb, z, p):
             Args:
                 grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
                 check convergence.
-                Y_grid (numpy.array): grid of moment-function components for norm evaluation of primer vector.
-                lamb (numpy.array): coefficients of primer vector.
-                z (numpy.array): right-hand side of moment equation.
+                Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
+                lamb (np.array): coefficients of primer vector.
+                z (np.array): right-hand side of moment equation.
                 p (int): type of norm to be minimized.
 
             Returns:
                 nus (list): optimal nus of burn.
-                DV (numpy.array): corresponding Delta-Vs.
+                DV (np.array): corresponding Delta-Vs.
 
     """
 
@@ -290,11 +290,11 @@ def solve_primal_1norm(grid_check, Y_grid, z):
             Args:
                 grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
                 check convergence.
-                Y_grid (numpy.array): grid of moment-function components for norm evaluation of primer vector.
-                z (numpy.array): right-hand side of moment equation.
+                Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
+                z (np.array): right-hand side of moment equation.
 
             Returns:
-                lamb (numpy.array): coefficients of primer vector.
+                lamb (np.array): coefficients of primer vector.
 
     """
 
@@ -313,21 +313,21 @@ def solve_primal_1norm(grid_check, Y_grid, z):
     while (not converged) and (iterations < conf.params_indirect["max_iter"]):
 
         # building matrix for linear constraints
-        A = numpy.zeros((d * n_work, d))
+        A = np.zeros((d * n_work, d))
         for j in range(0, len(grid_work)):
-            tY = numpy.transpose(Y_grid[:, hd * indices_work[j]: hd * (indices_work[j] + 1)])
+            tY = np.transpose(Y_grid[:, hd * indices_work[j]: hd * (indices_work[j] + 1)])
             A[d * j: d * j + hd, :] += tY
             A[d * j + hd: d * (j + 1), :] -= tY
 
-        res = linprog(-z, A_ub=A, b_ub=numpy.ones(d * n_work), bounds=(-numpy.inf, numpy.inf),
+        res = linprog(-z, A_ub=A, b_ub=np.ones(d * n_work), bounds=(-np.inf, np.inf),
                       options={"disp": conf.params_other["verbose"], "tol": conf.params_indirect["tol_lin_prog"]})
         lamb = res.x
 
-        (converged, index_max) = find_max_pv(Y_grid, lamb, numpy.inf)
+        (converged, index_max) = find_max_pv(Y_grid, lamb, np.inf)
         if not converged:
             iterations += 1
             if conf.params_indirect["exchange"]:
-                (grid_work, indices_work) = remove_nus(Y_grid, numpy.inf, grid_work, indices_work, lamb)
+                (grid_work, indices_work) = remove_nus(Y_grid, np.inf, grid_work, indices_work, lamb)
             grid_work.append(grid_check[index_max])  # add nu
             indices_work.append(index_max)
             n_work = len(grid_work)
@@ -348,13 +348,13 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
             Args:
                 grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
                 check convergence.
-                Y_grid (numpy.array): grid of moment-function components for norm evaluation of primer vector.
-                lamb (numpy.array): coefficients of primer vector.
-                z (numpy.array): right-hand side of moment equation.
+                Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
+                lamb (np.array): coefficients of primer vector.
+                z (np.array): right-hand side of moment equation.
 
             Returns:
                 nus (list): optimal nus of burn.
-                DVs (numpy.array): corresponding Delta-Vs.
+                DVs (np.array): corresponding Delta-Vs.
 
     """
 
@@ -363,20 +363,20 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
     hd = int(d / 2)
 
     # extracting optimal nus from primer vector
-    (nus, indices) = extract_nus(grid_check, Y_grid, lamb, numpy.inf)
+    (nus, indices) = extract_nus(grid_check, Y_grid, lamb, np.inf)
 
     # extracting optimal directions of burn from primer vector
-    directions = numpy.zeros((len(nus), hd))
+    directions = np.zeros((len(nus), hd))
     n_alphas = 0
     for i in range(0, len(nus)):
-        inter = numpy.transpose(Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]).dot(lamb)
+        inter = np.transpose(Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]).dot(lamb)
         for j in range(0, hd):
             if math.fabs(inter[j]) > 1.0 - conf.params_indirect["tol_unit_norm"]:
-                directions[i, j] = numpy.sign(inter[j])
+                directions[i, j] = np.sign(inter[j])
                 n_alphas += 1
 
     # building matrix for linear system
-    M = numpy.zeros((d, n_alphas))
+    M = np.zeros((d, n_alphas))
     count = 0
     for i in range(0, len(nus)):
         aux = Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]
@@ -391,7 +391,7 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
         print('dual numerical cost 1-norm : ' + str(sum(alphas)))
 
     # reconstructing velocity jumps
-    DVs = numpy.zeros((len(nus), hd))
+    DVs = np.zeros((len(nus), hd))
     count = 0
     for i in range(0, len(nus)):
         for j in range(0, hd):
@@ -408,11 +408,11 @@ def solve_primal_2norm(grid_check, Y_grid, z):
             Args:
                 grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
                 check convergence.
-                Y_grid (numpy.array): grid of moment-function components for norm evaluation of primer vector.
-                z (numpy.array): right-hand side of moment equation.
+                Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
+                z (np.array): right-hand side of moment equation.
 
             Returns:
-                lamb (numpy.array): coefficients of primer vector.
+                lamb (np.array): coefficients of primer vector.
 
     """
 
@@ -428,7 +428,7 @@ def solve_primal_2norm(grid_check, Y_grid, z):
     iterations = 1
     solvers.options['show_progress'] = conf.params_other["verbose"]
     solvers.options['abstol'] = conf.params_indirect["tol_cvx"]
-    lamb = numpy.zeros(d)
+    lamb = np.zeros(d)
     while (not converged) and (iterations < conf.params_indirect["max_iter"]):
 
         # building matrices for SDP constraints
@@ -436,8 +436,8 @@ def solve_primal_2norm(grid_check, Y_grid, z):
         h = None
         for j in range(0, len(grid_work)):
             Y = Y_grid[:, hd * indices_work[j]: hd * (indices_work[j] + 1)]
-            # construction of matrix in numpy.array form
-            inter = numpy.zeros((d, (hd + 1) * (hd + 1)))
+            # construction of matrix in np.array form
+            inter = np.zeros((d, (hd + 1) * (hd + 1)))
             inter[:, 1:1+hd] += Y
             for i in range(0, hd):
                 inter[:, 1 + hd + i * (hd + 1)] = Y[:, i]
@@ -445,13 +445,13 @@ def solve_primal_2norm(grid_check, Y_grid, z):
             B = matrix([list(el) for el in inter])
             if j == 0:
                 A = [-B]
-                h = [matrix(numpy.eye(hd + 1))]
+                h = [matrix(np.eye(hd + 1))]
             else:  # A and h are already not None
                 A += [-B]
-                h += [matrix(numpy.eye(hd + 1))]
+                h += [matrix(np.eye(hd + 1))]
 
         solution = solvers.sdp(matrix(-z), Gs=A, hs=h)
-        x = numpy.array(solution['x'])
+        x = np.array(solution['x'])
         lamb[:] = x[:, 0]
 
         (converged, index_max) = find_max_pv(Y_grid, lamb, 2)
@@ -478,13 +478,13 @@ def primal_to_dual_2norm(grid_check, Y_grid, lamb, z):
             Args:
                 grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
                 check convergence.
-                Y_grid (numpy.array): grid of moment-function components for norm evaluation of primer vector.
-                lamb (numpy.array): coefficients of primer vector.
-                z (numpy.array): right-hand side of moment equation.
+                Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
+                lamb (np.array): coefficients of primer vector.
+                z (np.array): right-hand side of moment equation.
 
             Returns:
                 nus (list): optimal nus of burn.
-                DVs (numpy.array): corresponding Delta-Vs.
+                DVs (np.array): corresponding Delta-Vs.
 
     """
 
@@ -497,11 +497,11 @@ def primal_to_dual_2norm(grid_check, Y_grid, lamb, z):
     (nus, indices) = extract_nus(grid_check, Y_grid, lamb, p)
 
     # building matrix for linear system
-    M = numpy.zeros((d, len(nus)))
-    directions = numpy.zeros((len(nus), hd))
+    M = np.zeros((d, len(nus)))
+    directions = np.zeros((len(nus), hd))
     for i in range(0, len(nus)):
         aux = Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]
-        inter = numpy.transpose(aux).dot(lamb)
+        inter = np.transpose(aux).dot(lamb)
         directions[i, :] = inter[:] / linalg.norm(inter, p)
         M[:, i] += aux.dot(directions[i, :])
 
@@ -510,7 +510,7 @@ def primal_to_dual_2norm(grid_check, Y_grid, lamb, z):
         print('dual numerical cost 2-norm : ' + str(sum(alphas)))
 
     # reconstructing velocity jumps
-    DVs = numpy.zeros((len(nus), hd))
+    DVs = np.zeros((len(nus), hd))
     for i in range(0, len(nus)):
         DVs[i, :] = directions[i, :] * alphas[i]
 

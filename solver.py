@@ -7,7 +7,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see < https://www.gnu.org/licenses/>.
 
-import numpy
+import numpy as np
 import body_prob_dyn
 import orbital_mechanics
 import utils
@@ -100,13 +100,13 @@ class Solver:
                     half_dim (int): half-dimension of state-vector.
 
                 Returns:
-                    Ys (numpy.array): grid of values for moment-function on input grid.
+                    Ys (np.array): grid of values for moment-function on input grid.
 
         """
 
         if self.prop_ana:
             grid_size = len(grid)
-            Ys = numpy.zeros((2 * half_dim, half_dim * grid_size))
+            Ys = np.zeros((2 * half_dim, half_dim * grid_size))
             for k in range(0, grid_size):
                 Ys[:, half_dim * k: half_dim * (k + 1)] = self.dyn.evaluate_Y(grid[k], half_dim)
         else:  # numerical integration
@@ -129,12 +129,12 @@ class Solver:
 
             if ((BC.nuf - BC.nu0) % math.pi) != 0.:
                 # build and solve system of equations for two boundary impulses
-                mat = numpy.zeros((2 * BC.half_dim, 2 * BC.half_dim))
+                mat = np.zeros((2 * BC.half_dim, 2 * BC.half_dim))
 
                 if self.prop_ana:
                     mat[:, 0:BC.half_dim] = self.dyn.evaluate_Y(BC.nu0, BC.half_dim)
                     mat[:, BC.half_dim:2 * BC.half_dim] = self.dyn.evaluate_Y(BC.nuf, BC.half_dim)
-                    inv_mat = numpy.linalg.inv(mat)
+                    inv_mat = np.linalg.inv(mat)
                     inter = inv_mat.dot(self.dyn.compute_rhs(BC, analytical=True))
 
                 else:  # numerical propagation
@@ -151,27 +151,27 @@ class Solver:
 
                     factor = 1.0 - self.dyn.params.ecc * self.dyn.params.ecc
                     multiplier = self.dyn.params.mean_motion / math.sqrt(factor * factor * factor)
-                    inv_mat = numpy.linalg.inv(mat)
+                    inv_mat = np.linalg.inv(mat)
                     inter = inv_mat.dot((FC_matrix.dot(self.dyn.transformation(BC.xf, BC.nuf)) -
                                          IC_matrix.dot(self.dyn.transformation(BC.x0, BC.nu0))) * multiplier)
 
                 # retrieve the two Delta-Vs
-                DVs = numpy.zeros((2, BC.half_dim))
+                DVs = np.zeros((2, BC.half_dim))
                 DVs[0, :] = inter[0:BC.half_dim]
                 DVs[1, :] = inter[BC.half_dim:2 * BC.half_dim]
 
                 # build and solve system of equations for corresponding primer vector
                 if self.p == 2:
-                    inter2 = numpy.zeros(2 * BC.half_dim)
-                    inter2[:BC.half_dim] = inter[:BC.half_dim] / numpy.linalg.norm(DVs[0, :], self.p)
-                    inter2[BC.half_dim:] = inter[BC.half_dim:] / numpy.linalg.norm(DVs[1, :], self.p)
-                    lamb = numpy.transpose(inv_mat).dot(inter2)
+                    inter2 = np.zeros(2 * BC.half_dim)
+                    inter2[:BC.half_dim] = inter[:BC.half_dim] / np.linalg.norm(DVs[0, :], self.p)
+                    inter2[BC.half_dim:] = inter[BC.half_dim:] / np.linalg.norm(DVs[1, :], self.p)
+                    lamb = np.transpose(inv_mat).dot(inter2)
 
                 else:  # p = 1
                     indices = inter != 0.
                     if len(indices) == 2 * BC.half_dim:
-                        inter2 = numpy.sign(inter)
-                        lamb = numpy.transpose(inv_mat).dot(inter2)
+                        inter2 = np.sign(inter)
+                        lamb = np.transpose(inv_mat).dot(inter2)
                     else:  # no unique solution for coefficients of primer vector
                         lamb = None
 

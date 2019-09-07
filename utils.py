@@ -7,7 +7,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see < https://www.gnu.org/licenses/>.
 
-import numpy
+import numpy as np
 from numpy import linalg
 
 
@@ -15,11 +15,11 @@ def stack_state(x_ip, x_oop):
     """Function that stacks in-plane and out-of-plane state vectors.
 
         Args:
-            x_ip (numpy.array): The in-plane state vector.
-            x_oop (numpy.array): The out-of-plane state vector.
+            x_ip (np.array): The in-plane state vector.
+            x_oop (np.array): The out-of-plane state vector.
 
         Returns:
-            x (numpy.array): The state vector for the corresponding complete dynamics.
+            x (np.array): The state vector for the corresponding complete dynamics.
 
     """
 
@@ -29,7 +29,7 @@ def stack_state(x_ip, x_oop):
     if len(x_oop) != 2:
         return ValueError('STACK_STATE: out-of-plane vector must be 2-dimensional')
 
-    x = numpy.zeros(6)
+    x = np.zeros(6)
     x[0:2] = x_ip[0:2]
     x[2] = x_oop[0]
     x[3:5] = x_ip[2:4]
@@ -42,11 +42,11 @@ def unstack_state(x):
     """Function that unstacks state vector into in-plane and out-of-plane vectors.
 
         Args:
-            x (numpy.array): The complete state vector.
+            x (np.array): The complete state vector.
 
         Returns:
-            x_ip (numpy.array): The in-plane state vector.
-            x_oop (numpy.array): The out-of-plane state vector.
+            x_ip (np.array): The in-plane state vector.
+            x_oop (np.array): The out-of-plane state vector.
 
     """
 
@@ -55,11 +55,11 @@ def unstack_state(x):
         return ValueError('UNSTACK_STATE: complete state vector must be 6-dimensional')
 
     # out-of-plane part
-    x_oop = numpy.zeros(2)
+    x_oop = np.zeros(2)
     x_oop[0] = x[2]
     x_oop[1] = x[5]
     # in-plane part
-    x_ip = numpy.zeros(4)
+    x_ip = np.zeros(4)
     x_ip[0:2] = x[0:2]
     x_ip[2:4] = x[3:5]
 
@@ -70,14 +70,14 @@ def vector_to_square_matrix(x_vector, n):
     """Function turning a N^2-dimensional vector into a N*N matrix column-wise.
 
         Args:
-            x_vector (numpy.array): vector.
+            x_vector (np.array): vector.
             n (int): size of output square matrix.
 
         Returns:
-            x_matrix (numpy.array): matrix whose concatenated columns would make up the input vector.
+            x_matrix (np.array): matrix whose concatenated columns would make up the input vector.
 
     """
-    x_matrix = numpy.zeros((n, n))
+    x_matrix = np.zeros((n, n))
     for i in range(0, n):
         x_matrix[i, :] = x_vector[i * n: (i + 1) * n]
 
@@ -88,14 +88,14 @@ def square_matrix_to_vector(x_matrix, n):
     """Function turning a NxN matrix into a N^2-dimensional vector.
 
         Args:
-            x_matrix (numpy.array): square matrix.
+            x_matrix (np.array): square matrix.
             n (int): size of input matrix.
 
         Returns:
-            x_vector (numpy.array): vector composed of the concatenated columns of the input matrix.
+            x_vector (np.array): vector composed of the concatenated columns of the input matrix.
 
     """
-    x_vector = numpy.zeros(n * n)
+    x_vector = np.zeros(n * n)
     for i in range(0, n):
         x_vector[i * n: (i + 1) * n] = x_matrix[i, :]
 
@@ -109,8 +109,8 @@ class BoundaryConditions:
                 nu0 (float): initial true anomaly.
                 nuf (float): final true anomaly.
                 half_dim (int): half-dimension of state vector.
-                x0 (numpy.array): initial state vector.
-                xf (numpy.array): final state vector.
+                x0 (np.array): initial state vector.
+                xf (np.array): final state vector.
 
     """
 
@@ -120,8 +120,8 @@ class BoundaryConditions:
                 Args:
                     nu0 (float): initial true anomaly.
                     nuf (float): final true anomaly.
-                    x0 (numpy.array): initial state vector.
-                    xf (numpy.array): final state vector.
+                    x0 (np.array): initial state vector.
+                    xf (np.array): final state vector.
 
         """
 
@@ -131,8 +131,8 @@ class BoundaryConditions:
         self.nu0 = nu0
         self.nuf = nuf
         self.half_dim = int(len(x0) / 2)
-        self.x0 = numpy.array(x0[:])
-        self.xf = numpy.array(xf[:])
+        self.x0 = np.array(x0[:])
+        self.xf = np.array(xf[:])
 
     def copy(self):
         """Function returning a copy of the object.
@@ -170,9 +170,9 @@ class ControlLaw:
             Attributes:
                 N (int): number of impulses.
                 half_dim (int): dimension of control vector.
-                nus (numpy.array): true anomalies where burns occur.
-                DVs (numpy.array): Delta-Vs.
-                lamb (numpy.array): coefficients for primer vector.
+                nus (np.array): true anomalies where burns occur.
+                DVs (np.array): Delta-Vs.
+                lamb (np.array): coefficients for primer vector.
 
     """
 
@@ -181,16 +181,16 @@ class ControlLaw:
 
                 Args:
                     half_dim (int): dimension of control vector.
-                    nus (numpy.array): true anomalies where burns occur.
-                    DVs (numpy.array): Delta-Vs.
-                    lamb (numpy.array): coefficients for primer vector.
+                    nus (np.array): true anomalies where burns occur.
+                    DVs (np.array): Delta-Vs.
+                    lamb (np.array): coefficients for primer vector.
 
         """
 
         self.N = len(nus)
         self.half_dim = half_dim
-        self.nus = numpy.array(nus[:])
-        self.DVs = numpy.zeros((self.N, half_dim))
+        self.nus = np.array(nus[:])
+        self.DVs = np.zeros((self.N, half_dim))
         if self.half_dim == 1:
             for i in range(0, self.N):
                 self.DVs[i, :] = DVs[i]
@@ -198,7 +198,7 @@ class ControlLaw:
             self.DVs += DVs
 
         if lamb is not None:
-            self.lamb = numpy.array(lamb[:])
+            self.lamb = np.array(lamb[:])
         else:  # no coefficients of primer vector were provided as inputs
             self.lamb = []
 
@@ -252,7 +252,7 @@ class NoControl(ControlLaw):
                     half_dim (int): half-dimension of state vector.
 
         """
-        DVs = numpy.zeros((1, half_dim))
+        DVs = np.zeros((1, half_dim))
         # call to parent constructor
         ControlLaw.__init__(self, half_dim, [0.], DVs)
 
@@ -276,8 +276,8 @@ def merge_control(CL_ip, CL_oop):
         return ValueError('merge_control: out-of-plane control vector must have 1 component')
 
     # merge nus and corresponding impulses
-    nus_unsorted = numpy.concatenate((CL_ip.nus, CL_oop.nus), axis=0)
-    DV_unsorted = numpy.zeros((len(nus_unsorted), 3))
+    nus_unsorted = np.concatenate((CL_ip.nus, CL_oop.nus), axis=0)
+    DV_unsorted = np.zeros((len(nus_unsorted), 3))
     for k in range(0, len(nus_unsorted)):
         if k < len(CL_ip.nus):
             DV_unsorted[k, 0:2] = CL_ip.DVs[k, 0:2]
@@ -285,9 +285,9 @@ def merge_control(CL_ip, CL_oop):
             DV_unsorted[k, 2] = CL_oop.DVs[k - len(CL_ip.nus)]
 
     # sort nus and corresponding impulses
-    indices_sorting = numpy.argsort(nus_unsorted)
+    indices_sorting = np.argsort(nus_unsorted)
     nus_conc = sorted(nus_unsorted)
-    DV_conc = numpy.zeros((len(nus_conc), 3))
+    DV_conc = np.zeros((len(nus_conc), 3))
     for k, index in enumerate(indices_sorting):
         DV_conc[k, :] = DV_unsorted[index, :]
 

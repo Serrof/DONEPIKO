@@ -8,7 +8,7 @@
 # If not, see < https://www.gnu.org/licenses/>.
 
 import math
-import numpy
+import numpy as np
 from numpy import linalg
 
 
@@ -25,7 +25,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 				Returns:
 					_nus (list): optimal true anomalies of burn.
 					DVs (list): optimal Delta-Vs.
-					lamb (numpy.array): coefficients of primer vector.
+					lamb (np.array): coefficients of primer vector.
 
 	"""
 
@@ -39,7 +39,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 	if(nu_f <= nu_0):
 		return ValueError('SOLVER_ANA: initial true anomaly cannot be larger than final one')
 
-	lamb = numpy.array([0.0, 0.0])  # vector to store Lagrange coefficients
+	lamb = np.array([0.0, 0.0])  # vector to store Lagrange coefficients
 	DVs = []  # vector to store DVs magnitude
 	nus = []  # vector to store impulses location
 
@@ -137,7 +137,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 							DVs[k] = (math.sqrt(1.0 - e * e) / (2.0 * e)) * (e * u[0] - math.sqrt(1.0 - e * e) * u[1]) / Nb_minus
 							k_minus += 1.0								
 						 
-				lamb[0] = -numpy.sign(u[0]) * math.sqrt(1.0 - e * e)
+				lamb[0] = -np.sign(u[0]) * math.sqrt(1.0 - e * e)
 			
 			else:
 				y = math.acos(-math.fabs(u[1]) / magnu)
@@ -156,10 +156,10 @@ def solver_ana(u, e, n, nu_0, nu_f):
 			
 				for k in range(0, len(nus)):
 					nus[k] = y + 2.0 * math.pi * k
-					DVs[k] = -numpy.sign(u[1]) * (magnu - e * math.fabs(u[1])) / Nb
+					DVs[k] = -np.sign(u[1]) * (magnu - e * math.fabs(u[1])) / Nb
 			
 				lamb[0] = -u[0] / magnu
-				lamb[1] = numpy.sign(u[1]) * (e - math.fabs(u[1]) / magnu)
+				lamb[1] = np.sign(u[1]) * (e - math.fabs(u[1]) / magnu)
 
 		elif (nu_f-nu_0<math.pi):
 		
@@ -181,10 +181,10 @@ def solver_ana(u, e, n, nu_0, nu_f):
 				else:
 					DVs.append(DV_p)
 					DVs.append(DV_m)
-				lamb[0]=-numpy.sign(u[0])*math.sqrt(1.0-e*e)
+				lamb[0]=-np.sign(u[0])*math.sqrt(1.0-e*e)
 
-			if (numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])==-numpy.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])):
-				eps=numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
+			if (np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])==-np.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])):
+				eps=np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
 				y=math.acos(-eps*(u[1]/magnu))
 				if (u[0]*eps<0.0):
 					y=2.0*math.pi-y
@@ -197,7 +197,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 
 			if (1.0+2.0*e*math.cos(nu_0)+math.cos(nu_f-nu_0)<=0.0) and (math.sin(nu_0)<=math.sqrt(1.0-e*e)):
 				y=nu_0+math.acos(-(1.0+2.0*e*math.cos(nu_0)))
-				eps=numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
+				eps=np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
 				if (magnu+(2.0*e*magnu-eps*u[1])*math.cos(nu_0) + eps*u[0]*math.sin(nu_0)<=0.0):
 					DVs.append(((1.0+e*math.cos(nu_0))/math.sin(y-nu_0))*(math.cos(y)*u[0]+u[1]*math.sin(y)))
 					DVs.append(((1.0+e*math.cos(y))/math.sin(y-nu_0))*(-math.cos(nu_0)*u[0]-u[1]*math.sin(nu_0)))
@@ -208,7 +208,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 
 			if (1.0+2.0*e*math.cos(nu_f)+math.cos(nu_f-nu_0)<=0.0) and (math.sin(nu_f)>=-math.sqrt(1.0-e*e)):
 				y=nu_f-math.acos(-(1.0+2.0*e*math.cos(nu_f)))
-				eps=numpy.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])
+				eps=np.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])
 				if (magnu+(2.0*e*magnu+eps*u[1])*math.cos(nu_f) - eps*u[0]*math.sin(nu_f)<=0.0):
 					DVs.append(((1.0+e*math.cos(y))/math.sin(nu_f-y))*(math.cos(nu_f)*u[0]+u[1]*math.sin(nu_f)))
 					DVs.append(((1.0+e*math.cos(nu_f))/math.sin(nu_f-y))*(-math.cos(y)*u[0]-u[1]*math.sin(y)))
@@ -217,12 +217,12 @@ def solver_ana(u, e, n, nu_0, nu_f):
 					lamb[0]=-eps*(math.sin(nu_f)*(1.0+2.0*e*math.cos(nu_f))+2.0*math.cos(nu_f)*math.sqrt(-e*math.cos(nu_f)*(1.0+e*math.cos(nu_f))))
 					lamb[1]=-eps*(e-math.cos(nu_f)*(1.0+2.0*e*math.cos(nu_f))+2.0*math.sin(nu_f)*math.sqrt(-e*math.cos(nu_f)*(1.0+e*math.cos(nu_f))))
 
-			if (numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])==numpy.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])) and (1.0+2.0*e*math.cos(nu_0)+math.cos(nu_f-nu_0)>=0.0) and (1.0+2.0*e*math.cos(nu_f)+math.cos(nu_f-nu_0)>=0.0):
+			if (np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])==np.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])) and (1.0+2.0*e*math.cos(nu_0)+math.cos(nu_f-nu_0)>=0.0) and (1.0+2.0*e*math.cos(nu_f)+math.cos(nu_f-nu_0)>=0.0):
 				nus.append(nu_0)
 				nus.append(nu_f)
 				DVs.append(((1.0+e*math.cos(nu_0))/math.sin(nu_f-nu_0))*(math.cos(nu_f)*u[0]+u[1]*math.sin(nu_f)))
 				DVs.append(((1.0+e*math.cos(nu_f))/math.sin(nu_f-nu_0))*(-math.cos(nu_0)*u[0]-u[1]*math.sin(nu_0)))
-				eps=numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
+				eps=np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
 				lamb[0]=-eps*((math.cos(nu_f)+math.cos(nu_0)+2.0*e*math.cos(nu_f)*math.cos(nu_0))/math.sin(nu_f-nu_0))
 				lamb[1]=-eps*((math.sin(nu_f)+math.sin(nu_0)+e*math.sin(nu_f+nu_0))/math.sin(nu_f-nu_0))
 		
@@ -248,10 +248,10 @@ def solver_ana(u, e, n, nu_0, nu_f):
 					else:
 						DVs.append(DV_p)
 						DVs.append(DV_m)
-					lamb[0]=-numpy.sign(u[0])*math.sqrt(1.0-e*e)
+					lamb[0]=-np.sign(u[0])*math.sqrt(1.0-e*e)
 
 			if (math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])*(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])<0.0:
-				eps=numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
+				eps=np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
 				y=math.acos(-eps*(u[1]/magnu))
 				if (u[0]*eps)<0.0:
 					y=2.0*math.pi-y
@@ -263,7 +263,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 					lamb[1]=eps*e-u[1]/magnu
 			
 			else:
-				eps=numpy.sign(u[1])
+				eps=np.sign(u[1])
 				y=math.acos(-math.fabs(u[1])/magnu)
 				if (u[0]*u[1]<0):
 					y=2.0*math.pi-y
@@ -275,7 +275,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 					lamb[1]=eps*e-u[1]/magnu
 
 			if (math.cos(nu_0)<0.0):
-				eps=numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
+				eps=np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
 				if (math.sin(nu_0)<=math.sqrt(1.0-e*e)) and ((1.0+e*math.cos(nu_0))*(math.sin(nu_f-nu_0)-e*math.sin(nu_0))+(math.cos(nu_f-nu_0)+e*math.cos(nu_0))*(2.0*math.sqrt(-e*math.cos(nu_0)*(1.0+e*math.cos(nu_0)))-e*math.sin(nu_0))<=0.0) and (1.0-math.cos(nu_f-nu_0)-2.0*math.sin(nu_f-nu_0)*(e*math.sin(nu_0)-math.sqrt(-e*math.cos(nu_0)*(1.0+e*math.cos(nu_0))))>=0.0) and (magnu+(2.0*e*magnu-eps*u[1])*math.cos(nu_0) + eps*u[0]*math.sin(nu_0)<=0.0):
 					y=nu_0+math.acos(-(1.0+2.0*e*math.cos(nu_0)))
 					DVs.append(((1.0+e*math.cos(nu_0))/math.sin(y-nu_0))*(math.cos(y)*u[0]+u[1]*math.sin(y)))
@@ -294,7 +294,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 					lamb[1]=-eps*(e-math.cos(nu_0)*(1.0+2.0*e*math.cos(nu_0))+2.0*math.sin(nu_0)*math.sqrt(-e*math.cos(nu_0)*(1.0+e*math.cos(nu_0))))
 
 			if (math.cos(nu_f)<0.0):
-				eps=numpy.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])
+				eps=np.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])
 				if (math.sin(nu_f)>=-math.sqrt(1.0-e*e)) and ((1+e*math.cos(nu_f))*(math.sin(nu_f-nu_0)+e*math.sin(nu_f))+(math.cos(nu_f-nu_0)+e*math.cos(nu_f))*(2.0*math.sqrt(-e*math.cos(nu_f)*(1.0+e*math.cos(nu_f)))+e*math.sin(nu_f))<=0.0) and (1.0-math.cos(nu_f-nu_0)+2.0*math.sin(nu_f-nu_0)*(e*math.sin(nu_f)+math.sqrt(-e*math.cos(nu_f)*(1.0+e*math.cos(nu_f))))>=0.0) and (magnu+(2.0*e*magnu+eps*u[1])*math.cos(nu_f) - eps*u[0]*math.sin(nu_f)<=0.0):
 					y=nu_f-math.acos(-(1.0+2.0*e*math.cos(nu_f)))
 					DVs.append(((1.0+e*math.cos(y))/math.sin(nu_f-y))*(math.cos(nu_f)*u[0]+u[1]*math.sin(nu_f)))
@@ -312,16 +312,16 @@ def solver_ana(u, e, n, nu_0, nu_f):
 					lamb[0]=eps*(math.sin(nu_f)*(1.0+2.0*e*math.cos(nu_f))-2.0*math.cos(nu_f)*math.sqrt(-e*math.cos(nu_f)*(1.0+e*math.cos(nu_f))))
 					lamb[1]=eps*(e-math.cos(nu_f)*(1.0+2.0*e*math.cos(nu_f))-2.0*math.sin(nu_f)*math.sqrt(-e*math.cos(nu_f)*(1.0+e*math.cos(nu_f))))
 
-			if (((math.sin(nu_0)<=-math.sqrt(1.0-e*e)) and (math.sin(nu_f)>=-math.sqrt(1.0-e*e))) or (math.fabs(math.sin(nu_0))<math.sqrt(1.0-e*e) and ((e+math.cos(nu_0))*(e+math.cos(nu_f))<=0.0))) and (numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])==numpy.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])) and (1.0+2.0*e*math.cos(nu_0)+math.cos(nu_f-nu_0)<=0.0) and (1.0+2.0*e*math.cos(nu_f)+math.cos(nu_f-nu_0)<=0.0):
+			if (((math.sin(nu_0)<=-math.sqrt(1.0-e*e)) and (math.sin(nu_f)>=-math.sqrt(1.0-e*e))) or (math.fabs(math.sin(nu_0))<math.sqrt(1.0-e*e) and ((e+math.cos(nu_0))*(e+math.cos(nu_f))<=0.0))) and (np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])==np.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])) and (1.0+2.0*e*math.cos(nu_0)+math.cos(nu_f-nu_0)<=0.0) and (1.0+2.0*e*math.cos(nu_f)+math.cos(nu_f-nu_0)<=0.0):
 					nus.append(nu_0)
 					nus.append(nu_f)
 					DVs.append(((1.0+e*math.cos(nu_0))/math.sin(nu_f-nu_0))*(math.cos(nu_f)*u[0]+u[1]*math.sin(nu_f)))
 					DVs.append(((1.0+e*math.cos(nu_f))/math.sin(nu_f-nu_0))*(-math.cos(nu_0)*u[0]-u[1]*math.sin(nu_0)))
-					eps=numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
+					eps=np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
 					lamb[0]=eps*((math.cos(nu_f)+math.cos(nu_0)+2.0*e*math.cos(nu_f)*math.cos(nu_0))/math.sin(nu_f-nu_0))
 					lamb[1]=eps*((math.sin(nu_f)+math.sin(nu_0)+e*math.sin(nu_f+nu_0))/math.sin(nu_f-nu_0))
 
-			if (numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])==-numpy.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])):
+			if (np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])==-np.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])):
 				a1=((math.cos(nu_f)-math.cos(nu_0))/math.sin(nu_f-nu_0))
 				a2=((math.sin(nu_f)-math.sin(nu_0))/math.sin(nu_f-nu_0)+e)
 				q=a1/a2
@@ -330,7 +330,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 					nus.append(nu_f)
 					DVs.append(((1.0+e*math.cos(nu_0))/math.sin(nu_f-nu_0))*(math.cos(nu_f)*u[0]+u[1]*math.sin(nu_f)))
 					DVs.append(((1.0+e*math.cos(nu_f))/math.sin(nu_f-nu_0))*(-math.cos(nu_0)*u[0]-u[1]*math.sin(nu_0)))
-					eps=numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
+					eps=np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
 					lamb[0]=-eps*((math.cos(nu_f)-math.cos(nu_0))/math.sin(nu_f-nu_0))
 					lamb[1]=-eps*((math.sin(nu_f)-math.sin(nu_0))/math.sin(nu_f-nu_0)+e)
 
@@ -354,10 +354,10 @@ def solver_ana(u, e, n, nu_0, nu_f):
 				else:
 					DVs.append(DV_p)
 					DVs.append(DV_m)
-				lamb[0]=-numpy.sign(u[0])*math.sqrt(1.0-e*e)
+				lamb[0]=-np.sign(u[0])*math.sqrt(1.0-e*e)
 
-			if (numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])==-numpy.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])):
-				eps=numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
+			if (np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])==-np.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])):
+				eps=np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
 				y=math.acos(-eps*(u[1]/magnu))
 				if (u[0]*eps<0.0):
 					y=2.0*math.pi-y
@@ -370,7 +370,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 
 			if (1.0+2.0*e*math.cos(nu_0)+math.cos(nu_f-nu_0)<=0.0) and (math.sin(nu_0)<=math.sqrt(1.0-e*e)):
 				y=nu_0+math.acos(-(1.0+2.0*e*math.cos(nu_0)))
-				eps=numpy.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
+				eps=np.sign(math.cos(nu_0)*u[0]+math.sin(nu_0)*u[1])
 				if (magnu+(2.0*e*magnu-eps*u[1])*math.cos(nu_0) + eps*u[0]*math.sin(nu_0)<=0.0):
 					DVs.append(((1.0+e*math.cos(nu_0))/math.sin(y-nu_0))*(math.cos(y)*u[0]+u[1]*math.sin(y)))
 					DVs.append(((1.0+e*math.cos(y))/math.sin(y-nu_0))*(-math.cos(nu_0)*u[0]-u[1]*math.sin(nu_0)))
@@ -381,7 +381,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 
 			if (1.0+2.0*e*math.cos(nu_f)+math.cos(nu_f-nu_0)<=0.0) and (math.sin(nu_f)>=-math.sqrt(1.0-e*e)):
 				y=nu_f-math.acos(-(1.0+2.0*e*math.cos(nu_f)))
-				eps=numpy.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])
+				eps=np.sign(math.cos(nu_f)*u[0]+math.sin(nu_f)*u[1])
 				if (magnu+(2.0*e*magnu+eps*u[1])*math.cos(nu_f) - eps*u[0]*math.sin(nu_f)<=0.0):
 					DVs.append(((1.0+e*math.cos(y))/math.sin(nu_f-y))*(math.cos(nu_f)*u[0]+u[1]*math.sin(nu_f)))
 					DVs.append(((1.0+e*math.cos(nu_f))/math.sin(nu_f-y))*(-math.cos(y)*u[0]-u[1]*math.sin(y)))

@@ -1,5 +1,5 @@
 # script_compa_primer.py: script showing that the primer vector optimal for a given norm is in general not for another
-# Copyright(C) 2018 Romain Serra
+# Copyright(C) 2019 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -9,7 +9,7 @@
 
 import utils
 import random
-import numpy
+import numpy as np
 import math
 import master
 import plotter
@@ -22,8 +22,8 @@ nuf = nu0 + 2.0 * math.pi * random.random()  # final true anomaly in rad
 dyn = dynamics_factory.EllipticalRestricted2BodyProblemEarthFromSMA(ecc=0.6, sma=42000.e3)
 
 hd = 3  # half-dimension of state vector (1 for out-of-plane dynamics only, 2 for in-plane only and 3 for complete)
-x0 = numpy.zeros(hd * 2)
-xf = numpy.zeros(hd * 2)
+x0 = np.zeros(hd * 2)
+xf = np.zeros(hd * 2)
 for i in range(0, len(x0)):
     if i < hd:
         x0[i] = (-1.0 + 2.0 * random.random()) * 1.0e3

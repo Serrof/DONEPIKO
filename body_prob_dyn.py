@@ -7,7 +7,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see < https://www.gnu.org/licenses/>.
 
-import numpy
+import numpy as np
 import math
 from moments import rho_func, Y_2bp, Y_oop, Y_oop_LP123, phi_harmo
 from numpy import linalg
@@ -74,7 +74,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
                 Attributes:
                     params (BodyProbParams): parameters characterizing the dynamical system
-                    x_eq_normalized (numpy.array): normalized coordinates of equilibrium point.
+                    x_eq_normalized (np.array): normalized coordinates of equilibrium point.
 
     """
 
@@ -109,11 +109,11 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         """Function converting original state vector to a modified space where propagation is simpler.
 
                 Args:
-                    x (numpy.array): state vector.
+                    x (np.array): state vector.
                     nu (float): current true anomaly.
 
                 Returns:
-                    x_bar (numpy.array): transformed state vector.
+                    x_bar (np.array): transformed state vector.
 
         """
 
@@ -134,11 +134,11 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         """Function converting back the transformed state vector in its original, physical space.
 
                 Args:
-                    x_bar (numpy.array): transformed state vector.
+                    x_bar (np.array): transformed state vector.
                     nu (float): current true anomaly.
 
                 Returns:
-                    x (numpy.array): original state vector.
+                    x (np.array): original state vector.
 
         """
 
@@ -161,10 +161,10 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
                 Args:
                     nu (float): value of independent variable.
-                    x (numpy.array): transformed state vector.
+                    x (np.array): transformed state vector.
 
                 Returns:
-                    (numpy.array): derivative of transformed state vector in non-linear dynamics.
+                    (np.array): derivative of transformed state vector in non-linear dynamics.
 
         """
         return state_deriv_nonlin(x, nu, self.params.ecc, self.x_eq_normalized, self.params.mu, self.params.slr)
@@ -178,12 +178,12 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    (numpy.array): matrix for transformed state equation in linearized dynamics.
+                    (np.array): matrix for transformed state equation in linearized dynamics.
 
         """
 
-        M = numpy.zeros((2 * half_dim, 2 * half_dim))
-        M[0: half_dim, half_dim: 2 * half_dim] = numpy.eye(half_dim)
+        M = np.zeros((2 * half_dim, 2 * half_dim))
+        M[0: half_dim, half_dim: 2 * half_dim] = np.eye(half_dim)
 
         if half_dim == 1:
 
@@ -198,7 +198,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
         else:  # in-plane or complete dynamics
 
-            M[half_dim: half_dim + 2, half_dim: half_dim + 2] = numpy.array([[0.0, 2.0], [-2.0, 0.0]])
+            M[half_dim: half_dim + 2, half_dim: half_dim + 2] = np.array([[0.0, 2.0], [-2.0, 0.0]])
 
             if self.params.mu == 0.:
                 H = Hessian_ip2bp(self.x_eq_normalized)
@@ -227,7 +227,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
         """
         matrices = self.integrate_phi_inv(nus, half_dim)
-        Ys = numpy.zeros((2 * half_dim, half_dim * len(nus)))
+        Ys = np.zeros((2 * half_dim, half_dim * len(nus)))
         for k, matrix in enumerate(matrices):
             Ys[:, half_dim * k: half_dim * (k + 1)] = matrix[:, half_dim: 2 * half_dim] / \
                                                       rho_func(self.params.ecc, nus[k])
@@ -242,7 +242,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    (numpy.array): moment-function.
+                    (np.array): moment-function.
 
         """
 
@@ -253,7 +253,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         """Function returning the in-plane initial vector propagated to the final true anomaly.
 
                 Args:
-                    x1 (numpy.array): in-plane initial transformed state vector.
+                    x1 (np.array): in-plane initial transformed state vector.
                     nu1 (float): initial true anomaly.
                     nu2 (float): final true anomaly.
 
@@ -267,8 +267,8 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                 Args:
                     nu1 (float): initial true anomaly.
                     nu2 (float): final true anomaly.
-                    x1 (numpy.array): initial transformed state vector.
-                    x2 (numpy.array): final transformed state vector.
+                    x1 (np.array): initial transformed state vector.
+                    x2 (np.array): final transformed state vector.
 
         """
         pass
@@ -279,17 +279,17 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                 Args:
                     nu1 (float): initial true anomaly.
                     nu2 (float): final true anomaly.
-                    x1 (numpy.array): initial state vector.
+                    x1 (np.array): initial state vector.
 
                 Returns:
-                    (numpy.array): final state vector.
+                    (np.array): final state vector.
 
         """
 
         half_dim = int(len(x1) / 2)
 
         if nu1 == nu2:
-            return numpy.array(x1[:])
+            return np.array(x1[:])
         else:  # initial and final true anomalies are different
             if half_dim == 1:
                 x1_bar = self.transformation(x1, nu1)
@@ -323,7 +323,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                     analytical (bool): set to true for analytical propagation of motion, false for integration.
 
                 Returns:
-                    u (numpy.array): right-hand side of moment equation.
+                    u (np.array): right-hand side of moment equation.
 
         """
 
@@ -390,7 +390,7 @@ class RestriTwoBodyProb(BodyProbDyn):
         BodyProbDyn.__init__(self, 0., ecc, period, sma)
         self.name = "Restricted 2-body problem"
 
-        self.x_eq_normalized = numpy.array([1.0, 0.0, 0.0])
+        self.x_eq_normalized = np.array([1.0, 0.0, 0.0])
 
     def copy(self):
         """Function returning a copy of the object.
@@ -407,7 +407,7 @@ class RestriTwoBodyProb(BodyProbDyn):
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    (numpy.array): moment-function.
+                    (np.array): moment-function.
 
         """
 
@@ -421,7 +421,7 @@ class RestriTwoBodyProb(BodyProbDyn):
         """Function returning the in-plane initial vector propagated to the final true anomaly.
 
                 Args:
-                    x1 (numpy.array): in-plane initial transformed state vector.
+                    x1 (np.array): in-plane initial transformed state vector.
                     nu1 (float): initial true anomaly.
                     nu2 (float): final true anomaly.
 
@@ -435,8 +435,8 @@ class RestriTwoBodyProb(BodyProbDyn):
                 Args:
                     nu1 (float): initial true anomaly.
                     nu2 (float): final true anomaly.
-                    x1 (numpy.array): initial transformed state vector.
-                    x2 (numpy.array): final transformed state vector.
+                    x1 (np.array): initial transformed state vector.
+                    x2 (np.array): final transformed state vector.
 
         """
 
@@ -455,7 +455,7 @@ class RestriThreeBodyProb(BodyProbDyn):
     """Class implementing the dynamics of the restricted 3-body problem.
 
             Attributes:
-                    _A_inv (numpy.array): intermediate matrix used for some calculations.
+                    _A_inv (np.array): intermediate matrix used for some calculations.
 
     """
 
@@ -478,27 +478,27 @@ class RestriThreeBodyProb(BodyProbDyn):
         # set normalized coordinates of Lagrange point of interest
         if self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3:
             if self.params.Li == 1:
-                self.x_eq_normalized = numpy.array((find_L1(self.params.mu), 0.0, 0.0))
+                self.x_eq_normalized = np.array((find_L1(self.params.mu), 0.0, 0.0))
             elif self.params.Li == 2:
-                self.x_eq_normalized = numpy.array((find_L2(self.params.mu), 0.0, 0.0))
+                self.x_eq_normalized = np.array((find_L2(self.params.mu), 0.0, 0.0))
             elif self.params.Li == 3:
-                self.x_eq_normalized = numpy.array((find_L3(self.params.mu), 0.0, 0.0))
+                self.x_eq_normalized = np.array((find_L3(self.params.mu), 0.0, 0.0))
             puls = puls_oop_LP(self.x_eq_normalized, self.params.mu)
             (gamma_re, gamma_im, c, k) = inter_L123(puls * puls)
-            A = numpy.array([[1.0, 1.0, 1.0, 0.0], [c, -c, 0.0, k], [gamma_re, -gamma_re, 0.0, gamma_im],
+            A = np.array([[1.0, 1.0, 1.0, 0.0], [c, -c, 0.0, k], [gamma_re, -gamma_re, 0.0, gamma_im],
                              [gamma_re * c, gamma_re * c, - gamma_im * k, 0.0]])
-            self._A_inv = numpy.linalg.inv(A)
+            self._A_inv = np.linalg.inv(A)
         else:  # Lagrange Point 4 or 5
             if Li == 4:
-                self.x_eq_normalized = numpy.array((0.5 * (1.0 - 2.0 * self.params.mu), math.sqrt(3.) / 2., 0., 0.))
+                self.x_eq_normalized = np.array((0.5 * (1.0 - 2.0 * self.params.mu), math.sqrt(3.) / 2., 0., 0.))
                 kappa = 1.0 - 2.0 * self.params.mu
             else:  # Li = 5
-                self.x_eq_normalized = numpy.array((0.5 * (1.0 - 2.0 * self.params.mu), -math.sqrt(3.) / 2., 0., 0.))
+                self.x_eq_normalized = np.array((0.5 * (1.0 - 2.0 * self.params.mu), -math.sqrt(3.) / 2., 0., 0.))
                 kappa = -1.0 + 2.0 * self.params.mu
             root1, root2, a1, a2, b1, b2, c1, c2, d1, d2 = inter_L45(self.params.mu, kappa)
-            A = numpy.array([[1.0, 0.0, 1.0, 0.0], [a1, a2, c1, c2],
+            A = np.array([[1.0, 0.0, 1.0, 0.0], [a1, a2, c1, c2],
                              [0.0, root1, 0.0, root2], [b1 * root1, b2 * root1, d1 * root2, d2 * root2]])
-            self._A_inv = numpy.linalg.inv(A)
+            self._A_inv = np.linalg.inv(A)
 
     def copy(self):
         """Function returning a copy of the object.
@@ -515,7 +515,7 @@ class RestriThreeBodyProb(BodyProbDyn):
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    (numpy.array): moment-function.
+                    (np.array): moment-function.
 
         """
 
@@ -536,7 +536,7 @@ class RestriThreeBodyProb(BodyProbDyn):
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    (numpy.array): moment-function.
+                    (np.array): moment-function.
 
         """
 
@@ -555,7 +555,7 @@ class RestriThreeBodyProb(BodyProbDyn):
         elif half_dim == 2:
             return self._Y_ip3bp_ds(nu)
         else:  # complete dynamics
-            Y = numpy.zeros((6, 3))
+            Y = np.zeros((6, 3))
             if self.params.Li == 1 or self.params.Li == 2 or self.params.Li == 3:
                 Yoop = Y_oop_LP123(nu, self.x_eq_normalized, self.params.mu)
             else:   # Lagrange Point 4 or 5
@@ -575,12 +575,12 @@ class RestriThreeBodyProb(BodyProbDyn):
                     nu (float): current true anomaly.
 
                 Returns:
-                    Y (numpy.array): moment-function.
+                    Y (np.array): moment-function.
 
         """
 
         if self.params.ecc == 0.:
-            Y = numpy.zeros((4, 2))
+            Y = np.zeros((4, 2))
             if (self.params.Li == 1) or (self.params.Li == 2) or (self.params.Li == 3):
                 phi = self._exp_LP123(-nu)
             elif self.params.Li == 4:
@@ -597,12 +597,12 @@ class RestriThreeBodyProb(BodyProbDyn):
         """Wrapper for the propagation of the transformed vector in the in-plane 3-body problem.
 
                 Args:
-                    x1_bar (numpy.array): initial transformed, in-plane state vector.
+                    x1_bar (np.array): initial transformed, in-plane state vector.
                     nu1 (float): initial true anomaly.
                     nu2 (float): final true anomaly.
 
                 Returns:
-                    (numpy.array): final transformed, in-plane state vector.
+                    (np.array): final transformed, in-plane state vector.
 
         """
 
@@ -631,7 +631,7 @@ class RestriThreeBodyProb(BodyProbDyn):
                     nu (float): true anomaly.
 
                 Returns:
-                    phi (numpy.array): transition matrix.
+                    phi (np.array): transition matrix.
 
         """
 
@@ -649,7 +649,7 @@ class RestriThreeBodyProb(BodyProbDyn):
                  -gamma_im * sin_inter, gamma_im * cos_inter]
         row4 = [gamma_re * c * exp_inter, gamma_re * c * inv_exp,
                  -gamma_im * k * cos_inter, -gamma_im * k * sin_inter]
-        phi = numpy.array([row1, row2, row3, row4]).dot(self._A_inv)
+        phi = np.array([row1, row2, row3, row4]).dot(self._A_inv)
 
         return phi
 
@@ -662,7 +662,7 @@ class RestriThreeBodyProb(BodyProbDyn):
                     kappa (float): parameter equal to 1-2mu for L4, -1+2mu for L5.
 
                 Returns:
-                    phi (numpy.array): transition matrix.
+                    phi (np.array): transition matrix.
 
         """
 
@@ -684,7 +684,7 @@ class RestriThreeBodyProb(BodyProbDyn):
                  -root1 * a2 * sin1 + root1 * b2 * cos1,
                  -root2 * c1 * sin2 + root2 * d1 * cos2,
                  -root2 * c2 * sin2 + root2 * d2 * cos2]
-        phi = numpy.array([row1, row2, row3, row4]).dot(self._A_inv)
+        phi = np.array([row1, row2, row3, row4]).dot(self._A_inv)
 
         return phi
 
@@ -692,7 +692,7 @@ class RestriThreeBodyProb(BodyProbDyn):
         """Function returning the in-plane initial vector propagated to the final true anomaly.
 
                 Args:
-                    x1 (numpy.array): in-plane initial transformed state vector.
+                    x1 (np.array): in-plane initial transformed state vector.
                     nu1 (float): initial true anomaly.
                     nu2 (float): final true anomaly.
 
@@ -706,8 +706,8 @@ class RestriThreeBodyProb(BodyProbDyn):
                 Args:
                     nu1 (float): initial true anomaly.
                     nu2 (float): final true anomaly.
-                    x1 (numpy.array): initial transformed state vector.
-                    x2 (numpy.array): final transformed state vector.
+                    x1 (np.array): initial transformed state vector.
+                    x2 (np.array): final transformed state vector.
 
         """
 

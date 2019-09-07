@@ -7,7 +7,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see < https://www.gnu.org/licenses/>.
 
-import numpy
+import numpy as np
 from numpy import linalg
 import utils
 import dynamical_system
@@ -38,7 +38,7 @@ class Plotter:
                     _nus (list): anomalies to be plotted.
                     _times (list): instants to be plotted.
                     _pts (list): values of independent variable to be plotted (depending on boolean 'anomaly')
-                    _states (numpy.array): states to be plotted.
+                    _states (np.array): states to be plotted.
 
     """
 
@@ -93,12 +93,12 @@ class Plotter:
         """
 
         if self.anomaly:    
-            self._nus = numpy.linspace(self.BC.nu0, self.BC.nuf, self._nb)
+            self._nus = np.linspace(self.BC.nu0, self.BC.nuf, self._nb)
             self._pts = self._nus
         else:  # the independent variable is time
-            self._times = numpy.linspace(0., self.dyn.convToAlterIndVar(self.BC.nu0, 0., self.BC.nuf), self._nb)
+            self._times = np.linspace(0., self.dyn.convToAlterIndVar(self.BC.nu0, 0., self.BC.nuf), self._nb)
             self._pts = self._times
-            self._nus = numpy.zeros(self._nb)
+            self._nus = np.zeros(self._nb)
             for k in range(0, self._nb):
                 self._nus[k] = self.dyn.convFromAlterIndVar(self.BC.nu0, 0., self._times[k])
 
@@ -177,8 +177,8 @@ class Plotter:
         dim = self.BC.half_dim * 2
         
         if self.linearized and self.analytical:
-            states = numpy.zeros((dim, self._nb))
-            inters = numpy.zeros((self.CL.N, dim))
+            states = np.zeros((dim, self._nb))
+            inters = np.zeros((self.CL.N, dim))
             for i in range(0, self.CL.N):
                 if self.BC.half_dim == 1:
                     inters[i, 1] = self.CL.DVs[i]
@@ -210,14 +210,14 @@ class Plotter:
                 else:  # non-linear dynamics
 
                     def func(nu, x):  # right-hand side function for integration
-                        return numpy.array(self.dyn.evaluate_state_deriv_nonlin(nu, x))
+                        return np.array(self.dyn.evaluate_state_deriv_nonlin(nu, x))
 
                 integrator = integrators.ABM8(func)
 
                 def propagate_num(nu1, nu2, IC):
                     if nu1 == nu2:
                         pts_inter = [nu1]
-                        state0 = numpy.array(IC[:])
+                        state0 = np.array(IC[:])
                         states_inter = [state0]
                         return states_inter, pts_inter
                     else:  # initial and final true anomaly are different
@@ -232,11 +232,11 @@ class Plotter:
                 pts = []
                 for k in range(0, self.CL.N):
                     if k == 0:
-                        state0 = numpy.array(self.BC.x0[:])
+                        state0 = np.array(self.BC.x0[:])
                         date0 = self.BC.nu0
                         datef = self.CL.nus[0]
                     else:  # not first loop
-                        state0 = numpy.array(states[-1])
+                        state0 = np.array(states[-1])
                         date0 = pts[-1]
                         datef = self.CL.nus[k]
 
@@ -264,7 +264,7 @@ class Plotter:
                     self._pts = pts
                 else:  # the independent variable is time
                     self._pts = [self.dyn.convToAlterIndVar(self.BC.nu0, 0., nu) for nu in pts]
-                self._states = numpy.array(states[:]).transpose()
+                self._states = np.array(states[:]).transpose()
 
     def plot_pv(self):
         """Function plotting primer vector's components and norm as functions of the independent variable.
@@ -275,25 +275,25 @@ class Plotter:
         fig, (ax1, ax2) = plt.subplots(2, 1)
 
         # generating primer vector 
-        pv = numpy.zeros((self.BC.half_dim, self._nb))
+        pv = np.zeros((self.BC.half_dim, self._nb))
         if self.analytical:
             for k in range(0, self._nb):
-                pv[:, k] = numpy.transpose(self.dyn.evaluate_Y(self._nus[k], self.BC.half_dim)).dot(self.CL.lamb)
+                pv[:, k] = np.transpose(self.dyn.evaluate_Y(self._nus[k], self.BC.half_dim)).dot(self.CL.lamb)
         else:
             Ys = self.dyn.integrate_Y(self._nus, self.BC.half_dim)
             for k in range(0, self._nb):
-                pv[:, k] = numpy.transpose(Ys[:, k * self.BC.half_dim: (k + 1) * self.BC.half_dim]).dot(self.CL.lamb)
+                pv[:, k] = np.transpose(Ys[:, k * self.BC.half_dim: (k + 1) * self.BC.half_dim]).dot(self.CL.lamb)
 
         pv_norm = [linalg.norm(pv[:, k], self._q) for k in range(0, self._nb)]
 
         # plotting primer vector 
-        min_pv = numpy.min(pv[0, :])
-        max_pv = numpy.max(pv[0, :])    
+        min_pv = np.min(pv[0, :])
+        max_pv = np.max(pv[0, :])
         if self.BC.half_dim == 1:
             ax1.plot(self._pts, pv[0, :], color='black', ls='dashed', label='$\delta z$-axis', linewidth=2)
         else:  # in-plane or complete dynamics
-            min_pv = min(numpy.min(pv[1, :]), min_pv)
-            max_pv = max(numpy.max(pv[1, :]), max_pv)
+            min_pv = min(np.min(pv[1, :]), min_pv)
+            max_pv = max(np.max(pv[1, :]), max_pv)
             if self.BC.half_dim == 2:
                 ax1.plot(self._pts, pv[0, :], color='blue', ls='dashed', label='$\delta x$-axis', linewidth=2)
                 ax1.plot(self._pts, pv[1, :], color='red', ls='dashed', label='$\delta y$-axis', linewidth=2)
@@ -301,8 +301,8 @@ class Plotter:
                 ax1.plot(self._pts, pv[0, :], color='blue', ls='dashed', label='$\delta x$-axis', linewidth=2)
                 ax1.plot(self._pts, pv[1, :], color='red', ls='dashed', label='$\delta y$-axis', linewidth=2)
                 ax1.plot(self._pts, pv[2, :], color='black', ls='dashed', label='$\delta z$-axis', linewidth=2)
-                min_pv = min(numpy.min(pv[2, :]), min_pv)
-                max_pv = max(numpy.max(pv[2, :]), max_pv)
+                min_pv = min(np.min(pv[2, :]), min_pv)
+                max_pv = max(np.max(pv[2, :]), max_pv)
 
         ax2.plot(self._pts, pv_norm, color='green', linewidth=2)
 
@@ -318,7 +318,7 @@ class Plotter:
         else:  # in-plane or complete dynamics
             ax2.set_ylabel(str(self._q) + '-norm')
         ax2.set_xlim([self._pts[0], self._pts[-1]])
-        ax2.set_ylim([0.0, numpy.max(pv_norm)]) 
+        ax2.set_ylim([0.0, np.max(pv_norm)])
         if self.anomaly:
             ax2.set_xlabel('true anomaly (rad)')
         else:  # the independent variable is time
@@ -464,7 +464,7 @@ class Plotter:
         """
 
         if self._states is not None:
-            numpy.savetxt(file_path, self._states)
+            np.savetxt(file_path, self._states)
         else:  # state history has not been computed yet
             self._compute_states()
-            numpy.savetxt(file_path, self._states)
+            np.savetxt(file_path, self._states)

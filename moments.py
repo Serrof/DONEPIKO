@@ -7,7 +7,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see < https://www.gnu.org/licenses/>.
 
-import numpy
+import numpy as np
 import math
 from orbital_mechanics import nu_to_dt, rho_func, phi_harmo, puls_oop_LP, exp_HCW
 
@@ -21,13 +21,13 @@ def Y_oop(e, nu):
                 nu (float): true anomaly.
 
             Returns:
-                Y (numpy.array): moment-function.
+                Y (np.array): moment-function.
 
     """
 
     rho = rho_func(e, nu)
     phi = phi_harmo(-nu, 1.0)
-    Y = numpy.zeros((2, 1))
+    Y = np.zeros((2, 1))
     Y[0, 0] = phi[0, 1]
     Y[1, 0] = phi[1, 1]
 
@@ -40,16 +40,16 @@ def Y_oop_LP123(nu, x, mu):
 
             Args:
                 nu (float): true anomaly.
-                x (numpy.array): coordinates of Lagrange Point around which linearization occurs
+                x (np.array): coordinates of Lagrange Point around which linearization occurs
                 mu (float): ratio of minor mass over total mass.
 
             Returns:
-                Y (numpy.array): moment-function.
+                Y (np.array): moment-function.
 
     """
 
     phi = phi_harmo(-nu, puls_oop_LP(x, mu))
-    Y = numpy.zeros((2, 1))
+    Y = np.zeros((2, 1))
     Y[0, 0] = phi[0, 1]
     Y[1, 0] = phi[1, 1]
 
@@ -64,11 +64,11 @@ def Y_ip_circular2bp(nu):
                 nu (float): true anomaly.
 
             Returns:
-                Y (numpy.array): moment-function.
+                Y (np.array): moment-function.
 
     """
 
-    Y = numpy.zeros((4, 2))
+    Y = np.zeros((4, 2))
     phi = exp_HCW(-nu)
     Y[:, 0:2] = phi[:, 2:4]
 
@@ -86,7 +86,7 @@ def Y_ip_elliptical2bp(e, n, nu0, nu):
                 nu (float): current true anomaly.
 
             Returns:
-                Y (numpy.array): moment-function.
+                Y (np.array): moment-function.
 
     """
 
@@ -94,7 +94,7 @@ def Y_ip_elliptical2bp(e, n, nu0, nu):
     if (e >= 1.0) or (e < 0.0):
         return ValueError('Y_IP_ELLIPTICAL2BP: eccentricity must be larger or equal to 0 and strictly less than 1')
 
-    Y = numpy.zeros((4, 2))
+    Y = np.zeros((4, 2))
     rho = rho_func(e, nu)
     rho_inv = 1.0 / rho
     s = math.sin(nu)
@@ -129,7 +129,7 @@ def Y_ip2bp(e, n, nu0, nu):
                 nu (float): current true anomaly.
 
             Returns:
-                (numpy.array): moment-function.
+                (np.array): moment-function.
 
     """
 
@@ -151,7 +151,7 @@ def Y_2bp(e, n, nu0, nu, m):
                 m (int): half-dimension of state vector
 
             Returns:
-                (numpy.array): moment-function.
+                (np.array): moment-function.
 
     """
 
@@ -164,7 +164,7 @@ def Y_2bp(e, n, nu0, nu, m):
     elif m == 2:
         return Y_ip2bp(e, n, nu0, nu)
     else:  # complete dynamics
-        Y = numpy.zeros((6, 3))
+        Y = np.zeros((6, 3))
         Yoop = Y_oop(e, nu)
         Yip = Y_ip2bp(e, n, nu0, nu)
         Y[0:2, 0:2] = Yip[0:2, 0:2]

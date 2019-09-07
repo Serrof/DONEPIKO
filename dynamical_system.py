@@ -8,7 +8,7 @@
 # If not, see < https://www.gnu.org/licenses/>.
 
 from abc import ABCMeta, abstractmethod
-import numpy
+import numpy as np
 import math
 import integrators
 import utils
@@ -71,7 +71,7 @@ class DynamicalSystem:
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    (numpy.array): matrix for transformed state equation in linearized dynamics.
+                    (np.array): matrix for transformed state equation in linearized dynamics.
 
         """
         pass
@@ -82,10 +82,10 @@ class DynamicalSystem:
 
                 Args:
                     nu (float): value of independent variable.
-                    x (numpy.array): transformed state vector.
+                    x (np.array): transformed state vector.
 
                 Returns:
-                    (numpy.array): derivative of transformed state vector in linearized dynamics.
+                    (np.array): derivative of transformed state vector in linearized dynamics.
 
         """
         return self.matrix_linear(nu, int(len(x) / 2)).dot(x)
@@ -97,10 +97,10 @@ class DynamicalSystem:
 
                 Args:
                     nu (float): value of independent variable.
-                    x (numpy.array): state vector.
+                    x (np.array): state vector.
 
                 Returns:
-                    (numpy.array): derivative of state vector in non-linear dynamics.
+                    (np.array): derivative of state vector in non-linear dynamics.
 
         """
         return self.evaluate_state_deriv(nu, x)
@@ -112,10 +112,10 @@ class DynamicalSystem:
                 Args:
                     nu1 (float): initial value of independent variable.
                     nu2 (float): final value of independent variable.
-                    x1 (numpy.array): initial state vector.
+                    x1 (np.array): initial state vector.
 
                 Returns:
-                    (numpy.array): final state vector.
+                    (np.array): final state vector.
 
         """
         pass
@@ -129,7 +129,7 @@ class DynamicalSystem:
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    (numpy.array): moment-function evaluated at nu.
+                    (np.array): moment-function evaluated at nu.
 
         """
         pass
@@ -143,7 +143,7 @@ class DynamicalSystem:
                     analytical (bool): set to true for analytical propagation of motion, false for integration.
 
                 Returns:
-                    u (numpy.array): right-hand side of moment equation.
+                    u (np.array): right-hand side of moment equation.
 
         """
         pass
@@ -174,11 +174,11 @@ class DynamicalSystem:
         analytical formula to be propagated.
 
                 Args:
-                    x (numpy.array): original state vector.
+                    x (np.array): original state vector.
                     nu (float): independent variable.
 
                 Returns:
-                    (numpy.array): transformed state vector.
+                    (np.array): transformed state vector.
 
         """
         return [el for el in x]
@@ -187,11 +187,11 @@ class DynamicalSystem:
         """Method to be overwritten by inverse of transformation if the latter is different from (x, nu) -> x.
 
                 Args:
-                    x (numpy.array): transformed state vector.
+                    x (np.array): transformed state vector.
                     nu (float): independent variable.
 
                 Returns:
-                    (numpy.array): original state vector.
+                    (np.array): original state vector.
 
         """
         return self.transformation(x, nu)
@@ -220,7 +220,7 @@ class DynamicalSystem:
 
         integ = integrators.RK4(func)
         outputs = []
-        IC_matrix = numpy.eye(2 * half_dim)
+        IC_matrix = np.eye(2 * half_dim)
         outputs.append(IC_matrix)
         IC_vector = utils.square_matrix_to_vector(IC_matrix, 2 * half_dim)  # initial conditions of matrix system turned into a vector for integration
         n_step = int(math.ceil(math.fabs(nus[1] - nus[0]) / conf.params_plot["h_min"]))
@@ -258,11 +258,11 @@ class ZeroGravity(DynamicalSystem):
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    (numpy.array): matrix for transformed state equation in linearized dynamics.
+                    (np.array): matrix for transformed state equation in linearized dynamics.
 
         """
-        A = numpy.zeros((2 * half_dim, 2 * half_dim))
-        A[0: half_dim, half_dim: 2 * half_dim] = numpy.eye(half_dim)
+        A = np.zeros((2 * half_dim, 2 * half_dim))
+        A[0: half_dim, half_dim: 2 * half_dim] = np.eye(half_dim)
         return A
 
     def propagate(self, nu1, nu2, x1):
@@ -271,13 +271,13 @@ class ZeroGravity(DynamicalSystem):
                 Args:
                     nu1 (float): initial value of independent variable.
                     nu2 (float): final value of independent variable.
-                    x1 (numpy.array): initial state vector.
+                    x1 (np.array): initial state vector.
 
                 Returns:
-                    x2 (numpy.array): final state vector.
+                    x2 (np.array): final state vector.
 
         """
-        x2 = numpy.array(x1[:])
+        x2 = np.array(x1[:])
         dnu = nu2 - nu1
         half_dim = int(len(x1) / 2)
         x2[:half_dim] += dnu * x1[half_dim:]
@@ -291,12 +291,12 @@ class ZeroGravity(DynamicalSystem):
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    (numpy.array): moment-function evaluated at nu in zero-gravity dynamics.
+                    (np.array): moment-function evaluated at nu in zero-gravity dynamics.
 
         """
-        Y = numpy.zeros((2 * half_dim, half_dim))
-        Y[0:half_dim, :] = -nu * numpy.eye(half_dim)
-        Y[half_dim: 2 * half_dim, :] = numpy.eye(half_dim)
+        Y = np.zeros((2 * half_dim, half_dim))
+        Y[0:half_dim, :] = -nu * np.eye(half_dim)
+        Y[half_dim: 2 * half_dim, :] = np.eye(half_dim)
         return Y
 
     def compute_rhs(self, BC, analytical):
@@ -307,14 +307,14 @@ class ZeroGravity(DynamicalSystem):
                     analytical (bool): set to true for analytical propagation of motion, false for integration.
 
                 Returns:
-                    u (numpy.array): right-hand side of moment equation.
+                    u (np.array): right-hand side of moment equation.
 
         """
         if analytical:
-            M0 = numpy.eye(2 * BC.half_dim)
-            M0[0:BC.half_dim, BC.half_dim: 2 * BC.half_dim] = -BC.nu0 * numpy.eye(BC.half_dim)
-            Mf = numpy.eye(2 * BC.half_dim)
-            Mf[0:BC.half_dim, BC.half_dim: 2 * BC.half_dim] = -BC.nuf * numpy.eye(BC.half_dim)
+            M0 = np.eye(2 * BC.half_dim)
+            M0[0:BC.half_dim, BC.half_dim: 2 * BC.half_dim] = -BC.nu0 * np.eye(BC.half_dim)
+            Mf = np.eye(2 * BC.half_dim)
+            Mf[0:BC.half_dim, BC.half_dim: 2 * BC.half_dim] = -BC.nuf * np.eye(BC.half_dim)
             return Mf.dot(BC.xf) - M0.dot(BC.x0)
 
         else:  # propagation is numerical
@@ -333,7 +333,7 @@ class ZeroGravity(DynamicalSystem):
 
         """
         matrices = self.integrate_phi_inv(nus, half_dim)
-        Ys = numpy.zeros((2 * half_dim, half_dim * len(nus)))
+        Ys = np.zeros((2 * half_dim, half_dim * len(nus)))
         for k, matrix in enumerate(matrices):
             Ys[:, half_dim * k: half_dim * (k + 1)] = matrix[:, half_dim: 2 * half_dim]
         return Ys

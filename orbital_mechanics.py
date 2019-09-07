@@ -8,18 +8,18 @@
 # If not, see < https://www.gnu.org/licenses/>.
 
 import math
-import numpy
+import numpy as np
 import utils
 from config import conf
 
 # pre-computation for rotation matrix between local orbital frames
 # (3-BP co-rotating and LVLH used by Yamanaka & Ankersen)
-swap = numpy.zeros((4, 4))
+swap = np.zeros((4, 4))
 swap[0, 1] = -1.
 swap[1, 0] = 1.
 swap[2, 3] = -1.
 swap[3, 2] = 1.
-swap_inv = numpy.zeros((4, 4))
+swap_inv = np.zeros((4, 4))
 swap_inv[0, 1] = 1.
 swap_inv[1, 0] = -1.
 swap_inv[2, 3] = 1.
@@ -102,7 +102,7 @@ def puls_oop_LP(x, mu_ratio):
     """Function that returns the pulsation of linearized out-of-plane motion in the 3-body problem.
 
                 Args:
-                    x (numpy.array): normalized position of Lagrange Point.
+                    x (np.array): normalized position of Lagrange Point.
                     mu_ratio (float): ratio of minor mass over total mass.
 
                 Returns:
@@ -348,11 +348,11 @@ def phi_harmo(nu, pulsation):
                 pulsation (float): pulsation.
 
             Returns:
-                phi (numpy.array): transition matrix of harmonic oscillator.
+                phi (np.array): transition matrix of harmonic oscillator.
 
     """
 
-    phi = numpy.zeros((2, 2))
+    phi = np.zeros((2, 2))
     angle = pulsation * nu
     c = math.cos(angle)
     s = math.sin(angle)
@@ -368,7 +368,7 @@ def transition_oop(x1_bar, nu1, nu2):
     """Function propagating the transformed vector if it follows a harmonic dynamics.
 
             Args:
-                x1_bar (numpy.array): initial, transformed state vector
+                x1_bar (np.array): initial, transformed state vector
                 nu1 (float): initial true anomaly.
                 nu2 (float): final true anomaly.
 
@@ -392,11 +392,11 @@ def exp_HCW(nu):
                 nu (float): true anomaly.
 
             Returns:
-                phi (numpy.array): transition matrix of in-plane Hill-Clohessly-Wiltshire system.
+                phi (np.array): transition matrix of in-plane Hill-Clohessly-Wiltshire system.
 
     """
 
-    phi = numpy.zeros((4, 4))
+    phi = np.zeros((4, 4))
     c = math.cos(nu)
     s = math.sin(nu)
     phi[0, 0] = 4.0 - 3.0 * c
@@ -426,7 +426,7 @@ def phi_YA(e, n, nu0, nu):
                 nu (float): current true anomaly.
 
             Returns:
-                (numpy.array): transition matrix of in-plane Yamanaka-Ankersen system.
+                (np.array): transition matrix of in-plane Yamanaka-Ankersen system.
 
     """
 
@@ -446,7 +446,7 @@ def phi_YA(e, n, nu0, nu):
     dt = nu_to_dt(e, n, nu0, nu)
     J = dt * n / math.sqrt((1.0 - e * e) * (1.0 - e * e) * (1.0 - e * e))
 
-    phi = numpy.zeros((4, 4))
+    phi = np.zeros((4, 4))
     phi[0, 0] = 1.0
     phi[0, 1] = -cr * (1.0 + rho_inv)
     phi[0, 2] = sr * (1.0 + rho_inv)
@@ -468,14 +468,14 @@ def transition_ip2bp(x1_bar, e, n, nu1, nu2):
     """Function propagating the transformed in-plane vector for the 2-body problem.
 
             Args:
-                x1_bar (numpy.array): initial, transformed, in-plane state vector
+                x1_bar (np.array): initial, transformed, in-plane state vector
                 e (float): eccentricity.
                 n (float): mean motion.
                 nu1 (float): initial true anomaly.
                 nu2 (float): final true anomaly.
 
             Returns:
-                (numpy.array): final, transformed, in-plane state vector.
+                (np.array): final, transformed, in-plane state vector.
 
     """
 
@@ -499,7 +499,7 @@ def transition_ip2bp(x1_bar, e, n, nu1, nu2):
         cr1 = c1 * rho1
         esq = e * e
         factor = 1.0 / (1.0 - esq)
-        phi_inv1 = numpy.zeros((4, 4))
+        phi_inv1 = np.zeros((4, 4))
         phi_inv1[0, 0] = 1.0 / factor
         phi_inv1[0, 1] = 3.0 * e * s1 * (1.0 + 1.0 / rho1)
         phi_inv1[0, 2] = -e * (s1 + sr1)
@@ -523,12 +523,12 @@ def pot_grad(x, mu, slr):
     """Function returning the gradient of the potential in the co-rotating frame in the 2 (mu=0) or 3-body problem.
 
             Args:
-                x (numpy.array): spacecraft's transformed coordinates
+                x (np.array): spacecraft's transformed coordinates
                 mu (float): ratio of minor mass over total mass.
                 slr (float): semilatus rectum of reference elliptical orbit
 
             Returns:
-                gr (numpy.array): gradient of the potential relative to conservative forces.
+                gr (np.array): gradient of the potential relative to conservative forces.
 
     """
 
@@ -559,7 +559,7 @@ def state_deriv_nonlin(x, nu, ecc, x_eq, mu, slr):
                 x (list): out-of-plane transformed vector.
                 nu (float): true anomaly.
                 ecc (float): eccentricity of reference orbit.
-                x_eq (numpy.array): coordinates of equilibrium point.
+                x_eq (np.array): coordinates of equilibrium point.
                 mu (float): ratio of minor mass over total mass.
                 slr (float): semi-latus rectum of reference orbit.
 
@@ -587,7 +587,7 @@ def oop_state_deriv(x, nu, ecc, x_eq, mu):
                 x (list): out-of-plane transformed vector.
                 nu (float): true anomaly.
                 ecc (float): eccentricity of reference orbit.
-                x_eq (numpy.array): coordinates of equilibrium point.
+                x_eq (np.array): coordinates of equilibrium point.
                 mu (float): ratio of minor mass over total mass.
 
             Returns:
@@ -608,10 +608,10 @@ def Hessian_ip2bp(x):
     """Function computing the Hessian matrix of conservative forces' potential (gravity + non-inertial) in in-plane R2BP.
 
             Args:
-                x (numpy.array): in-plane coordinates
+                x (np.array): in-plane coordinates
 
             Returns:
-                H (numpy.array): Hessian (2x2) of conservative forces' potential.
+                H (np.array): Hessian (2x2) of conservative forces' potential.
 
     """
 
@@ -621,7 +621,7 @@ def Hessian_ip2bp(x):
     r1 = math.sqrt(r1sq)
     r1cube = r1 * r1sq
     r1pow5 = r1cube * r1sq
-    H = numpy.zeros((2, 2))
+    H = np.zeros((2, 2))
     H[0, 0] = -1.0 + 1.0 / r1cube - 3.0 * x0sq / r1pow5
     H[0, 1] = -3.0 * x[1] * x[0] / r1pow5
     H[1, 0] = H[0, 1]
@@ -634,11 +634,11 @@ def Hessian_ip3bp(x, mu):
     """Function computing the Hessian matrix of conservative forces' potential (gravity + non-inertial) in in-plane R3BP.
 
             Args:
-                x (numpy.array): in-plane coordinates
+                x (np.array): in-plane coordinates
                 mu (float): ratio of minor mass over total mass.
 
             Returns:
-                H (numpy.array): Hessian (2x2) of conservative forces' potential.
+                H (np.array): Hessian (2x2) of conservative forces' potential.
 
     """
 
@@ -651,7 +651,7 @@ def Hessian_ip3bp(x, mu):
     r2 = math.sqrt(r2sq)
     r2cube = r2 * r2sq
     r2pow5 = r2cube * r2sq
-    H = numpy.zeros((2, 2))
+    H = np.zeros((2, 2))
     H[0, 0] = -1.0 + (1.0 - mu) / r1cube - 3.0 * (1.0 - mu) * (x[0] + mu) * (x[0] + mu) / r1pow5 + mu / r2cube - 3.0 * mu * (x[0] - 1.0 + mu) * (x[0] - 1.0 + mu) / r2pow5
     H[0, 1] = -3.0 * (1.0 - mu) * x[1] * (x[0] + mu) / r1pow5 - 3.0 * mu * x[1] * (x[0] - 1.0 + mu) / r2pow5
     H[1, 0] = H[0, 1]
@@ -667,7 +667,7 @@ def ip_state_deriv(x, nu, ecc, x_eq, mu):
                 x (list): in-plane transformed vector.
                 nu (float): true anomaly.
                 ecc (float): eccentricity of reference orbit.
-                x_eq (numpy.array): coordinates of equilibrium point.
+                x_eq (np.array): coordinates of equilibrium point.
                 mu (float): ratio of minor mass over total mass.
 
             Returns:
@@ -692,7 +692,7 @@ def complete_state_deriv(x, nu, ecc, x_eq, mu):
                 x (list): complete transformed vector.
                 nu (float): true anomaly.
                 ecc (float): eccentricity of reference orbit.
-                x_eq (numpy.array): coordinates of equilibrium point.
+                x_eq (np.array): coordinates of equilibrium point.
                 mu (float): ratio of minor mass over total mass.
 
             Returns:

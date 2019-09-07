@@ -7,7 +7,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see < https://www.gnu.org/licenses/>.
 
-import numpy
+import numpy as np
 from numpy import linalg
 import utils
 from utils import unstack_state
@@ -70,7 +70,7 @@ class IndirectSolver(solver.Solver):
         z /= scale
 
         # building grid for norm checks
-        grid_check = list(numpy.linspace(BC.nu0, BC.nuf, conf.params_indirect["n_check"]))
+        grid_check = list(np.linspace(BC.nu0, BC.nuf, conf.params_indirect["n_check"]))
         Y_grid = self.grid_Y(grid_check, BC.half_dim)
 
         lamb = solve_primal(grid_check, Y_grid, z, self.p)

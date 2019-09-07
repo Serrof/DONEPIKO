@@ -7,7 +7,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see < https://www.gnu.org/licenses/>.
 
-import numpy
+import numpy as np
 from numpy import linalg
 from scipy.optimize import linprog
 from cvxopt import matrix, solvers
@@ -57,20 +57,20 @@ class DirectSolver(solver.Solver):
             n_grid = conf.params_direct["n_grid_1norm"]
         else:  # p = 2
             n_grid = conf.params_direct["n_grid_2norm"]
-        grid = numpy.linspace(BC.nu0, BC.nuf, n_grid)
+        grid = np.linspace(BC.nu0, BC.nuf, n_grid)
         Y_grid = self.grid_Y(list(grid), BC.half_dim)
 
         if self.p == 1:
 
             # building matrix for linear program
-            M = numpy.zeros((d, d * n_grid))
+            M = np.zeros((d, d * n_grid))
             for k in range(0, n_grid):
                 inter = Y_grid[:, k * BC.half_dim: (k+1) * BC.half_dim]
                 M[:, d * k: d * k + BC.half_dim] = inter
                 M[:, d * k + BC.half_dim: d * k + d] = -inter
 
             # solving for slack variables
-            res = linprog(numpy.ones(d * n_grid), A_eq=M, b_eq=z,
+            res = linprog(np.ones(d * n_grid), A_eq=M, b_eq=z,
                           options={"disp": conf.params_other["verbose"],
                                    "tol": conf.params_direct["tol_lin_prog"]})
             sol = res.x
@@ -94,7 +94,7 @@ class DirectSolver(solver.Solver):
                     lost += linalg.norm(DV, 1)
 
             # reconstructing velocity jumps
-            DVs = numpy.zeros((len(nus), BC.half_dim))
+            DVs = np.zeros((len(nus), BC.half_dim))
             for k, index in enumerate(indices):
                 if BC.half_dim == 1:
                     DVs[k, 0] = sol[2 * index] - sol[2 * index + 1]
@@ -111,24 +111,24 @@ class DirectSolver(solver.Solver):
         else:  # p = 2
 
             # building matrix for linear constraints
-            M = numpy.zeros((d, BC.half_dim * n_grid))
+            M = np.zeros((d, BC.half_dim * n_grid))
             for k in range(0, n_grid):
                 M[:, BC.half_dim * k: BC.half_dim * (k + 1)] = Y_grid[:, k * BC.half_dim: (k + 1) * BC.half_dim]
-            A = numpy.concatenate((numpy.zeros((d, n_grid)), M), axis=1)
+            A = np.concatenate((np.zeros((d, n_grid)), M), axis=1)
             A = matrix(A)
 
             # building matrix for linear cost function
-            f = numpy.concatenate((numpy.ones(n_grid),
-                                   numpy.zeros(BC.half_dim * n_grid)), axis=0)
+            f = np.concatenate((np.ones(n_grid),
+                                   np.zeros(BC.half_dim * n_grid)), axis=0)
             f = matrix(f)
 
             # building matrices for SDP constraints
             G = None
             h = None
-            vec = numpy.zeros(BC.half_dim + 1)
+            vec = np.zeros(BC.half_dim + 1)
             vec = matrix(vec)
             for j in range(0, n_grid):
-                mat = numpy.zeros((BC.half_dim + 1, n_grid * (BC.half_dim + 1)))
+                mat = np.zeros((BC.half_dim + 1, n_grid * (BC.half_dim + 1)))
                 mat[0, j] = -1.0
                 for i in range(0, BC.half_dim):
                     mat[i + 1, n_grid + BC.half_dim * j + i] = 1.0
@@ -164,7 +164,7 @@ class DirectSolver(solver.Solver):
                 print("lost impulse: " + str(lost))
 
             # reconstructing velocity jumps
-            DVs = numpy.zeros((len(nus), BC.half_dim))
+            DVs = np.zeros((len(nus), BC.half_dim))
             for k in range(0, len(nus)):
                 DVs[k, :] = sol[n_grid + BC.half_dim * indices[k]:
                                 n_grid + BC.half_dim * indices[k] + BC.half_dim]
