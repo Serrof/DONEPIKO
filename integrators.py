@@ -205,6 +205,7 @@ class RK4(FixedstepIntegrator):
         middle_time = t + half_step
 
         f1 = self._func(t, x)  # function call
+
         x1 = x + half_step * f1
         f2 = self._func(middle_time, x1)  # function call
 
@@ -235,15 +236,14 @@ class BS(FixedstepIntegrator):
         """
         FixedstepIntegrator.__init__(self, func, order)
 
-        sequence = [2]
+        self.sequence = numpy.zeros(self._order, dtype=int)
+        self.sequence[0] = 2
         if self._order > 1:
-            sequence.append(4)
+            self.sequence[1] = 4
             if self._order > 2:
-                sequence.append(6)
-                if self._order > 3:
-                    for k in range(3, self._order):
-                        sequence.append(2 * sequence[-2])
-        self.sequence = sequence
+                self.sequence[2] = 6
+                for k in range(3, self._order):
+                    self.sequence[k] = 2 * self.sequence[-2]
 
     def integration_step(self, t, x, H):
         """Function performing a single integration step i.e. given the state vector at the current value t of
@@ -556,7 +556,7 @@ class VariableStepIntegrator(Integrator):
 
                 Args:
                      func (function): function to be integrated.
-                     order (integer): order of integrator.
+                     order (int): order of integrator.
                      dim_state (int): dimension of state factor.
                      abs_error_tol (iterable): tolerance vector on estimated absolute error. Should have same number of
                      components than there are state variables. Default is 1.e-8 for each.
@@ -699,8 +699,8 @@ class RKF45(VariableStepIntegrator):
         # values of independent variable where the model will be evaluated
         t1 = t
         t2 = t + h / 4.
-        t3 = t + h * 3. / 8.
-        t4 = t + h * 12. / 13.
+        t3 = t + h * (3. / 8.)
+        t4 = t + h * (12. / 13.)
         t5 = t + h
         t6 = t + h / 2.
 
