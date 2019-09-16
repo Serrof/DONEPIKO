@@ -423,9 +423,7 @@ class MultistepIntegrator(FixedstepIntegrator):
 
         """
 
-        copy_steps = []
-        for step in self.saved_steps:
-            copy_steps.append(step)
+        copy_steps = [step for step in self.saved_steps]
 
         self.saved_steps = []
         for j in range(0, len(copy_steps) - 1):
@@ -488,9 +486,7 @@ class MultistepIntegrator(FixedstepIntegrator):
         n_steps = self._order - 1
         (states, indVar) = self._initializer.integrate(t0, t0 + float(n_steps) * h, x0, n_steps)
 
-        self.saved_steps = []
-        for k, state in enumerate(states):
-            self.saved_steps.append(self._func(indVar[k], state))
+        self.saved_steps = [self._func(indVar[k], state) for k, state in enumerate(states)]
 
         return states, indVar
 
@@ -512,8 +508,7 @@ class MultistepIntegrator(FixedstepIntegrator):
         self.saved_steps = []
         if saved_steps is not None and len(saved_steps) == self._order:
             # input saved steps are recyclable
-            for el in saved_steps:
-                self.saved_steps.append(el)
+            self.saved_steps = [step for step in saved_steps]
 
         h = FixedstepIntegrator.step_size(t0, tf, n_step)
 
@@ -584,13 +579,12 @@ class ABM8(MultistepIntegrator):
 
         self._predictor.integration_step(t, x)
 
-        self.saved_steps = []
-        for step in self._predictor.saved_steps:
-            self.saved_steps.append(step)
+        self.saved_steps = [step for step in self._predictor.saved_steps]
 
         xf = self.update_state(x)
 
         f = self._func(t + self._stepsize, xf)  # function call
+
         del self._predictor.saved_steps[-1]
         self._predictor.saved_steps.append(f)
 
