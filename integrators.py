@@ -701,13 +701,14 @@ class VariableStepIntegrator(Integrator):
         h = FixedstepIntegrator.step_size(t0, tf, n_step)
 
         # save direction of integration
-        forward = tf >= t0
+        forward = tf > t0
 
         Ts = [t0]
         Xs = [x0]
 
         t = t0
-        while math.fabs(t - t0) < math.fabs(tf - t0):
+        abs_dt = math.fabs(tf - t0)
+        while math.fabs(t - t0) < abs_dt:
             # check and possibly decrease step-size
             if math.fabs(h) > self._max_stepsize:
                 if forward:
@@ -720,13 +721,9 @@ class VariableStepIntegrator(Integrator):
             x, err = self.integration_step(t, Xs[-1], h)
 
             # check viability of integration step
-            self._last_step_ok = True
-            max_err_ratio = 0.
-            for i in range(0, len(err)):
-                inter = math.fabs(err[i]) / self._abs_tol[i]
-                if inter > max_err_ratio:
-                    max_err_ratio = inter
-            self._last_step_ok = max_err_ratio <= 1.
+            err_ratios = np.fabs(err) / self._abs_tol
+            max_err_ratio = np.max(err_ratios)
+            self._last_step_ok = max_err_ratio < 1.
 
             if self._last_step_ok:
                 t += h
