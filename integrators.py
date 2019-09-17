@@ -113,8 +113,7 @@ class FixedstepIntegrator(Integrator):
         """
 
         h = FixedstepIntegrator.step_size(t0, tf, n_step)
-        Ts = [t0]
-        Xs = [x0]
+        Ts, Xs = [t0], [x0]
         for k in range(0, n_step):
             Xs.append(self.integration_step(Ts[-1], Xs[-1], h))
             Ts.append(Ts[-1] + h)
@@ -513,11 +512,10 @@ class MultistepIntegrator(FixedstepIntegrator):
         h = FixedstepIntegrator.step_size(t0, tf, n_step)
 
         if self._stepsize != h or self.saved_steps == []:
-            (Xs, Ts) = self.initialize(t0, x0, h)
+            Xs, Ts = self.initialize(t0, x0, h)
             n_start = self._order - 1
         else:  # step-size has not changed and there are available saved steps
-            Ts = [t0]
-            Xs = [x0]
+            Ts, Xs = [t0], [x0]
             n_start = 0
 
         for k in range(n_start, n_step):
@@ -641,10 +639,7 @@ class VariableStepIntegrator(Integrator):
                       + str(default_step_multiplier))
                 self._step_multiplier = default_step_multiplier
 
-        if max_stepsize is None:
-            self._max_stepsize = np.inf
-        else:
-            self._max_stepsize = max_stepsize
+        self._max_stepsize = np.inf if max_stepsize is None else max_stepsize
 
         default_abs_tol = 1.e-8
         self._abs_tol = np.ones(self._dim_state) * default_abs_tol
@@ -697,18 +692,13 @@ class VariableStepIntegrator(Integrator):
         # save direction of integration
         forward = tf > t0
 
-        Ts = [t0]
-        Xs = [x0]
-
+        Ts, Xs = [t0], [x0]
         t = t0
         abs_dt = math.fabs(tf - t0)
         while math.fabs(t - t0) < abs_dt:
             # check and possibly decrease step-size
             if math.fabs(h) > self._max_stepsize:
-                if forward:
-                    h = self._max_stepsize
-                else:
-                    h = -self._max_stepsize
+                h = self._max_stepsize if forward else -self._max_stepsize
             if (t + h > tf and forward) or (t + h < tf and not forward):
                 h = tf - t
 
