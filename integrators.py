@@ -598,6 +598,8 @@ class VariableStepIntegrator(Integrator):
                 otherwise.
                 _abs_tol (array_like): tolerance vector on estimated absolute error. Should have same number of
                 components than there are state variables. Default is 1.e-8 for each.
+                _rel_tol (array_like): tolerance vector on estimated relative error. Should have same number of
+                components than there are state variables. Default is 1.e-4 for each.
                 _max_stepsize (float): maximum step-size allowed. Default is + infinity.
                 _step_multiplier (float): multiplicative factor to increase step-size when an integration step has
                 been successful.
@@ -606,7 +608,8 @@ class VariableStepIntegrator(Integrator):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, func, order, dim_state, abs_error_tol=None, max_stepsize=None, step_multiplier=None):
+    def __init__(self, func, order, dim_state, abs_error_tol=None, rel_error_tol=None, max_stepsize=None,
+                 step_multiplier=None):
         """Constructor for class VariableStepIntegrator.
 
                 Args:
@@ -615,6 +618,8 @@ class VariableStepIntegrator(Integrator):
                      dim_state (int): dimension of state factor.
                      abs_error_tol (array_like): tolerance vector on estimated absolute error. Should have same number of
                      components than there are state variables. Default is 1.e-8 for each.
+                     rel_error_tol (array_like): tolerance vector on estimated relative error. Should have same number of
+                     components than there are state variables. Default is 1.e-4 for each.
                      max_stepsize (float): maximum step-size allowed. Default is + infinity.
                      step_multiplier (float): multiplicative factor to increase step-size when an integration step has
                      been successful.
@@ -653,6 +658,19 @@ class VariableStepIntegrator(Integrator):
                           + str(default_abs_tol) + "with state variable" + str(i))
                 else:
                     self._abs_tol[i] = abs_error_tol[i]
+
+        default_rel_tol = 1.e-4
+        self._rel_tol = np.ones(self._dim_state) * default_rel_tol
+        if rel_error_tol is not None:
+            if len(rel_error_tol) != self._dim_state:
+                raise ValueError("wrong input in VariableStepIntegrator: tolerance on relative error must have same "
+                      "dimension than state vector")
+            for i in range(0, len(rel_error_tol)):
+                if rel_error_tol[i] <= 0.:
+                    print("input tolerance on relative error is negative, switching to default value of"
+                          + str(default_rel_tol) + "with state variable" + str(i))
+                else:
+                    self._rel_tol[i] = rel_error_tol[i]
 
     @abstractmethod
     def integration_step(self, t, x, h):
@@ -705,7 +723,7 @@ class VariableStepIntegrator(Integrator):
             x, err = self.integration_step(t, Xs[-1], h)
 
             # check viability of integration step
-            err_ratios = np.fabs(err) / self._abs_tol
+            err_ratios = np.fabs(err) / np.max(self._abs_tol + self._rel_tol * np.fabs(x))
             max_err_ratio = np.max(err_ratios)
             self._last_step_ok = max_err_ratio < 1.
 
@@ -749,8 +767,9 @@ class RKF45(VariableStepIntegrator):
 
     """
 
-    def __init__(self, func, dim_state, abs_error_tol=None, max_stepsize=None, step_multiplier=None):
-        VariableStepIntegrator.__init__(self, func, 4, dim_state, abs_error_tol, max_stepsize, step_multiplier)
+    def __init__(self, func, dim_state, abs_error_tol=None, rel_error_tol=None, max_stepsize=None, step_multiplier=None):
+        VariableStepIntegrator.__init__(self, func, 4, dim_state, abs_error_tol, rel_error_tol, max_stepsize,
+                                        step_multiplier)
         self._factor_t3 = 3. / 8.
         self._factor_t4 = 12. / 13.
         self._factor_x2 = 3. / 32.
