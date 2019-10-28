@@ -413,8 +413,8 @@ class RestriTwoBodyProb(BodyProbDyn):
                     sma (float): semi-major axis (must be consistent with period)
 
         """
-
-        return cls(ecc, 2. * math.pi / mm, sma)
+        params = BodyProbParams(0., ecc, 2. * math.pi / mm, sma)
+        return RestriTwoBodyProb.init_from_params(params)
 
     def copy(self):
         """Function returning a copy of the object.
@@ -548,7 +548,8 @@ class RestriThreeBodyProb(BodyProbDyn):
 
         """
 
-        return cls(mu, ecc, 2. * math.pi / mm, sma, Li)
+        params = BodyProbParams(mu, ecc, 2. * math.pi / mm, sma, Li)
+        return RestriThreeBodyProb.init_from_params(params)
 
     def copy(self):
         """Function returning a copy of the object.
