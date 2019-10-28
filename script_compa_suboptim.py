@@ -18,7 +18,8 @@ import dynamics_factory
 nu0 = 2.0 * math.pi * random.random()  # initial true anomaly in rad
 nuf = nu0 + 2.0 * math.pi * random.random()  # final true anomaly in rad
 
-dyn = dynamics_factory.GEO()  # 2-body restricted dynamics is linearized around Geostationary Earth Orbit
+dyn = dynamics_factory.RestriTwoBodyProbEarthFromPeriod.geostationary()  # 2-body restricted dynamics
+# is linearized around Geostationary Earth Orbit
 
 hd = 2  # half-dimension of state vector (1 for out-of-plane dynamics only, 2 for in-plane only and 3 for complete)
 x0 = np.zeros(hd * 2)

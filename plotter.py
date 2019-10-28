@@ -443,13 +443,15 @@ class Plotter:
         else:  # in-plane or complete dynamics
             ax.set_title('trajectory')
 
-    def show(self):
+    @staticmethod
+    def show():
         """Function to show all the pre-computed plots.
 
         """
         plt.show()
 
-    def close(self):
+    @staticmethod
+    def close():
         """Function to close all the plots.
 
         """

@@ -19,7 +19,7 @@ nu0 = 2.0 * math.pi * random.random()  # initial true anomaly in rad
 nuf = nu0 + 2.0 * math.pi * random.random()  # final true anomaly in rad
 
 # 2-body restricted dynamics is linearized around an Earth elliptical orbit
-dyn = dynamics_factory.EllipticalRestricted2BodyProblemEarthFromSMA(ecc=0.6, sma=42000.e3)
+dyn = dynamics_factory.RestriTwoBodyProbEarthFromSMA(ecc=0.6, sma=42000.e3)
 
 hd = 3  # half-dimension of state vector (1 for out-of-plane dynamics only, 2 for in-plane only and 3 for complete)
 x0 = np.zeros(hd * 2)

@@ -392,12 +392,36 @@ class RestriTwoBodyProb(BodyProbDyn):
 
         self.x_eq_normalized = np.array([1.0, 0.0, 0.0])
 
+    @classmethod
+    def init_from_params(cls, params):
+        """Method to instantiate the class from an object of its parameters' class.
+
+                Args:
+                    params (BodyProbParams): object of parameter's class.
+
+        """
+
+        return cls(params.ecc, params.period, params.sma)
+
+    @classmethod
+    def init_with_mean_motion(cls, ecc, mm, sma):
+        """Method to instantiate the class from the mean motion instead of the orbital period.
+
+                Args:
+                    ecc (float): eccentricity.
+                    mm (float): mean motion.
+                    sma (float): semi-major axis (must be consistent with period)
+
+        """
+
+        return cls(ecc, 2. * math.pi / mm, sma)
+
     def copy(self):
         """Function returning a copy of the object.
 
         """
 
-        return RestriTwoBodyProb(self.params.ecc, self.params.period, self.params.sma)
+        return RestriTwoBodyProb.init_from_params(self.params)
 
     def evaluate_Y(self, nu, half_dim):
         """Function returning the moment-function involved in the equation satisfied by the control law.
@@ -500,12 +524,38 @@ class RestriThreeBodyProb(BodyProbDyn):
                              [0.0, root1, 0.0, root2], [b1 * root1, b2 * root1, d1 * root2, d2 * root2]])
             self._A_inv = np.linalg.inv(A)
 
+    @classmethod
+    def init_from_params(cls, params):
+        """Method to instantiate the class from an object of its parameters' class.
+
+                Args:
+                    params (BodyProbParams): object of parameter's class.
+
+        """
+
+        return cls(params.mu, params.ecc, params.period, params.sma, params.Li)
+
+    @classmethod
+    def init_with_mean_motion(cls, mu, ecc, mm, sma, Li):
+        """Method to instantiate the class from the mean motion instead of the orbital period.
+
+                Args:
+                    mu (float): ratio of minor mass over total mass.
+                    ecc (float): eccentricity.
+                    mm (float): mean motion.
+                    sma (float): semi-major axis (must be consistent with period)
+                    Li (int): index of Lagrange Point (used only if mu != 0)
+
+        """
+
+        return cls(mu, ecc, 2. * math.pi / mm, sma, Li)
+
     def copy(self):
         """Function returning a copy of the object.
 
         """
 
-        return RestriThreeBodyProb(self.params.mu, self.params.ecc, self.params.period, self.params.sma, self.params.Li)
+        return RestriThreeBodyProb.init_from_params(self.params)
 
     def evaluate_Y(self, nu, half_dim):
         """Function returning the moment-function involved in the equation satisfied by the control law.

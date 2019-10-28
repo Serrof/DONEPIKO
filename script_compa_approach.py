@@ -19,7 +19,8 @@ import time
 nu0 = 2.0 * math.pi * random.random()  # initial true anomaly in rad
 nuf = nu0 + 2.0 * math.pi * random.random()  # final true anomaly in rad
 
-dyn = dynamics_factory.EarthMoonLP(Li=4)  # 3-body restricted dynamics is linearized around Earth-Moon Lagrange Point 4
+dyn = dynamics_factory.CircRestriThreeBodyProb.Sun_Earth(Li=4)  # 3-body restricted dynamics is
+# linearized around Sun-Earth Lagrange Point 4
 
 hd = 3  # half-dimension of state vector (1 for out-of-plane dynamics only, 2 for in-plane only and 3 for complete)
 x0 = np.zeros(hd * 2)
