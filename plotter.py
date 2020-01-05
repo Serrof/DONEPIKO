@@ -1,5 +1,5 @@
 # plotter.py: class handling the plots
-# Copyright(C) 2019 Romain Serra
+# Copyright(C) 2018-2020 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -222,7 +222,7 @@ class Plotter:
                         return states_inter, pts_inter
                     else:  # initial and final true anomaly are different
                         IC_transformed = self.dyn.transformation(IC, nu1)
-                        n_int = int(math.ceil((nu2 - nu1) / conf.params_plot["h_min"]))
+                        n_int = int(math.ceil((nu2 - nu1) / conf.params_other["max_stepsize"]))
                         (states_transformed, pts_inter) = integrator.integrate(nu1, nu2, IC_transformed, n_int)
                         states_inter = [self.dyn.transformation_inv(states_transformed[j], pts_inter[j])
                                         for j in range(0, len(pts_inter))]

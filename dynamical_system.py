@@ -1,5 +1,5 @@
 # dynamical_system.py: set of classes for the dynamical models with an example dynamics
-# Copyright(C) 2019 Romain Serra
+# Copyright(C) 2018-2020 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -223,7 +223,7 @@ class DynamicalSystem:
         IC_matrix = np.eye(2 * half_dim)
         outputs.append(IC_matrix)
         IC_vector = utils.square_matrix_to_vector(IC_matrix, 2 * half_dim)  # initial conditions of matrix system turned into a vector for integration
-        n_step = int(math.ceil(math.fabs(nus[1] - nus[0]) / conf.params_plot["h_min"]))
+        n_step = int(math.ceil(math.fabs(nus[1] - nus[0]) / conf.params_other["max_stepsize"]))
 
         for k in range(0, len(nus)-1):
             (state_hist, nu_hist) = integ.integrate(nus[k], nus[k+1], IC_vector, n_step)

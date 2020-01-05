@@ -1,5 +1,5 @@
 # script_compa_suboptim.py: script showing that the two-impulse strategy with boundary burns is usually not optimal
-# Copyright(C) 2019 Romain Serra
+# Copyright(C) 2018-2020 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied

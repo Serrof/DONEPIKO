@@ -19,9 +19,9 @@
 		<plot>
 			<mesh_plot>2000</mesh_plot>
 			<font>22</font>
-			<h_min>1.0e-3</h_min>
 		</plot>
 		<other>
+			<max_stepsize>1.0e-2</max_stepsize>
 			<verbose>False</verbose>
 			<tol_kepler>1.e-8</tol_kepler>
 			<iter_max_kepler>100</iter_max_kepler>

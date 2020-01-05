@@ -1,5 +1,5 @@
 # py: set of tuning parameters for algorithms and other
-# Copyright(C) 2019 Romain Serra
+# Copyright(C) 2018-2020 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
@@ -103,10 +103,10 @@ class Config:
                 plot = child.find("plot")
                 for el in {"font", "mesh_plot"}:
                     self.params_plot[el] = int(plot.find(el).text)
-                for el in {"h_min"}:
-                    self.params_plot[el] = float(plot.find(el).text)
 
                 other = child.find("other")
+                for el in {"max_stepsize"}:
+                    self.params_other[el] = float(other.find(el).text)
                 for el in {"verbose"}:
                     self.params_other[el] = other.find(el).attrib
                 for el in {"iter_max_kepler", "iter_max_LP"}:

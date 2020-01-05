@@ -1,5 +1,5 @@
 # script_compa_nonlin.py: script showing how the optimal solution with linear dynamics behaves with the original one
-# Copyright(C) 2019 Romain Serra
+# Copyright(C) 2018-2020 Romain Serra
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Software Foundation, either version 3 of the License, or any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
