@@ -354,7 +354,7 @@ class BS(FixedstepIntegrator):
             f = self._func(t + j * h, u2)  # function call
             u2, u1, u0 = u1 + h2 * f, u2, u1
 
-        return (u0 + u1 * 2. + u2) / 4.
+        return 0.25 * (u0 + u1 * 2. + u2)
 
     def _extrapolation(self, i, H, y, t):
         """Function performing the extrapolation according to the Bulirsch-Stoer algorithm.
@@ -805,12 +805,12 @@ class RKF45(VariableStepIntegrator):
         """
         # values of independent variable where the model will be evaluated
         t1 = t
-        dt2 = h / 4.
+        dt2 = 0.25 * h
         t2 = t + dt2
         t3 = t + h * self._factor_t3
         t4 = t + h * self._factor_t4
         t5 = t + h
-        t6 = t + h / 2.
+        t6 = t + 0.5 * h
 
         f1 = self._func(t1, x)  # function call
 
