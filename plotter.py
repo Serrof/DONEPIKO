@@ -203,16 +203,9 @@ class Plotter:
             else:  # linearized dynamics or in-plane or complete non-linear dynamics
 
                 if self.linearized:
-
-                    def func(nu, x):  # right-hand side function for integration
-                        return self.dyn.evaluate_state_deriv(nu, x)
-
+                    integrator = integrators.ABM8(lambda var, x: self.dyn.evaluate_state_deriv(var, x))
                 else:  # non-linear dynamics
-
-                    def func(nu, x):  # right-hand side function for integration
-                        return np.array(self.dyn.evaluate_state_deriv_nonlin(nu, x))
-
-                integrator = integrators.ABM8(func)
+                    integrator = integrators.ABM8(lambda var, x: np.array(self.dyn.evaluate_state_deriv_nonlin(var, x)))
 
                 def propagate_num(nu1, nu2, IC):
                     if nu1 == nu2:

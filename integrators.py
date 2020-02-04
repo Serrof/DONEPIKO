@@ -425,8 +425,8 @@ class MultistepIntegrator(FixedstepIntegrator):
         copy_steps = [step for step in self.saved_steps]
 
         self.saved_steps = []
-        for j in range(0, len(copy_steps) - 1):
-            self.saved_steps.append(copy_steps[j + 1])  # shift
+        for j in range(1, len(copy_steps)):
+            self.saved_steps.append(copy_steps[j])  # shift
 
         f = self._func(t, x)  # function call
         self.saved_steps.append(f)
@@ -477,17 +477,17 @@ class MultistepIntegrator(FixedstepIntegrator):
 
                 Returns:
                     states (list): history of state vector after initialization with single-step integrator.
-                    indVar (list): values of independent variable corresponding to history of state vector.
+                    ind_vars (list): values of independent variable corresponding to history of state vector.
 
         """
 
         self._stepsize = h
         n_steps = self._order - 1
-        (states, indVar) = self._initializer.integrate(t0, t0 + float(n_steps) * h, x0, n_steps)
+        (states, ind_vars) = self._initializer.integrate(t0, t0 + float(n_steps) * h, x0, n_steps)
 
-        self.saved_steps = [self._func(indVar[k], state) for k, state in enumerate(states)]
+        self.saved_steps = [self._func(ind_var, state) for ind_var, state in zip(ind_vars, states)]
 
-        return states, indVar
+        return states, ind_vars
 
     def integrate(self, t0, tf, x0, n_step, saved_steps=None):
         """Function that performs integration between two values of independent variable.
@@ -541,7 +541,7 @@ class AB8(MultistepIntegrator):
         MultistepIntegrator.__init__(self, func, 8)
 
         self._beta = np.array([-36799., 295767., -1041723., 2102243., -2664477., 2183877., -1152169., 434241.]) / 120960.
-        self._initializer = BS(self._func, int((self._order + 1) / 2))
+        self._initializer = BS(self._func, (self._order + 1) // 2)
 
 
 class ABM8(MultistepIntegrator):
@@ -712,10 +712,10 @@ class VariableStepIntegrator(Integrator):
 
         Ts, Xs = [t0], [x0]
         t = t0
-        abs_dt = math.fabs(tf - t0)
-        while math.fabs(t - t0) < abs_dt:
+        abs_dt = abs(tf - t0)
+        while abs(t - t0) < abs_dt:
             # check and possibly decrease step-size
-            if math.fabs(h) > self._max_stepsize:
+            if abs(h) > self._max_stepsize:
                 h = self._max_stepsize if forward else -self._max_stepsize
             if (t + h > tf and forward) or (t + h < tf and not forward):
                 h = tf - t
