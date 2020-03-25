@@ -107,8 +107,8 @@ class Solver:
         if self.prop_ana:
             grid_size = len(grid)
             Ys = np.zeros((2 * half_dim, half_dim * grid_size))
-            for k in range(0, grid_size):
-                Ys[:, half_dim * k: half_dim * (k + 1)] = self.dyn.evaluate_Y(grid[k], half_dim)
+            for k, el in enumerate(grid):
+                Ys[:, half_dim * k: half_dim * (k + 1)] = self.dyn.evaluate_Y(el, half_dim)
         else:  # numerical integration
             Ys = self.dyn.integrate_Y(grid, half_dim)
 

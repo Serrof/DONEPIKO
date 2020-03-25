@@ -422,12 +422,7 @@ class MultistepIntegrator(FixedstepIntegrator):
 
         """
 
-        copy_steps = [step for step in self.saved_steps]
-
-        self.saved_steps = []
-        for j in range(1, len(copy_steps)):
-            self.saved_steps.append(copy_steps[j])  # shift
-
+        self.saved_steps = self.saved_steps[1:]  # shift
         f = self._func(t, x)  # function call
         self.saved_steps.append(f)
 
@@ -652,12 +647,12 @@ class VariableStepIntegrator(Integrator):
             if len(abs_error_tol) != self._dim_state:
                 raise ValueError("wrong input in VariableStepIntegrator: tolerance on absolute error must have same "
                       "dimension than state vector")
-            for i in range(0, len(abs_error_tol)):
-                if abs_error_tol[i] <= 0.:
+            for i, tol in enumerate(abs_error_tol):
+                if tol <= 0.:
                     print("input tolerance on absolute error is negative, switching to default value of"
                           + str(default_abs_tol) + "with state variable" + str(i))
                 else:
-                    self._abs_tol[i] = abs_error_tol[i]
+                    self._abs_tol[i] = tol
 
         default_rel_tol = 1.e-4
         self._rel_tol = np.ones(self._dim_state) * default_rel_tol
@@ -665,12 +660,12 @@ class VariableStepIntegrator(Integrator):
             if len(rel_error_tol) != self._dim_state:
                 raise ValueError("wrong input in VariableStepIntegrator: tolerance on relative error must have same "
                       "dimension than state vector")
-            for i in range(0, len(rel_error_tol)):
-                if rel_error_tol[i] <= 0.:
+            for i, tol in rel_error_tol:
+                if tol <= 0.:
                     print("input tolerance on relative error is negative, switching to default value of"
                           + str(default_rel_tol) + "with state variable" + str(i))
                 else:
-                    self._rel_tol[i] = rel_error_tol[i]
+                    self._rel_tol[i] = tol
 
     @abstractmethod
     def integration_step(self, t, x, h):

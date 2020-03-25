@@ -674,10 +674,7 @@ def ip_state_deriv(x, nu, ecc, x_eq, mu):
                 (list): state derivative.
 
     """
-    if mu == 0:
-        Hessian = Hessian_ip2bp(x_eq)
-    else:  # restricted three-body case
-        Hessian = Hessian_ip3bp(x_eq, mu)
+    Hessian = Hessian_ip2bp(x_eq) if mu == 0 else Hessian_ip3bp(x_eq, mu)
 
     rho = rho_func(ecc, nu)
     return [x[2], x[3], 2. * x[3] - (Hessian[0, 0] * x[0] + Hessian[0, 1] * x[1]) / rho, -2. * x[2] -

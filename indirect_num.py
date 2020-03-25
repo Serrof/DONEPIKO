@@ -100,15 +100,12 @@ def find_max_pv(Y_grid, lamb, q):
 
     hd = int(len(lamb) / 2)
     n_check = int(len(Y_grid[0, :]) / hd)
-    unit_norm = True
     norms = np.zeros(n_check)
     for k in range(0, n_check):
         Y_k = Y_grid[:, hd * k: hd * (k + 1)]
         norms[k] = linalg.norm(np.transpose(Y_k).dot(lamb), q)
     index_max = np.argmax(norms)
-    val_max = norms[index_max]
-    if val_max > 1.0 + conf.params_indirect["tol_unit_norm"]:
-        unit_norm = False
+    unit_norm = (norms[index_max] <= 1.0 + conf.params_indirect["tol_unit_norm"])
 
     return unit_norm, index_max
 
@@ -314,8 +311,8 @@ def solve_primal_1norm(grid_check, Y_grid, z):
 
         # building matrix for linear constraints
         A = np.zeros((d * n_work, d))
-        for j in range(0, len(grid_work)):
-            tY = np.transpose(Y_grid[:, hd * indices_work[j]: hd * (indices_work[j] + 1)])
+        for j, index in enumerate(indices_work):
+            tY = np.transpose(Y_grid[:, hd * index: hd * (index + 1)])
             A[d * j: d * j + hd, :] += tY
             A[d * j + hd: d * (j + 1), :] -= tY
 
@@ -368,8 +365,8 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
     # extracting optimal directions of burn from primer vector
     directions = np.zeros((len(nus), hd))
     n_alphas = 0
-    for i in range(0, len(nus)):
-        inter = np.transpose(Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]).dot(lamb)
+    for i, index in enumerate(indices):
+        inter = np.transpose(Y_grid[:, hd * index: hd * (index + 1)]).dot(lamb)
         for j in range(0, hd):
             if math.fabs(inter[j]) > 1.0 - conf.params_indirect["tol_unit_norm"]:
                 directions[i, j] = np.sign(inter[j])
@@ -378,8 +375,8 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
     # building matrix for linear system
     M = np.zeros((d, n_alphas))
     count = 0
-    for i in range(0, len(nus)):
-        aux = Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]
+    for i, index in enumerate(indices):
+        aux = Y_grid[:, hd * index: hd * (index + 1)]
         for j in range(0, hd):
             if math.fabs(directions[i, j]) > 0.0:
                 M[:, count] = directions[i, j] * aux[:, j]
@@ -434,8 +431,8 @@ def solve_primal_2norm(grid_check, Y_grid, z):
         # building matrices for SDP constraints
         A = None
         h = None
-        for j in range(0, len(grid_work)):
-            Y = Y_grid[:, hd * indices_work[j]: hd * (indices_work[j] + 1)]
+        for j, index in enumerate(indices_work):
+            Y = Y_grid[:, hd * index: hd * (index + 1)]
             # construction of matrix in np.array form
             inter = np.zeros((d, (hd + 1) * (hd + 1)))
             inter[:, 1:1+hd] += Y
@@ -511,7 +508,7 @@ def primal_to_dual_2norm(grid_check, Y_grid, lamb, z):
 
     # reconstructing velocity jumps
     DVs = np.zeros((len(nus), hd))
-    for i in range(0, len(nus)):
-        DVs[i, :] = directions[i, :] * alphas[i]
+    for i, alpha in enumerate(alphas):
+        DVs[i, :] = directions[i, :] * alpha
 
     return nus, DVs

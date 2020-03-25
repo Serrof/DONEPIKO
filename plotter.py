@@ -94,13 +94,11 @@ class Plotter:
 
         if self.anomaly:    
             self._nus = np.linspace(self.BC.nu0, self.BC.nuf, self._nb)
-            self._pts = self._nus
+            self._pts = np.array(self._nus)
         else:  # the independent variable is time
             self._times = np.linspace(0., self.dyn.convToAlterIndVar(self.BC.nu0, 0., self.BC.nuf), self._nb)
-            self._pts = self._times
-            self._nus = np.zeros(self._nb)
-            for k in range(0, self._nb):
-                self._nus[k] = self.dyn.convFromAlterIndVar(self.BC.nu0, 0., self._times[k])
+            self._pts = np.array(self._times)
+            self._nus = np.array([self.dyn.convFromAlterIndVar(self.BC.nu0, 0., time) for time in self._times])
 
     def set_ind_var(self, anomaly):
         """Setter for attribute anomaly.
@@ -210,22 +208,22 @@ class Plotter:
                 def propagate_num(nu1, nu2, IC):
                     if nu1 == nu2:
                         pts_inter = [nu1]
-                        state0 = np.array(IC[:])
+                        state0 = np.array(IC)
                         states_inter = [state0]
                         return states_inter, pts_inter
                     else:  # initial and final true anomaly are different
                         IC_transformed = self.dyn.transformation(IC, nu1)
                         n_int = int(math.ceil((nu2 - nu1) / conf.params_other["max_stepsize"]))
                         (states_transformed, pts_inter) = integrator.integrate(nu1, nu2, IC_transformed, n_int)
-                        states_inter = [self.dyn.transformation_inv(states_transformed[j], pts_inter[j])
-                                        for j in range(0, len(pts_inter))]
+                        states_inter = [self.dyn.transformation_inv(states_transformed[j], pt)
+                                        for j, pt in enumerate(pts_inter)]
                         return states_inter, pts_inter
 
                 states = []
                 pts = []
                 for k in range(0, self.CL.N):
                     if k == 0:
-                        state0 = np.array(self.BC.x0[:])
+                        state0 = np.array(self.BC.x0)
                         date0 = self.BC.nu0
                         datef = self.CL.nus[0]
                     else:  # not first loop
@@ -240,16 +238,16 @@ class Plotter:
                         pts.append(pts_inter[0])
                         states.append(states_inter[0])
                     else:  # not first date
-                        for i in range(1, len(pts_inter)):
-                            pts.append(pts_inter[i])
-                            states.append(states_inter[i])
+                        for pt, state in zip(pts_inter[1:], states_inter[1:]):
+                            pts.append(pt)
+                            states.append(state)
 
                 if self.BC.nuf != self.CL.nus[-1]:
                     (states_inter, pts_inter) = propagate_num(self.CL.nus[-1], self.BC.nuf, states[-1])
 
-                    for i in range(1, len(pts_inter)):
-                        pts.append(pts_inter[i])
-                        states.append(states_inter[i])
+                    for pt, state in zip(pts_inter[1:], states_inter[1:]):
+                        pts.append(pt)
+                        states.append(state)
 
                 self._nus = pts
                 self._nb = len(self._nus)
@@ -257,7 +255,7 @@ class Plotter:
                     self._pts = pts
                 else:  # the independent variable is time
                     self._pts = [self.dyn.convToAlterIndVar(self.BC.nu0, 0., nu) for nu in pts]
-                self._states = np.array(states[:]).transpose()
+                self._states = np.array(states).transpose()
 
     def plot_pv(self):
         """Function plotting primer vector's components and norm as functions of the independent variable.
@@ -270,8 +268,8 @@ class Plotter:
         # generating primer vector 
         pv = np.zeros((self.BC.half_dim, self._nb))
         if self.analytical:
-            for k in range(0, self._nb):
-                pv[:, k] = np.transpose(self.dyn.evaluate_Y(self._nus[k], self.BC.half_dim)).dot(self.CL.lamb)
+            for k, nu in enumerate(self._nus):
+                pv[:, k] = np.transpose(self.dyn.evaluate_Y(nu, self.BC.half_dim)).dot(self.CL.lamb)
         else:
             Ys = self.dyn.integrate_Y(self._nus, self.BC.half_dim)
             for k in range(0, self._nb):
@@ -372,16 +370,16 @@ class Plotter:
             dates_cost = [self._pts[0] - 1.]
         else:  # first maneuver is not at initial true anomaly
             dates_cost = [self._pts[0]]
-        for k in range(0, len(self.CL.nus)):
+        for k, nu in enumerate(self.CL.nus):
             if self.BC.half_dim == 1:
                 jump = math.fabs(self.CL.DVs[k]) 
             else:  # in-plane or complete dynamics
                 jump = linalg.norm(self.CL.DVs[k, :], self.p) 
             cost.append(jump + cost[-1])
             if self.anomaly:
-                dates_cost.append(self.CL.nus[k])
+                dates_cost.append(nu)
             else:  # the independent variable is time
-                dates_cost.append(self.dyn.convToAlterIndVar(self.BC.nu0, 0., self.CL.nus[k]))
+                dates_cost.append(self.dyn.convToAlterIndVar(self.BC.nu0, 0., nu))
         if dates_cost[-1] != self._pts[-1]:
             cost.append(cost[-1])
             dates_cost.append(self._pts[-1])

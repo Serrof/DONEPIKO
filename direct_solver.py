@@ -82,11 +82,11 @@ class DirectSolver(solver.Solver):
             n_components = 0
             indices = []
             nus = []
-            for k in range(0, n_grid):
+            for k, el in enumerate(grid):
                 DV = sol[d * k: d * k + BC.half_dim] - sol[d * k + BC.half_dim: d * k + d]
                 if linalg.norm(DV, 1) > conf.params_direct["DV_min"]:
                     indices.append(k)
-                    nus.append(grid[k])
+                    nus.append(el)
                     for component in DV:
                         if math.fabs(component) > conf.params_direct["DV_min"]:
                             n_components += 1
@@ -142,9 +142,7 @@ class DirectSolver(solver.Solver):
             solvers.options['show_progress'] = conf.params_other["verbose"]
             solvers.options['abstol'] = conf.params_direct["tol_cvx"]
             solution = solvers.socp(f, Gq=G, hq=h, A=A, b=matrix(z))
-            sol = []
-            for el in solution['x']:
-                sol.append(el)
+            sol = [xi for xi in solution['x']]
             if conf.params_other["verbose"]:
                 print("direct cost 2-norm: " + str(solution['primal objective']))
 
@@ -152,12 +150,12 @@ class DirectSolver(solver.Solver):
             lost = 0.0  # variable to keep track of cost from deleted impulses
             indices = []
             nus = []
-            for k in range(0, n_grid):
+            for k, el in enumerate(grid):
                 DV = sol[n_grid + BC.half_dim * k:
                          n_grid + BC.half_dim * k + BC.half_dim]
                 if linalg.norm(DV, 2) > conf.params_direct["DV_min"]:
                     indices.append(k)
-                    nus.append(grid[k])
+                    nus.append(el)
                 else:  # Delta-V is considered numerically negligible
                     lost += linalg.norm(DV, 2)
             if conf.params_other["verbose"]:
@@ -165,9 +163,9 @@ class DirectSolver(solver.Solver):
 
             # reconstructing velocity jumps
             DVs = np.zeros((len(nus), BC.half_dim))
-            for k in range(0, len(nus)):
-                DVs[k, :] = sol[n_grid + BC.half_dim * indices[k]:
-                                n_grid + BC.half_dim * indices[k] + BC.half_dim]
+            for k, index in enumerate(indices):
+                DVs[k, :] = sol[n_grid + BC.half_dim * index:
+                                n_grid + BC.half_dim * index + BC.half_dim]
 
         # un-scaling
         DVs *= scale

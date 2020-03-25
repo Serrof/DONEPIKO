@@ -122,11 +122,8 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         inter2 = math.sqrt(inter * inter * inter) / self.params.mean_motion
         rho = rho_func(self.params.ecc, nu)
         es = self.params.ecc * math.sin(nu)
-        x_bar = []
-        for k in range(0, half_dim):
-            x_bar.append(rho * x[k])
-        for k in range(0, half_dim):
-            x_bar.append(-es * x[k] + inter2 * x[k + half_dim] / rho)
+        x_bar = [rho * x[k] for k in range(0, half_dim)]
+        x_bar.extend([-es * x[k] + inter2 * x[k + half_dim] / rho for k in range(0, half_dim)])
 
         return x_bar
 
@@ -147,11 +144,8 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         inter2 = math.sqrt(inter * inter * inter) / self.params.mean_motion
         rho = rho_func(self.params.ecc, nu)
         es = self.params.ecc * math.sin(nu)
-        x = []
-        for k in range(0, half_dim):
-            x.append(x_bar[k] / rho)
-        for k in range(0, half_dim):
-            x.append((es * x_bar[k] + rho * x_bar[k + half_dim]) / inter2)
+        x = [x_bar[k] / rho for k in range(0, half_dim)]
+        x.extend([(es * x_bar[k] + rho * x_bar[k + half_dim]) / inter2 for k in range(0, half_dim)])
 
         return x
 
@@ -289,7 +283,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         half_dim = int(len(x1) / 2)
 
         if nu1 == nu2:
-            return np.array(x1[:])
+            return np.array(x1)
         else:  # initial and final true anomalies are different
             if half_dim == 1:
                 x1_bar = self.transformation(x1, nu1)

@@ -88,7 +88,7 @@ class DynamicalSystem:
                     (np.array): derivative of transformed state vector in linearized dynamics.
 
         """
-        return self.matrix_linear(nu, int(len(x) / 2)).dot(x)
+        return self.matrix_linear(nu, len(x) // 2).dot(x)
 
     def evaluate_state_deriv_nonlin(self, nu, x):
         """Function returning the derivative of the state vector w.r.t. the independent variable in the non-linearized
@@ -181,7 +181,7 @@ class DynamicalSystem:
                     (np.array): transformed state vector.
 
         """
-        return [el for el in x]
+        return np.array(x)
 
     def transformation_inv(self, x, nu):
         """Method to be overwritten by inverse of transformation if the latter is different from (x, nu) -> x.
@@ -225,8 +225,8 @@ class DynamicalSystem:
         IC_vector = utils.square_matrix_to_vector(IC_matrix, 2 * half_dim)  # initial conditions of matrix system turned into a vector for integration
         n_step = int(math.ceil(math.fabs(nus[1] - nus[0]) / conf.params_other["max_stepsize"]))
 
-        for k in range(0, len(nus)-1):
-            (state_hist, nu_hist) = integ.integrate(nus[k], nus[k+1], IC_vector, n_step)
+        for k, nu in enumerate(nus[:-1]):
+            (state_hist, nu_hist) = integ.integrate(nu, nus[k+1], IC_vector, n_step)
 
             outputs.append(utils.vector_to_square_matrix(state_hist[-1], 2 * half_dim))
 
@@ -277,7 +277,7 @@ class ZeroGravity(DynamicalSystem):
                     x2 (np.array): final state vector.
 
         """
-        x2 = np.array(x1[:])
+        x2 = np.array(x1)
         dnu = nu2 - nu1
         half_dim = int(len(x1) / 2)
         x2[:half_dim] += dnu * x1[half_dim:]

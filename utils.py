@@ -131,8 +131,8 @@ class BoundaryConditions:
         self.nu0 = nu0
         self.nuf = nuf
         self.half_dim = int(len(x0) / 2)
-        self.x0 = np.array(x0[:])
-        self.xf = np.array(xf[:])
+        self.x0 = np.array(x0)
+        self.xf = np.array(xf)
 
     def copy(self):
         """Function returning a copy of the object.
@@ -155,12 +155,12 @@ class BoundaryConditions:
         file_object.write("Final true anomaly \n")
         file_object.write(str(self.nuf) + '\n')
         file_object.write("Initial state vector \n")
-        for k in range(0, len(self.x0)):
-            file_object.write(str(self.x0[k]) + " ")
+        for el in self.x0:
+            file_object.write(str(el) + " ")
         file_object.write('\n')
         file_object.write("Final state vector \n")
-        for k in range(0, len(self.xf)):
-            file_object.write(str(self.xf[k]) + " ")
+        for el in self.xf:
+            file_object.write(str(el) + " ")
         file_object.close()
 
 
@@ -189,7 +189,7 @@ class ControlLaw:
 
         self.N = len(nus)
         self.half_dim = half_dim
-        self.nus = np.array(nus[:])
+        self.nus = np.array(nus)
         self.DVs = np.zeros((self.N, half_dim))
         if self.half_dim == 1:
             for i in range(0, self.N):
@@ -198,7 +198,7 @@ class ControlLaw:
             self.DVs += DVs
 
         if lamb is not None:
-            self.lamb = np.array(lamb[:])
+            self.lamb = np.array(lamb)
         else:  # no coefficients of primer vector were provided as inputs
             self.lamb = []
 
@@ -229,8 +229,8 @@ class ControlLaw:
 
         file_object = open(file_path, 'w')
         file_object.write("True anomalies of burn \n")
-        for k in range(0, self.N):
-            file_object.write(str(self.nus[k]) + " ")
+        for nu in self.nus:
+            file_object.write(str(nu) + " ")
         file_object.write('\n')
         for k in range(0, self.N):
             file_object.write("Delta-V #" + str(k+1) + "\n")
@@ -286,7 +286,7 @@ def merge_control(CL_ip, CL_oop):
 
     # sort nus and corresponding impulses
     indices_sorting = np.argsort(nus_unsorted)
-    nus_conc = sorted(nus_unsorted)
+    nus_conc = nus_unsorted[indices_sorting]
     DV_conc = np.zeros((len(nus_conc), 3))
     for k, index in enumerate(indices_sorting):
         DV_conc[k, :] = DV_unsorted[index, :]
