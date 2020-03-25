@@ -660,7 +660,7 @@ class VariableStepIntegrator(Integrator):
             if len(rel_error_tol) != self._dim_state:
                 raise ValueError("wrong input in VariableStepIntegrator: tolerance on relative error must have same "
                       "dimension than state vector")
-            for i, tol in rel_error_tol:
+            for i, tol in enumerate(rel_error_tol):
                 if tol <= 0.:
                     print("input tolerance on relative error is negative, switching to default value of"
                           + str(default_rel_tol) + "with state variable" + str(i))
