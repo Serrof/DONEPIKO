@@ -36,7 +36,7 @@ class Integrator:
         self._order = order
 
     @abstractmethod
-    def integrate(self, t0, tf, x0, n_step):
+    def integrate(self, t0, tf, x0, n_step, keep_history):
         """Abstract method to implement. Performs the numerical integration between initial to final values of
         independent variable, with provided initial conditions.
 
@@ -44,7 +44,9 @@ class Integrator:
                      t0 (float): initial time.
                      tf (int): final time.
                      x0 (iterable): initial conditions.
-                     n_step (int): number of integrations steps
+                     n_step (int): number of integrations steps.
+                     keep_history (bool): set to True to return the whole history of successful steps, False to return
+                     only the initial and final states.
 
         """
         return NotImplementedError
@@ -97,26 +99,37 @@ class FixedstepIntegrator(Integrator):
         """
         pass
 
-    def integrate(self, t0, tf, x0, n_step):
-        """Function that performs integration between two values of independent variable.
+    def integrate(self, t0, tf, x0, n_step, keep_history):
+        """Function that performs integration between two values of independent variable. It is vectorized w.r.t. x0 if
+        self._func is: in other words, several initial states can be propagated in one call (with the same value for the
+        initial independent variable and the same number of steps).
 
                 Args:
                     t0 (float): initial value of independent variable.
                     tf (float): final value of independent variable.
                     x0 (iterable): state vector at t0.
                     n_step (int): number of integration steps to be performed.
+                    keep_history (bool): set to True to return the whole history of successful steps, False to return
+                     only the initial and final states.
 
                 Returns:
-                    Xs (list): history of state vectors at integration steps.
-                    Ts (list): values taken by the independent variable at successive integration steps.
+                    Xs (list): state vectors at integration steps of interest.
+                    Ts (list): values taken by the independent variable at integration steps.
 
         """
 
         h = FixedstepIntegrator.step_size(t0, tf, n_step)
         Ts, Xs = [t0], [x0]
-        for k in range(0, n_step):
-            Xs.append(self.integration_step(Ts[-1], Xs[-1], h))
-            Ts.append(Ts[-1] + h)
+        if keep_history:
+            for k in range(0, n_step):
+                Xs.append(self.integration_step(Ts[k], Xs[k], h))
+                Ts.append(Ts[k] + h)
+        else:
+            Xs.append(self.integration_step(t0, x0, h))
+            Ts.append(t0 + h)
+            for k in range(1, n_step):
+                Xs[1] = self.integration_step(Ts[1], Xs[1], h)
+                Ts[1] += h
 
         return Xs, Ts
 
@@ -170,7 +183,7 @@ class Heun(FixedstepIntegrator):
         FixedstepIntegrator.__init__(self, func, 2)
         self._half_step = None
 
-    def integrate(self, t0, tf, x0, n_step):
+    def integrate(self, t0, tf, x0, n_step, keep_history):
         """Overload parent implementation in order to pre-compute the half step-size.
 
                 Args:
@@ -178,15 +191,17 @@ class Heun(FixedstepIntegrator):
                     tf (float): final value of independent variable.
                     x0 (iterable): state vector at t0.
                     n_step (int): number of integration steps to be performed.
+                    keep_history (bool): set to True to return the whole history of successful steps, False to return
+                     only the initial and final states.
 
                 Returns:
-                    Xs (list): history of state vectors at integration steps.
-                    Ts (list): values taken by the independent variable at successive integration steps.
+                    Xs (list): state vectors at integration steps of interest.
+                    Ts (list): values taken by the independent variable at integration steps.
 
         """
 
         self._half_step = 0.5 * FixedstepIntegrator.step_size(t0, tf, n_step)
-        return FixedstepIntegrator.integrate(self, t0, tf, x0, n_step)
+        return FixedstepIntegrator.integrate(self, t0, tf, x0, n_step, keep_history)
 
     def integration_step(self, t, x, h):
         """Function performing a single integration step i.e. given the state vector at the current value t of
@@ -228,9 +243,10 @@ class RK4(FixedstepIntegrator):
         """
         FixedstepIntegrator.__init__(self, func, 4)
         self._half_step = None
-        self._sixth_step = None
+        self._one_third_step = None
+        self._one_sixth_step = None
 
-    def integrate(self, t0, tf, x0, n_step):
+    def integrate(self, t0, tf, x0, n_step, keep_history):
         """Overload parent implementation in order to pre-compute quantities such as the half step-size.
 
                 Args:
@@ -238,17 +254,20 @@ class RK4(FixedstepIntegrator):
                     tf (float): final value of independent variable.
                     x0 (iterable): state vector at t0.
                     n_step (int): number of integration steps to be performed.
+                    keep_history (bool): set to True to return the whole history of successful steps, False to return
+                     only the initial and final states.
 
                 Returns:
-                    Xs (list): history of state vectors at integration steps.
-                    Ts (list): values taken by the independent variable at successive integration steps.
+                    Xs (list): state vectors at integration steps of interest.
+                    Ts (list): values taken by the independent variable at integration steps.
 
         """
 
         h = FixedstepIntegrator.step_size(t0, tf, n_step)
         self._half_step = h / 2.
-        self._sixth_step = h / 6.
-        return FixedstepIntegrator.integrate(self, t0, tf, x0, n_step)
+        self._one_third_step = h / 3.
+        self._one_sixth_step = h / 6.
+        return FixedstepIntegrator.integrate(self, t0, tf, x0, n_step, keep_history)
 
     def integration_step(self, t, x, h):
         """Function performing a single integration step i.e. given the state vector at the current value t of
@@ -277,14 +296,14 @@ class RK4(FixedstepIntegrator):
         x3 = x + h * f3
         f4 = self._func(t + h, x3)  # function call
 
-        return x + self._sixth_step * (f1 + 2. * (f2 + f3) + f4)
+        return x + (self._one_sixth_step * (f1 + f4) + self._one_third_step * (f2 + f3))
 
 
 class BS(FixedstepIntegrator):
     """Class implementing the Bulirsch-Stoer integration scheme.
 
             Attributes:
-                 sequence (array_like): Burlirsch sequence of integers to be used in scheme.
+                 _sequence (array_like): Burlirsch sequence of integers to be used in scheme.
 
     """
 
@@ -298,14 +317,21 @@ class BS(FixedstepIntegrator):
         """
         FixedstepIntegrator.__init__(self, func, order)
 
-        self.sequence = np.zeros(self._order, dtype=int)
-        self.sequence[0] = 2
+        self._sequence = np.zeros(self._order, dtype=int)
+        self._sequence[0] = 2
         if self._order > 1:
-            self.sequence[1] = 4
+            self._sequence[1] = 4
             if self._order > 2:
-                self.sequence[2] = 6
+                self._sequence[2] = 6
                 for k in range(3, self._order):
-                    self.sequence[k] = 2 * self.sequence[-2]
+                    self._sequence[k] = 2 * self._sequence[k - 2]
+
+        # pre-compute intermediate quantities for extrapolation
+        self._aux_extrap = np.zeros((self._order + 1, self._order + 1))
+        inter = np.flip(self._sequence)
+        for i in range(1, self._order + 1):
+            self._aux_extrap[i, : i - 1] = self._sequence[i - 1] / inter[self._order - i + 1:]
+        self._aux_extrap = 1. / (self._aux_extrap ** 2 - 1.)
 
     def integration_step(self, t, x, H):
         """Function performing a single integration step i.e. given the state vector at the current value t of
@@ -354,7 +380,7 @@ class BS(FixedstepIntegrator):
             f = self._func(t + j * h, u2)  # function call
             u2, u1, u0 = u1 + h2 * f, u2, u1
 
-        return 0.25 * (u0 + u1 * 2. + u2)
+        return 0.25 * (u0 + u2) + 0.5 * u1
 
     def _extrapolation(self, i, H, y, t):
         """Function performing the extrapolation according to the Bulirsch-Stoer algorithm.
@@ -369,18 +395,13 @@ class BS(FixedstepIntegrator):
 
         """
 
-        eta = self._midpoint(self.sequence[i - 1], H, y, t)
-        M = [eta]
+        M = [self._midpoint(self._sequence[i - 1], H, y, t)]
 
         if i > 1:
             Mp = self._extrapolation(i - 1, H, y, t)
-
-            for j in range(1, i):
-                eta = M[j-1]
-                M.append(eta)
-                aux1 = float(self.sequence[i-1]) / float(self.sequence[i-1-j])
-                aux2 = aux1 * aux1 - 1.
-                M[j] += (eta - Mp[j-1]) / aux2
+            for j, el in enumerate(Mp):
+                eta = M[j]
+                M.append(eta + (eta - el) * self._aux_extrap[i, j])
 
         return M
 
@@ -478,44 +499,61 @@ class MultistepIntegrator(FixedstepIntegrator):
 
         self._stepsize = h
         n_steps = self._order - 1
-        (states, ind_vars) = self._initializer.integrate(t0, t0 + float(n_steps) * h, x0, n_steps)
+        states, ind_vars = self._initializer.integrate(t0, t0 + float(n_steps) * h, x0, n_steps, keep_history=True)
 
         self.saved_steps = [self._func(ind_var, state) for ind_var, state in zip(ind_vars, states)]
 
         return states, ind_vars
 
-    def integrate(self, t0, tf, x0, n_step, saved_steps=None):
-        """Function that performs integration between two values of independent variable.
+    def integrate(self, t0, tf, x0, n_step, keep_history, saved_steps=None):
+        """Function that performs integration between two values of independent variable. It is vectorized w.r.t. x0 if
+        self._func is: in other words, several initial states can be propagated in one call (with the same value for the
+        initial independent variable and the same number of steps).
 
                 Args:
                     t0 (float): initial value of independent variable.
                     tf (float): final value of independent variable.
                     x0 (iterable): state vector at t0.
                     n_step (int): number of integration steps to be performed.
+                    keep_history (bool): set to True to return the whole history of successful steps, False to return
+                     only the initial and final states.
                     saved_steps (list): past values of self._func.
 
                 Returns:
-                    Xs (list): history of state vectors at integration steps.
-                    Ts (list): values taken by the independent variable at successive integration steps.
+                    Xs (list): state vectors at integration steps of interest.
+                    Ts (list): values taken by the independent variable at integration steps.
 
         """
         self.saved_steps = []
         if saved_steps is not None and len(saved_steps) == self._order:
             # input saved steps are recyclable
-            self.saved_steps = [step for step in saved_steps]
+            self.saved_steps = list(saved_steps)
 
         h = FixedstepIntegrator.step_size(t0, tf, n_step)
 
         if self._stepsize != h or self.saved_steps == []:
             Xs, Ts = self.initialize(t0, x0, h)
-            n_start = self._order - 1
+            n_start = len(Ts) - 1  # number of steps already performed
+            if n_step <= n_start:
+                # enough steps have already been performed, integration is over
+                if keep_history:
+                    return Xs[:n_step + 1], Ts[:n_step + 1]
+                else:
+                    return [x0, Xs[n_step + 1]], [t0, Ts[n_step + 1]]
+            elif not keep_history:
+                Ts, Xs = [t0, Ts[-1]], [x0, Xs[-1]]
         else:  # step-size has not changed and there are available saved steps
-            Ts, Xs = [t0], [x0]
-            n_start = 0
+            Ts, Xs = [t0, t0 + self._stepsize], [x0, self.integration_step(t0, x0)]
+            n_start = 1  # number of steps already performed
 
-        for k in range(n_start, n_step):
-            Xs.append(self.integration_step(Ts[-1], Xs[-1]))
-            Ts.append(Ts[-1] + self._stepsize)
+        if keep_history:
+            for k in range(n_start, n_step):
+                Xs.append(self.integration_step(Ts[k], Xs[k]))
+                Ts.append(Ts[k] + self._stepsize)
+        else:
+            for k in range(n_start, n_step):
+                Xs[1] = self.integration_step(Ts[1], Xs[1], self._stepsize)
+                Ts[1] += self._stepsize
 
         return Xs, Ts
 
@@ -572,7 +610,7 @@ class ABM8(MultistepIntegrator):
 
         self._predictor.integration_step(t, x)
 
-        self.saved_steps = [step for step in self._predictor.saved_steps]
+        self.saved_steps = list(self._predictor.saved_steps)
 
         xf = self.update_state(x)
 
@@ -611,10 +649,10 @@ class VariableStepIntegrator(Integrator):
                      func (function): function to be integrated.
                      order (int): order of integrator.
                      dim_state (int): dimension of state factor.
-                     abs_error_tol (array_like): tolerance vector on estimated absolute error. Should have same number of
-                     components than there are state variables. Default is 1.e-8 for each.
-                     rel_error_tol (array_like): tolerance vector on estimated relative error. Should have same number of
-                     components than there are state variables. Default is 1.e-4 for each.
+                     abs_error_tol (array_like): tolerance vector on estimated absolute error. Should have same number
+                     of components than there are state variables. Default is 1.e-8 for each.
+                     rel_error_tol (array_like): tolerance vector on estimated relative error. Should have same number
+                     of components than there are state variables. Default is 1.e-4 for each.
                      max_stepsize (float): maximum step-size allowed. Default is + infinity.
                      step_multiplier (float): multiplicative factor to increase step-size when an integration step has
                      been successful.
@@ -635,7 +673,7 @@ class VariableStepIntegrator(Integrator):
             if 1. <= step_multiplier <= 5.:
                 self._step_multiplier = float(step_multiplier)
             else:
-                print("input step multiplier is not in [1, 5], switching to default value of"
+                print("input step multiplier is not in [1, 5], switching to default value of "
                       + str(default_step_multiplier))
                 self._step_multiplier = default_step_multiplier
 
@@ -646,11 +684,11 @@ class VariableStepIntegrator(Integrator):
         if abs_error_tol is not None:
             if len(abs_error_tol) != self._dim_state:
                 raise ValueError("wrong input in VariableStepIntegrator: tolerance on absolute error must have same "
-                      "dimension than state vector")
+                                 "dimension than state vector")
             for i, tol in enumerate(abs_error_tol):
                 if tol <= 0.:
-                    print("input tolerance on absolute error is negative, switching to default value of"
-                          + str(default_abs_tol) + "with state variable" + str(i))
+                    print("input tolerance on absolute error is negative, switching to default value of "
+                          + str(default_abs_tol) + " with state variable " + str(i))
                 else:
                     self._abs_tol[i] = tol
 
@@ -659,7 +697,7 @@ class VariableStepIntegrator(Integrator):
         if rel_error_tol is not None:
             if len(rel_error_tol) != self._dim_state:
                 raise ValueError("wrong input in VariableStepIntegrator: tolerance on relative error must have same "
-                      "dimension than state vector")
+                                 "dimension than state vector")
             for i, tol in enumerate(rel_error_tol):
                 if tol <= 0.:
                     print("input tolerance on relative error is negative, switching to default value of"
@@ -680,7 +718,7 @@ class VariableStepIntegrator(Integrator):
         """
         return NotImplementedError
 
-    def integrate(self, t0, tf, x0, n_step):
+    def integrate(self, t0, tf, x0, n_step, keep_history):
         """Function that performs integration between two values of independent variable.
 
                 Args:
@@ -688,16 +726,18 @@ class VariableStepIntegrator(Integrator):
                     tf (float): final value of independent variable.
                     x0 (iterable): state vector at t0.
                     n_step (int): initial guess for number of integration steps.
+                    keep_history (bool): set to True to return the whole history of successful steps, False to return
+                     only the initial and final states.
 
                 Returns:
-                    Xs (list): history of state vectors at integration steps.
-                    Ts (list): values taken by the independent variable at successive integration steps.
+                    Xs (list): state vectors at integration steps of interest.
+                    Ts (list): values taken by the independent variable at integration steps.
 
         """
 
         if len(x0) != self._dim_state:
             return ValueError("wrong input in integrate: state vector has different dimension than the one given when "
-                  "the integrator was instantiated")
+                              "the integrator was instantiated")
 
         # initial guess for step-size
         h = FixedstepIntegrator.step_size(t0, tf, n_step)
@@ -705,7 +745,10 @@ class VariableStepIntegrator(Integrator):
         # save direction of integration
         forward = tf > t0
 
-        Ts, Xs = [t0], [x0]
+        if keep_history:
+            Ts, Xs = [t0], [x0]
+        else:
+            Ts, Xs = [t0, t0], [x0, x0]
         t = t0
         abs_dt = abs(tf - t0)
         while abs(t - t0) < abs_dt:
@@ -723,10 +766,13 @@ class VariableStepIntegrator(Integrator):
             self._last_step_ok = max_err_ratio < 1.
 
             if self._last_step_ok:
-                t += h
-                Ts.append(t)
-                Xs.append(x)
                 factor = self._step_multiplier
+                t += h
+                if keep_history:
+                    Ts.append(t)
+                    Xs.append(x)
+                else:
+                    Ts[1], Xs[1] = t, x
             else:  # step was not successful
                 factor = 0.9 * (1. / float(max_err_ratio)) ** self._error_exponent
 

@@ -226,7 +226,7 @@ class DynamicalSystem:
         n_step = int(math.ceil(math.fabs(nus[1] - nus[0]) / conf.params_other["max_stepsize"]))
 
         for k, nu in enumerate(nus[:-1]):
-            (state_hist, nu_hist) = integ.integrate(nu, nus[k+1], IC_vector, n_step)
+            (state_hist, nu_hist) = integ.integrate(nu, nus[k+1], IC_vector, n_step, keep_history=False)
 
             outputs.append(utils.vector_to_square_matrix(state_hist[-1], 2 * half_dim))
 

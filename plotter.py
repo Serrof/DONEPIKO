@@ -214,7 +214,8 @@ class Plotter:
                     else:  # initial and final true anomaly are different
                         IC_transformed = self.dyn.transformation(IC, nu1)
                         n_int = int(math.ceil((nu2 - nu1) / conf.params_other["max_stepsize"]))
-                        (states_transformed, pts_inter) = integrator.integrate(nu1, nu2, IC_transformed, n_int)
+                        (states_transformed, pts_inter) = integrator.integrate(nu1, nu2, IC_transformed, n_int,
+                                                                               keep_history=True)
                         states_inter = [self.dyn.transformation_inv(states_transformed[j], pt)
                                         for j, pt in enumerate(pts_inter)]
                         return states_inter, pts_inter
