@@ -50,18 +50,14 @@ def solver_ana(u, e, n, nu_0, nu_f):
 	if e == 0.0:  # circular case
 		y = nu_0 + ((arcu + math.pi / 2.0 - nu_0) % math.pi) 
 		if (y > nu_f):
-			eps = 1.0
-			if math.cos(nu_0) * u[0] + math.sin(nu_0) * u[1] < 0.0:
-				eps = -1.0
+			eps = -1.0 if math.cos(nu_0) * u[0] + math.sin(nu_0) * u[1] < 0.0 else 1.
 			lamb[0] = -eps * (math.cos(nu_f) + math.cos(nu_0)) / math.sin(nu_f - nu_0)
 			lamb[1] = -eps * (math.sin(nu_f) + math.sin(nu_0)) / math.sin(nu_f - nu_0)
 			nus.extend([nu_0, nu_f])
 			DVs.append(math.cos(nu_f - arcu) * magnu / math.sin(nu_f - nu_0))
 			DVs.append(-math.cos(nu_0 - arcu) * magnu / math.sin(nu_f - nu_0))
 		else:
-			eps = 1.0
-			if math.cos(y) * u[1] < 0.0:
-				eps = -1.0		
+			eps = -1.0 if math.cos(y) * u[1] < 0.0 else 1.
 			m = 0.0
 			while y + m * math.pi <= nu_f:
 				nus.append(y + m * math.pi)
@@ -86,9 +82,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 				x1 = nu_0 + ((x - nu_0) % (2.0 * math.pi))
 				x2 = nu_0 + ((2.0 * math.pi - x - nu_0) % (2.0*  math.pi))
 				if x1 > x2:
-					x = x1
-					x1 = x2
-					x2 = x
+					x1, x2 = x2, x1
 				
 				if math.sin(x1) >= 0.0:
 					y_plus = x1
@@ -113,8 +107,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 					nus.append(0.0)
 					DVs.append(0.0)
 			
-				k_minus = 1.0
-				k_plus = 1.0
+				k_minus = k_plus = 1.0
 				if math.sin(x1) < 0.0:
 					for k in range(0, len(nus)):
 						if k % 2 == 0:
@@ -166,7 +159,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 				x=math.acos(-e)
 				x1=nu_0+((x-nu_0)%(2.0*math.pi))
 				x2=nu_0+((2.0*math.pi-x-nu_0)%(2.0*math.pi))
-				if x1>x2:
+				if x1 > x2:
 					x1, x2 = x2, x1
 				nus.extend([x1, x2])
 				DV_p=-(math.sqrt(1.0-e*e)/(2.0*e))*(e*u[0]+math.sqrt(1.0-e*e)*u[1])
@@ -224,7 +217,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 					x=math.acos(-e)
 					x1=nu_0+((x-nu_0)%(2.0*math.pi))
 					x2=nu_0+((2.0*math.pi-x-nu_0)%(2.0*math.pi))
-					if (x1>x2):
+					if x1 > x2:
 						x1, x2 = x2, x1
 				
 					nus.extend([x1, x2])
@@ -314,7 +307,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 					lamb[0]=-eps*((math.cos(nu_f)-math.cos(nu_0))/math.sin(nu_f-nu_0))
 					lamb[1]=-eps*((math.sin(nu_f)-math.sin(nu_0))/math.sin(nu_f-nu_0)+e)
 
-		else: # nu_f-nu_0==math.pi
+		else:  # nu_f-nu_0==math.pi
 		
 			if (math.sin(nu_0)>=math.sqrt(1.0-e*e)) and (math.sin(nu_f)<=-math.sqrt(1.0-e*e)) and (e*math.fabs(u[0])-math.sqrt(1.0-e*e)*math.fabs(u[1])>=0.0):
 				x=math.acos(-e)

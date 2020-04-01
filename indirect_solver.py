@@ -141,8 +141,7 @@ class IndirectSolver(solver.Solver):
         factor = linalg.norm(self.dyn.compute_rhs(BC, analytical=True)) / linalg.norm(z_rescaled)
 
         # un-scaling
-        for k in range(0, len(nus)):
-            nus[k] /= puls
+        nus = np.array(nus) / puls
         lamb /= factor
 
         return utils.ControlLaw(BC.half_dim, nus, DVs, lamb)

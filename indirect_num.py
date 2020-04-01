@@ -23,18 +23,16 @@ def dual_to_primal_norm_type(p):
                 p (int): type of dual norm.
 
             Returns:
-                q (int): type of primal norm.
+                (int): type of primal norm.
 
     """
 
-    # sanity check(s)
-    if (p != 1) and (p != 2):
-        return ValueError('dual_to_primal_norm_type: dual norm must be 1 or 2')
-
-    q = p
     if p == 1:
-        q = np.inf
-    return q
+        return np.inf
+    elif p == 2:
+        return 2
+    else:
+        return ValueError('dual_to_primal_norm_type: dual norm must be 1 or 2')
 
 
 def initialize_iterative_grid(grid_input):

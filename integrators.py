@@ -9,7 +9,6 @@
 
 from abc import ABCMeta, abstractmethod
 import numpy as np
-import math
 
 
 class Integrator:
@@ -118,7 +117,7 @@ class FixedstepIntegrator(Integrator):
 
         """
 
-        h = FixedstepIntegrator.step_size(t0, tf, n_step)
+        h = self.step_size(t0, tf, n_step)
         Ts, Xs = [t0], [x0]
         if keep_history:
             for k in range(0, n_step):
@@ -200,7 +199,7 @@ class Heun(FixedstepIntegrator):
 
         """
 
-        self._half_step = 0.5 * FixedstepIntegrator.step_size(t0, tf, n_step)
+        self._half_step = 0.5 * self.step_size(t0, tf, n_step)
         return FixedstepIntegrator.integrate(self, t0, tf, x0, n_step, keep_history)
 
     def integration_step(self, t, x, h):
@@ -230,7 +229,8 @@ class RK4(FixedstepIntegrator):
 
         Attributes:
             _half_step (float): stored half step-size.
-            _sixth_step (float): stored sixth step-size.
+            _one_third_step (float): stored one third of step-size.
+            _one_sixth_step (float): stored one sixth of step-size.
 
     """
 
@@ -263,7 +263,7 @@ class RK4(FixedstepIntegrator):
 
         """
 
-        h = FixedstepIntegrator.step_size(t0, tf, n_step)
+        h = self.step_size(t0, tf, n_step)
         self._half_step = h / 2.
         self._one_third_step = h / 3.
         self._one_sixth_step = h / 6.
@@ -398,7 +398,7 @@ class BS(FixedstepIntegrator):
         M = [self._midpoint(self._sequence[i - 1], H, y, t)]
 
         if i > 1:
-            Mp = self._extrapolation(i - 1, H, y, t)
+            Mp = self._extrapolation(i - 1, H, y, t)  # recursive call
             for j, el in enumerate(Mp):
                 eta = M[j]
                 M.append(eta + (eta - el) * self._aux_extrap[i, j])
@@ -529,8 +529,9 @@ class MultistepIntegrator(FixedstepIntegrator):
             # input saved steps are recyclable
             self.saved_steps = list(saved_steps)
 
-        h = FixedstepIntegrator.step_size(t0, tf, n_step)
+        h = self.step_size(t0, tf, n_step)
 
+        # initialize steps
         if self._stepsize != h or self.saved_steps == []:
             Xs, Ts = self.initialize(t0, x0, h)
             n_start = len(Ts) - 1  # number of steps already performed
@@ -546,6 +547,7 @@ class MultistepIntegrator(FixedstepIntegrator):
             Ts, Xs = [t0, t0 + self._stepsize], [x0, self.integration_step(t0, x0)]
             n_start = 1  # number of steps already performed
 
+        # perform the rest of the integration
         if keep_history:
             for k in range(n_start, n_step):
                 Xs.append(self.integration_step(Ts[k], Xs[k]))
@@ -758,6 +760,7 @@ class VariableStepIntegrator(Integrator):
             if (t + h > tf and forward) or (t + h < tf and not forward):
                 h = tf - t
 
+            # compute candidate new state and associated integration error
             x, err = self.integration_step(t, Xs[-1], h)
 
             # check viability of integration step
