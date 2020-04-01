@@ -356,10 +356,9 @@ def phi_harmo(nu, pulsation):
     angle = pulsation * nu
     c = math.cos(angle)
     s = math.sin(angle)
-    phi[0, 0] = c
+    phi[0, 0] = phi[1, 1] = c
     phi[0, 1] = s / pulsation
     phi[1, 0] = - s * pulsation
-    phi[1, 1] = c
 
     return phi
 
@@ -404,13 +403,13 @@ def exp_HCW(nu):
     phi[0, 3] = -2.0 * c + 2.0
     phi[1, 0] = -6.0 * nu + 6.0 * s
     phi[1, 1] = 1.0
-    phi[1, 2] = 2.0 * c - 2.0
+    phi[1, 2] = -phi[0, 3]
     phi[1, 3] = -3.0 * nu + 4.0 * s
     phi[2, 0] = 3.0 * s
     phi[2, 2] = c
     phi[2, 3] = 2.0 * s
     phi[3, 0] = -6.0 + 6.0 * c
-    phi[3, 2] = -2.0 * s
+    phi[3, 2] = -phi[2, 3]
     phi[3, 3] = -3.0 + 4.0 * c
 
     return phi
@@ -444,7 +443,7 @@ def phi_YA(e, n, nu0, nu):
     sr = s * rho
     cr = c * rho
     dt = nu_to_dt(e, n, nu0, nu)
-    J = dt * n / math.sqrt((1.0 - e * e) * (1.0 - e * e) * (1.0 - e * e))
+    J = dt * n / math.sqrt((1.0 - e * e) ** 3)
 
     phi = np.zeros((4, 4))
     phi[0, 0] = 1.0
@@ -618,8 +617,7 @@ def Hessian_ip2bp(x):
     x0sq = x[0] * x[0]
     x1sq = x[1] * x[1]
     r1sq = x0sq + x1sq
-    r1 = math.sqrt(r1sq)
-    r1cube = r1 * r1sq
+    r1cube = math.sqrt(r1sq) * r1sq
     r1pow5 = r1cube * r1sq
     H = np.zeros((2, 2))
     H[0, 0] = -1.0 + 1.0 / r1cube - 3.0 * x0sq / r1pow5
@@ -644,12 +642,10 @@ def Hessian_ip3bp(x, mu):
 
     x1sq = x[1] * x[1]
     r1sq = (x[0] + mu) * (x[0] + mu) + x1sq
-    r1 = math.sqrt(r1sq)
-    r1cube = r1 * r1sq
+    r1cube = math.sqrt(r1sq) * r1sq
     r1pow5 = r1cube * r1sq
     r2sq = (x[0] - 1.0 + mu) * (x[0] - 1.0 + mu) + x1sq
-    r2 = math.sqrt(r2sq)
-    r2cube = r2 * r2sq
+    r2cube = math.sqrt(r2sq) * r2sq
     r2pow5 = r2cube * r2sq
     H = np.zeros((2, 2))
     H[0, 0] = -1.0 + (1.0 - mu) / r1cube - 3.0 * (1.0 - mu) * (x[0] + mu) * (x[0] + mu) / r1pow5 + mu / r2cube - 3.0 * mu * (x[0] - 1.0 + mu) * (x[0] - 1.0 + mu) / r2pow5
