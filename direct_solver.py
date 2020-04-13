@@ -118,8 +118,7 @@ class DirectSolver(solver.Solver):
             A = matrix(A)
 
             # building matrix for linear cost function
-            f = np.concatenate((np.ones(n_grid),
-                                   np.zeros(BC.half_dim * n_grid)), axis=0)
+            f = np.concatenate((np.ones(n_grid), np.zeros(BC.half_dim * n_grid)), axis=0)
             f = matrix(f)
 
             # building matrices for SDP constraints
@@ -142,7 +141,7 @@ class DirectSolver(solver.Solver):
             solvers.options['show_progress'] = conf.params_other["verbose"]
             solvers.options['abstol'] = conf.params_direct["tol_cvx"]
             solution = solvers.socp(f, Gq=G, hq=h, A=A, b=matrix(z))
-            sol = [xi for xi in solution['x']]
+            sol = list(solution['x'])
             if conf.params_other["verbose"]:
                 print("direct cost 2-norm: " + str(solution['primal objective']))
 

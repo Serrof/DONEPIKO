@@ -68,7 +68,7 @@ class Plotter:
         if isinstance(dyn, body_prob_dyn.BodyProbDyn):
             # propagation has to be numerical for elliptical out-of-plane L1, 2 or 3 or elliptical in-plane of any LP
             if analytical and dyn.params.mu != 0. and dyn.params.ecc != 0. and \
-                (dyn.params.Li == 1 or dyn.params.Li == 2 or dyn.params.Li == 3 or BC.half_dim > 1):
+                    (dyn.params.Li in [1, 2, 3] or BC.half_dim > 1):
                 print('WARNING: propagation type within plotter changed to numerical')
                 self.analytical = False
 
@@ -196,7 +196,7 @@ class Plotter:
 
         else:  # dynamics for plots has to be numerically simulated
             if self.BC.half_dim == 1 and not self.linearized:
-                return ValueError('_compute_states: non-linear dynamics cannot be only out-of-plane')
+                raise ValueError('_compute_states: non-linear dynamics cannot be only out-of-plane')
 
             else:  # linearized dynamics or in-plane or complete non-linear dynamics
 

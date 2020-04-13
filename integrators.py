@@ -48,7 +48,7 @@ class Integrator:
                      only the initial and final states.
 
         """
-        return NotImplementedError
+        raise NotImplementedError
 
 
 class FixedstepIntegrator(Integrator):
@@ -329,8 +329,8 @@ class BS(FixedstepIntegrator):
         # pre-compute intermediate quantities for extrapolation
         self._aux_extrap = np.zeros((self._order + 1, self._order + 1))
         inter = np.flip(self._sequence)
-        for i in range(1, self._order + 1):
-            self._aux_extrap[i, : i - 1] = self._sequence[i - 1] / inter[self._order - i + 1:]
+        for i, el in enumerate(self._sequence, 1):
+            self._aux_extrap[i, : i - 1] = el / inter[self._order - i + 1:]
         self._aux_extrap = 1. / (self._aux_extrap ** 2 - 1.)
 
     def integration_step(self, t, x, H):
@@ -458,9 +458,7 @@ class MultistepIntegrator(FixedstepIntegrator):
 
         """
 
-        dx = self.saved_steps[0] * self._beta[0]
-        for j in range(1, self._order):
-            dx += self.saved_steps[j] * self._beta[j]
+        dx = sum(step * beta for step, beta in zip(self.saved_steps, self._beta))
 
         return x + self._stepsize * dx
 
@@ -610,7 +608,7 @@ class ABM8(MultistepIntegrator):
 
         """
 
-        self._predictor.integration_step(t, x)
+        self._predictor.integration_step(t, x)  # (hides a function call)
 
         self.saved_steps = list(self._predictor.saved_steps)
 
@@ -718,7 +716,7 @@ class VariableStepIntegrator(Integrator):
                     h (float): current step-size.
 
         """
-        return NotImplementedError
+        raise NotImplementedError
 
     def integrate(self, t0, tf, x0, n_step, keep_history):
         """Function that performs integration between two values of independent variable.
@@ -738,7 +736,7 @@ class VariableStepIntegrator(Integrator):
         """
 
         if len(x0) != self._dim_state:
-            return ValueError("wrong input in integrate: state vector has different dimension than the one given when "
+            raise ValueError("wrong input in integrate: state vector has different dimension than the one given when "
                               "the integrator was instantiated")
 
         # initial guess for step-size
@@ -751,6 +749,7 @@ class VariableStepIntegrator(Integrator):
             Ts, Xs = [t0], [x0]
         else:
             Ts, Xs = [t0, t0], [x0, x0]
+
         t = t0
         abs_dt = abs(tf - t0)
         while abs(t - t0) < abs_dt:
@@ -792,6 +791,7 @@ class RKF45(VariableStepIntegrator):
                 _factor_t3 (float): pre-computed factor involved in calculation of t3
                 _factor_t4 (float): pre-computed factor involved in calculation of t4
                 _factor_x2 (float): pre-computed factor involved in calculation of x2
+                _factor_x3 (float): pre-computed factor involved in calculation of x3
                 _factor_x4_f1 (float): pre-computed factor multiplied by f1 to obtain x4
                 _factor_x4_f3 (float): pre-computed factor multiplied by f3 to obtain x4
                 _factor_x4_f4 (float): pre-computed factor multiplied by f4 to obtain x4
@@ -817,6 +817,7 @@ class RKF45(VariableStepIntegrator):
         self._factor_t3 = 3. / 8.
         self._factor_t4 = 12. / 13.
         self._factor_x2 = 3. / 32.
+        self._factor_x3 = 1. / 2197.
         self._factor_x4_f1 = 439. / 216.
         self._factor_x4_f3 = 3680. / 513.
         self._factor_x4_f4 = -845. / 4104.
@@ -864,7 +865,7 @@ class RKF45(VariableStepIntegrator):
         x2 = x + h * self._factor_x2 * (f1 + f2 * 3.)
         f3 = self._func(t3, x2)  # function call
 
-        x3 = x + (h / 2197.) * (f1 * 1932. + f2 * (-7200.) + f3 * 7296.)
+        x3 = x + h * self._factor_x3 * (f1 * 1932. + f2 * (-7200.) + f3 * 7296.)
         f4 = self._func(t4, x3)  # function call
 
         x4 = x + h * (f1 * self._factor_x4_f1 + f2 * (-8.) + f3 * self._factor_x4_f3 + f4 * self._factor_x4_f4)

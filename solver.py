@@ -181,5 +181,5 @@ class Solver:
                 return Exception("No two-impulse boundary control was found.")
 
         else:
-            return NotImplementedError("The computation of two-impulse boundary control laws is not implemented "
+            raise NotImplementedError("The computation of two-impulse boundary control laws is not implemented "
                                        "for that dynamics.")

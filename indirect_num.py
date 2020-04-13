@@ -32,7 +32,7 @@ def dual_to_primal_norm_type(p):
     elif p == 2:
         return 2
     else:
-        return ValueError('dual_to_primal_norm_type: dual norm must be 1 or 2')
+        raise ValueError('dual_to_primal_norm_type: dual norm must be 1 or 2')
 
 
 def initialize_iterative_grid(grid_input):
@@ -128,9 +128,9 @@ def remove_nus(Y_grid, q, grid_work, indices_work, lamb):
     hd = int(len(lamb) / 2)
     grid = []
     indices = []
-    for k, nu in enumerate(grid_work):
+    for index, nu in zip(indices_work, grid_work):
         grid.append(nu)
-        indices.append(indices_work[k])
+        indices.append(index)
     removed_nus = 0
     for k in range(0, len(grid)):
         pv = np.transpose(Y_grid[:, hd * indices[k - removed_nus]: hd * (indices[k - removed_nus] + 1)]).dot(lamb)
@@ -240,7 +240,7 @@ def solve_primal(grid_check, Y_grid, z, p):
 
     # sanity check(s)
     if (p != 1) and (p != 2):
-        return ValueError('SOLVE_PRIMAL: norm in cost function must be 1 or 2')
+        raise ValueError('SOLVE_PRIMAL: norm in cost function must be 1 or 2')
 
     if p == 1:
         lamb = solve_primal_1norm(grid_check, Y_grid, z)
@@ -269,7 +269,7 @@ def primal_to_dual(grid_check, Y_grid, lamb, z, p):
 
     # sanity check(s)
     if (p != 1) and (p != 2):
-        return ValueError('PRIMAL_TO_DUAL: norm in cost function must be 1 or 2')
+        raise ValueError('PRIMAL_TO_DUAL: norm in cost function must be 1 or 2')
 
     if p == 1:
         (nus, DV) = primal_to_dual_1norm(grid_check, Y_grid, lamb, z)
@@ -364,10 +364,9 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
     directions = np.zeros((len(nus), hd))
     n_alphas = 0
     for i, index in enumerate(indices):
-        inter = np.transpose(Y_grid[:, hd * index: hd * (index + 1)]).dot(lamb)
-        for j in range(0, hd):
-            if math.fabs(inter[j]) > 1.0 - conf.params_indirect["tol_unit_norm"]:
-                directions[i, j] = np.sign(inter[j])
+        for j, el in enumerate(np.transpose(Y_grid[:, hd * index: hd * (index + 1)]).dot(lamb)):
+            if math.fabs(el) > 1.0 - conf.params_indirect["tol_unit_norm"]:
+                directions[i, j] = np.sign(el)
                 n_alphas += 1
 
     # building matrix for linear system
@@ -494,10 +493,10 @@ def primal_to_dual_2norm(grid_check, Y_grid, lamb, z):
     # building matrix for linear system
     M = np.zeros((d, len(nus)))
     directions = np.zeros((len(nus), hd))
-    for i in range(0, len(nus)):
-        aux = Y_grid[:, hd * indices[i]: hd * (indices[i] + 1)]
+    for i, index in enumerate(indices):
+        aux = Y_grid[:, hd * index: hd * (index + 1)]
         inter = np.transpose(aux).dot(lamb)
-        directions[i, :] = inter[:] / linalg.norm(inter, p)
+        directions[i, :] = inter / linalg.norm(inter, p)
         M[:, i] += aux.dot(directions[i, :])
 
     alphas = solve_alphas(M, z, len(nus))

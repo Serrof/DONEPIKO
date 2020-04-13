@@ -23,7 +23,7 @@ def solver_ana(u, e, n, nu_0, nu_f):
 					nu_f (float) : final true anomaly.
 
 				Returns:
-					_nus (list): optimal true anomalies of burn.
+					nus (list): optimal true anomalies of burn.
 					DVs (list): optimal Delta-Vs.
 					lamb (np.array): coefficients of primer vector.
 
@@ -31,16 +31,16 @@ def solver_ana(u, e, n, nu_0, nu_f):
 
 	# sanity check(s)
 	if(len(u) != 2):
-		return ValueError('SOLVER_ANA: input vector needs to be two-dimensional')
+		raise ValueError('SOLVER_ANA: input vector needs to be two-dimensional')
 	if(e >= 1.0) or (e < 0.0):
-		return ValueError('SOLVER_ANA: eccentricity must be larger or equal to 0 and strictly less than 1')
+		raise ValueError('SOLVER_ANA: eccentricity must be larger or equal to 0 and strictly less than 1')
 	if(n < 0.0):
-		return ValueError('SOLVER_ANA: mean motion cannot be smaller than 0')
+		raise ValueError('SOLVER_ANA: mean motion cannot be smaller than 0')
 	if(nu_f <= nu_0):
-		return ValueError('SOLVER_ANA: initial true anomaly cannot be larger than final one')
+		raise ValueError('SOLVER_ANA: initial true anomaly cannot be larger than final one')
 
-	lamb = np.array([0.0, 0.0])  # vector to store Lagrange coefficients
-	DVs = []  # vector to store DVs magnitude
+	lamb = np.zeros(2)  # vector to store Lagrange coefficients
+	DVs = []  # vector to store Delta-V
 	nus = []  # vector to store impulses location
 
 	# pre-computations

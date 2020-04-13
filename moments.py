@@ -92,7 +92,7 @@ def Y_ip_elliptical2bp(e, n, nu0, nu):
 
     # sanity check(s)
     if (e >= 1.0) or (e < 0.0):
-        return ValueError('Y_IP_ELLIPTICAL2BP: eccentricity must be larger or equal to 0 and strictly less than 1')
+        raise ValueError('Y_IP_ELLIPTICAL2BP: eccentricity must be larger or equal to 0 and strictly less than 1')
 
     Y = np.zeros((4, 2))
     rho = rho_func(e, nu)
@@ -157,7 +157,7 @@ def Y_2bp(e, n, nu0, nu, m):
 
     # sanity check(s)
     if (m != 1) and (m != 2) and (m != 3):
-        return ValueError('Y_2BP: half-dimension must be 1, 2 or 3')
+        raise ValueError('Y_2BP: half-dimension must be 1, 2 or 3')
 
     if m == 1:
         return Y_oop(e, nu)

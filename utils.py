@@ -25,9 +25,9 @@ def stack_state(x_ip, x_oop):
 
     # sanity check(s)
     if len(x_ip) != 4:
-        return ValueError('STACK_STATE: in-plane vector must be 4-dimensional')
+        raise ValueError('STACK_STATE: in-plane vector must be 4-dimensional')
     if len(x_oop) != 2:
-        return ValueError('STACK_STATE: out-of-plane vector must be 2-dimensional')
+        raise ValueError('STACK_STATE: out-of-plane vector must be 2-dimensional')
 
     x = np.zeros(6)
     x[0:2] = x_ip[0:2]
@@ -52,7 +52,7 @@ def unstack_state(x):
 
     # sanity check(s)
     if len(x) != 6:
-        return ValueError('UNSTACK_STATE: complete state vector must be 6-dimensional')
+        raise ValueError('UNSTACK_STATE: complete state vector must be 6-dimensional')
 
     # out-of-plane part
     x_oop = np.zeros(2)
@@ -192,8 +192,8 @@ class ControlLaw:
         self.nus = np.array(nus)
         self.DVs = np.zeros((self.N, half_dim))
         if self.half_dim == 1:
-            for i in range(0, self.N):
-                self.DVs[i, :] = DVs[i]
+            for i, DV in enumerate(DVs):
+                self.DVs[i, :] = DV
         else:  # in-plane or complete dynamics
             self.DVs += DVs
 
@@ -271,9 +271,9 @@ def merge_control(CL_ip, CL_oop):
 
     # sanity check(s)
     if CL_ip.half_dim != 2:
-        return ValueError('merge_control: in-plane control vector must have 2 components')
+        raise ValueError('merge_control: in-plane control vector must have 2 components')
     if CL_oop.half_dim != 1:
-        return ValueError('merge_control: out-of-plane control vector must have 1 component')
+        raise ValueError('merge_control: out-of-plane control vector must have 1 component')
 
     # merge nus and corresponding impulses
     nus_unsorted = np.concatenate((CL_ip.nus, CL_oop.nus), axis=0)
