@@ -15,7 +15,8 @@ class Integrator:
     """Abstract class for the implementation of numerical integrators.
 
         Attributes:
-            _func (method): function to be integrated.
+            _func (method): function of the independent variable and the state vector defining the derivative of the 
+            latter w.r.t. the former.
             _order (int): order of integration scheme.
 
     """
@@ -26,7 +27,8 @@ class Integrator:
         """Constructor for class Integrator.
 
                 Args:
-                     func (function): function to be integrated.
+                     func (function): function of the independent variable and the state vector defining the derivative 
+                     of the latter w.r.t. the former.
                      order (int): order of integration scheme.
 
         """
@@ -62,7 +64,8 @@ class FixedstepIntegrator(Integrator):
         """Constructor for class FixedstepIntegrator.
 
                 Args:
-                     func (function): function to be integrated.
+                     func (function): function of the independent variable and the state vector defining the derivative
+                     of the latter w.r.t. the former.
                      order (int): order of integration scheme.
 
         """
@@ -142,10 +145,11 @@ class Euler(FixedstepIntegrator):
         """Constructor for Euler class.
 
                 Args:
-                     func (function): function to be integrated.
+                     func (function): function of the independent variable and the state vector defining the derivative
+                     of the latter w.r.t. the former.
 
         """
-        FixedstepIntegrator.__init__(self, func, 1)
+        FixedstepIntegrator.__init__(self, func, order=1)
 
     def integration_step(self, t, x, h):
         """Function performing a single integration step i.e. given the state vector at the current value t of
@@ -176,10 +180,11 @@ class Heun(FixedstepIntegrator):
         """Constructor for Heun class.
 
                 Args:
-                     func (function): function to be integrated.
+                     func (function): function of the independent variable and the state vector defining the derivative
+                     of the latter w.r.t. the former.
 
         """
-        FixedstepIntegrator.__init__(self, func, 2)
+        FixedstepIntegrator.__init__(self, func, order=2)
         self._half_step = None
 
     def integrate(self, t0, tf, x0, n_step, keep_history):
@@ -238,10 +243,11 @@ class RK4(FixedstepIntegrator):
         """Constructor for RK4 class.
 
                 Args:
-                     func (function): function to be integrated.
+                     func (function): function of the independent variable and the state vector defining the derivative
+                     of the latter w.r.t. the former.
 
         """
-        FixedstepIntegrator.__init__(self, func, 4)
+        FixedstepIntegrator.__init__(self, func, order=4)
         self._half_step = None
         self._one_third_step = None
         self._one_sixth_step = None
@@ -311,7 +317,8 @@ class BS(FixedstepIntegrator):
         """Constructor for BS class.
 
                 Args:
-                     func (function): function to be integrated.
+                     func (function): function of the independent variable and the state vector defining the derivative
+                     of the latter w.r.t. the former.
                      order (int): order of integrator.
 
         """
@@ -328,9 +335,9 @@ class BS(FixedstepIntegrator):
 
         # pre-compute intermediate quantities for extrapolation
         self._aux_extrap = np.zeros((self._order + 1, self._order + 1))
-        inter = np.flip(self._sequence)
-        for i, el in enumerate(self._sequence, 1):
-            self._aux_extrap[i, : i - 1] = el / inter[self._order - i + 1:]
+        inter = 1. / np.flip(self._sequence)
+        for i, el in enumerate(self._sequence[1:], 1):
+            self._aux_extrap[i + 1, : i] = el * inter[-i:]
         self._aux_extrap = 1. / (self._aux_extrap ** 2 - 1.)
 
     def integration_step(self, t, x, H):
@@ -423,7 +430,8 @@ class MultistepIntegrator(FixedstepIntegrator):
         """Constructor for class MultistepIntegrator.
 
                 Args:
-                     func (function): function to be integrated.
+                     func (function): function of the independent variable and the state vector defining the derivative
+                     of the latter w.r.t. the former.
                      order (int): order of integrator.
 
         """
@@ -567,11 +575,12 @@ class AB8(MultistepIntegrator):
         """Constructor for class AB8.
 
                 Args:
-                     func (function): function to be integrated.
+                     func (function): function of the independent variable and the state vector defining the derivative
+                     of the latter w.r.t. the former.
 
         """
 
-        MultistepIntegrator.__init__(self, func, 8)
+        MultistepIntegrator.__init__(self, func, order=8)
 
         self._beta = np.array([-36799., 295767., -1041723., 2102243., -2664477., 2183877., -1152169., 434241.]) / 120960.
         self._initializer = BS(self._func, (self._order + 1) // 2)
@@ -585,11 +594,12 @@ class ABM8(MultistepIntegrator):
         """Constructor for class ABM8.
 
                 Args:
-                     func (function): function to be integrated.
+                     func (function): function of the independent variable and the state vector defining the derivative
+                     of the latter w.r.t. the former.
 
         """
 
-        MultistepIntegrator.__init__(self, func, 8)
+        MultistepIntegrator.__init__(self, func, order=8)
 
         self._beta = np.array([1375., -11351., 41499., -88547., 123133., -121797., 139849., 36799.]) / 120960.
         self._predictor = AB8(self._func)
@@ -646,7 +656,8 @@ class VariableStepIntegrator(Integrator):
         """Constructor for class VariableStepIntegrator.
 
                 Args:
-                     func (function): function to be integrated.
+                     func (function): function of the independent variable and the state vector defining the derivative
+                     of the latter w.r.t. the former.
                      order (int): order of integrator.
                      dim_state (int): dimension of state factor.
                      abs_error_tol (array_like): tolerance vector on estimated absolute error. Should have same number
@@ -811,9 +822,11 @@ class RKF45(VariableStepIntegrator):
 
     """
 
-    def __init__(self, func, dim_state, abs_error_tol=None, rel_error_tol=None, max_stepsize=None, step_multiplier=None):
-        VariableStepIntegrator.__init__(self, func, 4, dim_state, abs_error_tol, rel_error_tol, max_stepsize,
-                                        step_multiplier)
+    def __init__(self, func, dim_state, abs_error_tol=None, rel_error_tol=None, max_stepsize=None,
+                 step_multiplier=None):
+        VariableStepIntegrator.__init__(self, func, order=4, dim_state=dim_state, abs_error_tol=abs_error_tol,
+                                        rel_error_tol=rel_error_tol, max_stepsize=max_stepsize,
+                                        step_multiplier=step_multiplier)
         self._factor_t3 = 3. / 8.
         self._factor_t4 = 12. / 13.
         self._factor_x2 = 3. / 32.
