@@ -675,7 +675,7 @@ class VariableStepIntegrator(Integrator):
         self._dim_state = dim_state
 
         self._last_step_ok = True
-        self._error_exponent = 1. / order
+        self._error_exponent = None
 
         default_step_multiplier = 2.
         if step_multiplier is None:
@@ -827,6 +827,7 @@ class RKF45(VariableStepIntegrator):
         VariableStepIntegrator.__init__(self, func, order=4, dim_state=dim_state, abs_error_tol=abs_error_tol,
                                         rel_error_tol=rel_error_tol, max_stepsize=max_stepsize,
                                         step_multiplier=step_multiplier)
+        self._error_exponent = 1. / (self._order + 1.)
         self._factor_t3 = 3. / 8.
         self._factor_t4 = 12. / 13.
         self._factor_x2 = 3. / 32.
