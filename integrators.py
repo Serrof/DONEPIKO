@@ -15,7 +15,7 @@ class Integrator:
     """Abstract class for the implementation of numerical integrators.
 
         Attributes:
-            _func (method): function of the independent variable and the state vector defining the derivative of the 
+            _func (Callable): function of the independent variable and the state vector defining the derivative of the 
             latter w.r.t. the former.
             _order (int): order of integration scheme.
 
@@ -27,7 +27,7 @@ class Integrator:
         """Constructor for class Integrator.
 
                 Args:
-                     func (function): function of the independent variable and the state vector defining the derivative 
+                     func (Callable): function of the independent variable and the state vector defining the derivative 
                      of the latter w.r.t. the former.
                      order (int): order of integration scheme.
 
@@ -64,7 +64,7 @@ class FixedstepIntegrator(Integrator):
         """Constructor for class FixedstepIntegrator.
 
                 Args:
-                     func (function): function of the independent variable and the state vector defining the derivative
+                     func (Callable): function of the independent variable and the state vector defining the derivative
                      of the latter w.r.t. the former.
                      order (int): order of integration scheme.
 
@@ -115,8 +115,8 @@ class FixedstepIntegrator(Integrator):
                      only the initial and final states.
 
                 Returns:
-                    Xs (list): state vectors at integration steps of interest.
-                    Ts (list): values taken by the independent variable at integration steps.
+                    Xs (List): state vectors at integration steps of interest.
+                    Ts (List): values taken by the independent variable at integration steps.
 
         """
 
@@ -127,9 +127,11 @@ class FixedstepIntegrator(Integrator):
                 Xs.append(self.integration_step(Ts[k], Xs[k], h))
                 Ts.append(Ts[k] + h)
         else:
+            # first step
             Xs.append(self.integration_step(t0, x0, h))
             Ts.append(t0 + h)
-            for k in range(1, n_step):
+            # rest of integration
+            for __ in range(1, n_step):
                 Xs[1] = self.integration_step(Ts[1], Xs[1], h)
                 Ts[1] += h
 
@@ -145,7 +147,7 @@ class Euler(FixedstepIntegrator):
         """Constructor for Euler class.
 
                 Args:
-                     func (function): function of the independent variable and the state vector defining the derivative
+                     func (Callable): function of the independent variable and the state vector defining the derivative
                      of the latter w.r.t. the former.
 
         """
@@ -165,7 +167,7 @@ class Euler(FixedstepIntegrator):
 
         """
 
-        return x + h * self._func(t, x)
+        return x + h * self._func(t, x)  # function call
 
 
 class Heun(FixedstepIntegrator):
@@ -180,7 +182,7 @@ class Heun(FixedstepIntegrator):
         """Constructor for Heun class.
 
                 Args:
-                     func (function): function of the independent variable and the state vector defining the derivative
+                     func (Callable): function of the independent variable and the state vector defining the derivative
                      of the latter w.r.t. the former.
 
         """
@@ -199,8 +201,8 @@ class Heun(FixedstepIntegrator):
                      only the initial and final states.
 
                 Returns:
-                    Xs (list): state vectors at integration steps of interest.
-                    Ts (list): values taken by the independent variable at integration steps.
+                    Xs (List): state vectors at integration steps of interest.
+                    Ts (List): values taken by the independent variable at integration steps.
 
         """
 
@@ -243,7 +245,7 @@ class RK4(FixedstepIntegrator):
         """Constructor for RK4 class.
 
                 Args:
-                     func (function): function of the independent variable and the state vector defining the derivative
+                     func (Callable): function of the independent variable and the state vector defining the derivative
                      of the latter w.r.t. the former.
 
         """
@@ -264,8 +266,8 @@ class RK4(FixedstepIntegrator):
                      only the initial and final states.
 
                 Returns:
-                    Xs (list): state vectors at integration steps of interest.
-                    Ts (list): values taken by the independent variable at integration steps.
+                    Xs (List): state vectors at integration steps of interest.
+                    Ts (List): values taken by the independent variable at integration steps.
 
         """
 
@@ -317,7 +319,7 @@ class BS(FixedstepIntegrator):
         """Constructor for BS class.
 
                 Args:
-                     func (function): function of the independent variable and the state vector defining the derivative
+                     func (Callable): function of the independent variable and the state vector defining the derivative
                      of the latter w.r.t. the former.
                      order (int): order of integrator.
 
@@ -417,7 +419,7 @@ class MultistepIntegrator(FixedstepIntegrator):
     """Abstract class for the implementation of multi-step integrators with fixed step-size.
 
             Attributes:
-                 saved_steps (list): values of state derivative at previous steps.
+                 saved_steps (List): values of state derivative at previous steps.
                  _stepsize (float): step-size.
                  _beta (array_like): vector of numbers used in integration scheme.
                  _initializer (FixedstepIntegrator): integrator used to initialize the multi-step method.
@@ -430,7 +432,7 @@ class MultistepIntegrator(FixedstepIntegrator):
         """Constructor for class MultistepIntegrator.
 
                 Args:
-                     func (function): function of the independent variable and the state vector defining the derivative
+                     func (Callable): function of the independent variable and the state vector defining the derivative
                      of the latter w.r.t. the former.
                      order (int): order of integrator.
 
@@ -498,8 +500,8 @@ class MultistepIntegrator(FixedstepIntegrator):
                     h (float): step-size
 
                 Returns:
-                    states (list): history of state vector after initialization with single-step integrator.
-                    ind_vars (list): values of independent variable corresponding to history of state vector.
+                    states (List): history of state vector after initialization with single-step integrator.
+                    ind_vars (List): values of independent variable corresponding to history of state vector.
 
         """
 
@@ -523,11 +525,11 @@ class MultistepIntegrator(FixedstepIntegrator):
                     n_step (int): number of integration steps to be performed.
                     keep_history (bool): set to True to return the whole history of successful steps, False to return
                      only the initial and final states.
-                    saved_steps (list): past values of self._func.
+                    saved_steps (List): past values of self._func.
 
                 Returns:
-                    Xs (list): state vectors at integration steps of interest.
-                    Ts (list): values taken by the independent variable at integration steps.
+                    Xs (List): state vectors at integration steps of interest.
+                    Ts (List): values taken by the independent variable at integration steps.
 
         """
         self.saved_steps = []
@@ -559,7 +561,7 @@ class MultistepIntegrator(FixedstepIntegrator):
                 Xs.append(self.integration_step(Ts[k], Xs[k]))
                 Ts.append(Ts[k] + self._stepsize)
         else:
-            for k in range(n_start, n_step):
+            for __ in range(n_start, n_step):
                 Xs[1] = self.integration_step(Ts[1], Xs[1], self._stepsize)
                 Ts[1] += self._stepsize
 
@@ -575,7 +577,7 @@ class AB8(MultistepIntegrator):
         """Constructor for class AB8.
 
                 Args:
-                     func (function): function of the independent variable and the state vector defining the derivative
+                     func (Callable): function of the independent variable and the state vector defining the derivative
                      of the latter w.r.t. the former.
 
         """
@@ -594,7 +596,7 @@ class ABM8(MultistepIntegrator):
         """Constructor for class ABM8.
 
                 Args:
-                     func (function): function of the independent variable and the state vector defining the derivative
+                     func (Callable): function of the independent variable and the state vector defining the derivative
                      of the latter w.r.t. the former.
 
         """
@@ -656,7 +658,7 @@ class VariableStepIntegrator(Integrator):
         """Constructor for class VariableStepIntegrator.
 
                 Args:
-                     func (function): function of the independent variable and the state vector defining the derivative
+                     func (Callable): function of the independent variable and the state vector defining the derivative
                      of the latter w.r.t. the former.
                      order (int): order of integrator.
                      dim_state (int): dimension of state factor.
@@ -741,8 +743,8 @@ class VariableStepIntegrator(Integrator):
                      only the initial and final states.
 
                 Returns:
-                    Xs (list): state vectors at integration steps of interest.
-                    Ts (list): values taken by the independent variable at integration steps.
+                    Xs (List): state vectors at integration steps of interest.
+                    Ts (List): values taken by the independent variable at integration steps.
 
         """
 
