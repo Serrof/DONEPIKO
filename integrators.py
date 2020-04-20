@@ -12,11 +12,11 @@ import numpy as np
 
 
 class Integrator:
-    """Abstract class for the implementation of numerical integrators.
+    """Abstract class for the implementation of numerical integrators for first-order ordinary differential equations.
 
         Attributes:
-            _func (Callable): function of the independent variable and the state vector defining the derivative of the 
-            latter w.r.t. the former.
+            _func (Callable[[float, np.array], np.array]): function of the independent variable and the state vector 
+            defining the derivative of the latter w.r.t. the former.
             _order (int): order of integration scheme.
 
     """
@@ -27,8 +27,8 @@ class Integrator:
         """Constructor for class Integrator.
 
                 Args:
-                     func (Callable): function of the independent variable and the state vector defining the derivative 
-                     of the latter w.r.t. the former.
+                     func (Callable[[float, np.array], np.array]): function of the independent variable and the state 
+                     vector defining the derivative of the latter w.r.t. the former.
                      order (int): order of integration scheme.
 
         """
@@ -44,7 +44,7 @@ class Integrator:
                 Args:
                      t0 (float): initial time.
                      tf (int): final time.
-                     x0 (iterable): initial conditions.
+                     x0 (np.array): initial conditions.
                      n_step (int): number of integrations steps.
                      keep_history (bool): set to True to return the whole history of successful steps, False to return
                      only the initial and final states.
@@ -64,8 +64,8 @@ class FixedstepIntegrator(Integrator):
         """Constructor for class FixedstepIntegrator.
 
                 Args:
-                     func (Callable): function of the independent variable and the state vector defining the derivative
-                     of the latter w.r.t. the former.
+                     func (Callable[[float, np.array], np.array]): function of the independent variable and the state 
+                     vector defining the derivative of the latter w.r.t. the former.
                      order (int): order of integration scheme.
 
         """
@@ -95,11 +95,11 @@ class FixedstepIntegrator(Integrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (iterable): state vector at t.
+                    x (np.array): state vector at t.
                     h (float): step-size.
 
         """
-        pass
+        raise NotImplementedError
 
     def integrate(self, t0, tf, x0, n_step, keep_history):
         """Function that performs integration between two values of independent variable. It is vectorized w.r.t. x0 if
@@ -109,14 +109,14 @@ class FixedstepIntegrator(Integrator):
                 Args:
                     t0 (float): initial value of independent variable.
                     tf (float): final value of independent variable.
-                    x0 (iterable): state vector at t0.
+                    x0 (np.array): state vector at t0.
                     n_step (int): number of integration steps to be performed.
                     keep_history (bool): set to True to return the whole history of successful steps, False to return
                      only the initial and final states.
 
                 Returns:
-                    Xs (List): state vectors at integration steps of interest.
-                    Ts (List): values taken by the independent variable at integration steps.
+                    Xs (List[np.array]): state vectors at integration steps of interest.
+                    Ts (List[float]): values taken by the independent variable at integration steps.
 
         """
 
@@ -147,8 +147,8 @@ class Euler(FixedstepIntegrator):
         """Constructor for Euler class.
 
                 Args:
-                     func (Callable): function of the independent variable and the state vector defining the derivative
-                     of the latter w.r.t. the former.
+                     func (Callable[[float, np.array], np.array]): function of the independent variable and the state 
+                     vector defining the derivative of the latter w.r.t. the former.
 
         """
         FixedstepIntegrator.__init__(self, func, order=1)
@@ -159,11 +159,11 @@ class Euler(FixedstepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (iterable): state vector at t.
+                    x (np.array): state vector at t.
                     h (float): step-size.
 
                 Returns:
-                    xf (iterable): state vector at t + h.
+                    xf (np.array): state vector at t + h.
 
         """
 
@@ -182,8 +182,8 @@ class Heun(FixedstepIntegrator):
         """Constructor for Heun class.
 
                 Args:
-                     func (Callable): function of the independent variable and the state vector defining the derivative
-                     of the latter w.r.t. the former.
+                     func (Callable[[float, np.array], np.array]): function of the independent variable and the state 
+                     vector defining the derivative of the latter w.r.t. the former.
 
         """
         FixedstepIntegrator.__init__(self, func, order=2)
@@ -195,14 +195,14 @@ class Heun(FixedstepIntegrator):
                 Args:
                     t0 (float): initial value of independent variable.
                     tf (float): final value of independent variable.
-                    x0 (iterable): state vector at t0.
+                    x0 (np.array): state vector at t0.
                     n_step (int): number of integration steps to be performed.
                     keep_history (bool): set to True to return the whole history of successful steps, False to return
                      only the initial and final states.
 
                 Returns:
-                    Xs (List): state vectors at integration steps of interest.
-                    Ts (List): values taken by the independent variable at integration steps.
+                    Xs (List[np.array]): state vectors at integration steps of interest.
+                    Ts (List[float]): values taken by the independent variable at integration steps.
 
         """
 
@@ -215,11 +215,11 @@ class Heun(FixedstepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (iterable): state vector at t.
+                    x (np.array): state vector at t.
                     h (float): step-size.
 
                 Returns:
-                    xf (iterable): state vector at t + h.
+                    xf (np.array): state vector at t + h.
 
         """
 
@@ -245,8 +245,8 @@ class RK4(FixedstepIntegrator):
         """Constructor for RK4 class.
 
                 Args:
-                     func (Callable): function of the independent variable and the state vector defining the derivative
-                     of the latter w.r.t. the former.
+                     func (Callable[[float, np.array], np.array]): function of the independent variable and the state 
+                     vector defining the derivative of the latter w.r.t. the former.
 
         """
         FixedstepIntegrator.__init__(self, func, order=4)
@@ -260,14 +260,14 @@ class RK4(FixedstepIntegrator):
                 Args:
                     t0 (float): initial value of independent variable.
                     tf (float): final value of independent variable.
-                    x0 (iterable): state vector at t0.
+                    x0 (np.array): state vector at t0.
                     n_step (int): number of integration steps to be performed.
                     keep_history (bool): set to True to return the whole history of successful steps, False to return
                      only the initial and final states.
 
                 Returns:
-                    Xs (List): state vectors at integration steps of interest.
-                    Ts (List): values taken by the independent variable at integration steps.
+                    Xs (List[np.array]): state vectors at integration steps of interest.
+                    Ts (List[float]): values taken by the independent variable at integration steps.
 
         """
 
@@ -283,11 +283,11 @@ class RK4(FixedstepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (iterable): state vector at t.
+                    x (np.array): state vector at t.
                     h (float): step-size.
 
                 Returns:
-                    xf (iterable): state vector at t + h.
+                    xf (np.array): state vector at t + h.
 
         """
 
@@ -319,8 +319,8 @@ class BS(FixedstepIntegrator):
         """Constructor for BS class.
 
                 Args:
-                     func (Callable): function of the independent variable and the state vector defining the derivative
-                     of the latter w.r.t. the former.
+                     func (Callable[[float, np.array], np.array]): function of the independent variable and the state 
+                     vector defining the derivative of the latter w.r.t. the former.
                      order (int): order of integrator.
 
         """
@@ -348,11 +348,11 @@ class BS(FixedstepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (iterable): state vector at t.
+                    x (np.array): state vector at t.
                     H (float): step-size.
 
                 Returns:
-                     (iterable): state vector at t + H.
+                     (np.array): state vector at t + H.
 
         """
 
@@ -419,9 +419,9 @@ class MultistepIntegrator(FixedstepIntegrator):
     """Abstract class for the implementation of multi-step integrators with fixed step-size.
 
             Attributes:
-                 saved_steps (List): values of state derivative at previous steps.
+                 saved_steps (List[np.array]): values of state derivative at previous steps.
                  _stepsize (float): step-size.
-                 _beta (array_like): vector of numbers used in integration scheme.
+                 _beta (np.array): vector of numbers used in integration scheme.
                  _initializer (FixedstepIntegrator): integrator used to initialize the multi-step method.
 
     """
@@ -432,8 +432,8 @@ class MultistepIntegrator(FixedstepIntegrator):
         """Constructor for class MultistepIntegrator.
 
                 Args:
-                     func (Callable): function of the independent variable and the state vector defining the derivative
-                     of the latter w.r.t. the former.
+                     func (Callable[[float, np.array], np.array]): function of the independent variable and the state 
+                     vector defining the derivative of the latter w.r.t. the former.
                      order (int): order of integrator.
 
         """
@@ -449,7 +449,7 @@ class MultistepIntegrator(FixedstepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (iterable): state vector at t.
+                    x (np.array): state vector at t.
 
         """
 
@@ -461,10 +461,10 @@ class MultistepIntegrator(FixedstepIntegrator):
         """Function propagating the state vector over one integration step.
 
                 Args:
-                    x (iterable): current state vector.
+                    x (np.array): current state vector.
 
                 Returns:
-                    xf (iterable): state vector at next integration step.
+                    xf (np.array): state vector at next integration step.
 
         """
 
@@ -477,11 +477,11 @@ class MultistepIntegrator(FixedstepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (iterable): state vector at t.
+                    x (np.array): state vector at t.
                     h (float): step-size (dummy variable in multi-step integrator here to match parent signature)
 
                 Returns:
-                    xf (iterable): state vector at t + self._stepsize.
+                    xf (np.array): state vector at t + self._stepsize.
 
         """
 
@@ -496,12 +496,12 @@ class MultistepIntegrator(FixedstepIntegrator):
 
                 Args:
                     t0 (float): initial value of independent variable.
-                    x0 (iterable): state vector at t0.
+                    x0 (np.array): state vector at t0.
                     h (float): step-size
 
                 Returns:
-                    states (List): history of state vector after initialization with single-step integrator.
-                    ind_vars (List): values of independent variable corresponding to history of state vector.
+                    states (List[np.array]): history of state vector after initialization with single-step integrator.
+                    ind_vars (List[float]): values of independent variable corresponding to history of state vector.
 
         """
 
@@ -521,15 +521,15 @@ class MultistepIntegrator(FixedstepIntegrator):
                 Args:
                     t0 (float): initial value of independent variable.
                     tf (float): final value of independent variable.
-                    x0 (iterable): state vector at t0.
+                    x0 (np.array): state vector at t0.
                     n_step (int): number of integration steps to be performed.
                     keep_history (bool): set to True to return the whole history of successful steps, False to return
                      only the initial and final states.
-                    saved_steps (List): past values of self._func.
+                    saved_steps (List[np.array]): past values of self._func.
 
                 Returns:
-                    Xs (List): state vectors at integration steps of interest.
-                    Ts (List): values taken by the independent variable at integration steps.
+                    Xs (List[np.array]): state vectors at integration steps of interest.
+                    Ts (List[float]): values taken by the independent variable at integration steps.
 
         """
         self.saved_steps = []
@@ -577,8 +577,8 @@ class AB8(MultistepIntegrator):
         """Constructor for class AB8.
 
                 Args:
-                     func (Callable): function of the independent variable and the state vector defining the derivative
-                     of the latter w.r.t. the former.
+                     func (Callable[[float, np.array], np.array]): function of the independent variable and the state 
+                     vector defining the derivative of the latter w.r.t. the former.
 
         """
 
@@ -596,8 +596,8 @@ class ABM8(MultistepIntegrator):
         """Constructor for class ABM8.
 
                 Args:
-                     func (Callable): function of the independent variable and the state vector defining the derivative
-                     of the latter w.r.t. the former.
+                     func (Callable[[float, np.array], np.array]): function of the independent variable and the state 
+                     vector defining the derivative of the latter w.r.t. the former.
 
         """
 
@@ -612,11 +612,11 @@ class ABM8(MultistepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (iterable): state vector at t.
+                    x (np.array): state vector at t.
                     h (float): step-size (dummy variable in multi-step integrator here to match parent signature)
 
                 Returns:
-                    xf (iterable): state vector at t + self._stepsize.
+                    xf (np.array): state vector at t + self._stepsize.
 
         """
 
@@ -658,13 +658,13 @@ class VariableStepIntegrator(Integrator):
         """Constructor for class VariableStepIntegrator.
 
                 Args:
-                     func (Callable): function of the independent variable and the state vector defining the derivative
-                     of the latter w.r.t. the former.
+                     func (Callable[[float, np.array], np.array]): function of the independent variable and the state 
+                     vector defining the derivative of the latter w.r.t. the former.
                      order (int): order of integrator.
                      dim_state (int): dimension of state factor.
-                     abs_error_tol (array_like): tolerance vector on estimated absolute error. Should have same number
+                     abs_error_tol (List[float]): tolerance vector on estimated absolute error. Should have same number
                      of components than there are state variables. Default is 1.e-8 for each.
-                     rel_error_tol (array_like): tolerance vector on estimated relative error. Should have same number
+                     rel_error_tol (List[float]): tolerance vector on estimated relative error. Should have same number
                      of components than there are state variables. Default is 1.e-4 for each.
                      max_stepsize (float): maximum step-size allowed. Default is + infinity.
                      step_multiplier (float): multiplicative factor to increase step-size when an integration step has
@@ -725,7 +725,7 @@ class VariableStepIntegrator(Integrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (iterable): state vector at t.
+                    x (np.array): state vector at t.
                     h (float): current step-size.
 
         """
@@ -737,14 +737,14 @@ class VariableStepIntegrator(Integrator):
                 Args:
                     t0 (float): initial value of independent variable.
                     tf (float): final value of independent variable.
-                    x0 (iterable): state vector at t0.
+                    x0 (np.array): state vector at t0.
                     n_step (int): initial guess for number of integration steps.
                     keep_history (bool): set to True to return the whole history of successful steps, False to return
                      only the initial and final states.
 
                 Returns:
-                    Xs (List): state vectors at integration steps of interest.
-                    Ts (List): values taken by the independent variable at integration steps.
+                    Xs (List[np.array]): state vectors at integration steps of interest.
+                    Ts (List[float]): values taken by the independent variable at integration steps.
 
         """
 
@@ -856,12 +856,12 @@ class RKF45(VariableStepIntegrator):
 
                 Args:
                     t (float): current value of independent variable.
-                    x (iterable): state vector at t.
+                    x (np.array): state vector at t.
                     h (float): current step-size.
 
                 Returns:
-                    xf (iterable): tentative state vector at t + h.
-                    err (iterable): estimated error vector.
+                    xf (np.array): tentative state vector at t + h.
+                    err (np.array): estimated error vector.
 
         """
         # values of independent variable where the model will be evaluated

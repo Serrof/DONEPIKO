@@ -60,7 +60,7 @@ class Solver:
 
         """
 
-        pass
+        raise NotImplementedError
 
     def set_norm(self, p):
         """Setter for attribute p.
@@ -96,7 +96,7 @@ class Solver:
         """Function computing the value of the moment-function on the given list of true anomalies.
 
                 Args:
-                    grid (list): grid of true anomalies where to compute the moment-function.
+                    grid (List[float]): grid of true anomalies where to compute the moment-function.
                     half_dim (int): half-dimension of state-vector.
 
                 Returns:

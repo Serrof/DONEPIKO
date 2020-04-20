@@ -64,6 +64,9 @@ class BodyProbParams(dynamical_system.DynParams):
     def copy(self):
         """Function returning a copy of the object.
 
+                Returns:
+                    (BodyProbParams): copied object.
+
         """
 
         return BodyProbParams(self.mu, self.ecc, self.period, self.sma, self.Li)
@@ -212,11 +215,11 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
         """Function integrating over the true anomaly the moment-function.
 
                 Args:
-                    nus (list): grid of true anomalies.
+                    nus (List[float]): grid of true anomalies.
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    outputs (list): moment-function integrated on input grid.
+                    outputs (np.array): moment-function integrated on input grid.
 
         """
         matrices = self.integrate_phi_inv(nus, half_dim)
@@ -239,7 +242,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
 
         """
 
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def _transition_ip(self, x1, nu1, nu2):
@@ -251,7 +254,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                     nu2 (float): final true anomaly.
 
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def _rhs_ip(self, nu1, nu2, x1, x2):
@@ -264,7 +267,7 @@ class BodyProbDyn(dynamical_system.DynamicalSystem):
                     x2 (np.array): final transformed state vector.
 
         """
-        pass
+        raise NotImplementedError
 
     def propagate(self, nu1, nu2, x1):
         """Wrapper for the propagation of the state vector.
@@ -412,6 +415,9 @@ class RestriTwoBodyProb(BodyProbDyn):
     def copy(self):
         """Function returning a copy of the object.
 
+                Returns:
+                    (RestriTwoBodyProb): copied object.
+
         """
 
         return RestriTwoBodyProb.init_from_params(self.params)
@@ -547,6 +553,9 @@ class RestriThreeBodyProb(BodyProbDyn):
     def copy(self):
         """Function returning a copy of the object.
 
+                Returns:
+                    (RestriThreeBodyProb): copied object.
+
         """
 
         return RestriThreeBodyProb.init_from_params(self.params)
@@ -619,7 +628,7 @@ class RestriThreeBodyProb(BodyProbDyn):
                     nu (float): current true anomaly.
 
                 Returns:
-                    Y (np.array): moment-function.
+                    Y (np.array): moment-function evaluated at given anomaly.
 
         """
 

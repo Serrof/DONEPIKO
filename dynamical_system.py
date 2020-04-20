@@ -27,7 +27,7 @@ class DynParams:
         """Function returning a copy of the object.
 
         """
-        pass
+        raise NotImplementedError
 
 
 class DynamicalSystem:
@@ -36,8 +36,10 @@ class DynamicalSystem:
         Attributes:
             name (str): name of the dynamics implemented.
             params (DynParams): object dealing with the dynamical parameters.
-            convToAlterIndVar (func): conversion from original to alternative independent variable
-            convFromAlterIndVar (func): conversion from alternative to original independent variable
+            convToAlterIndVar (Callable[[float, float, float], float]): conversion from original to alternative
+            independent variable
+            convFromAlterIndVar (Callable[[float, float, float], float]): conversion from alternative to original
+            independent variable
 
     """
 
@@ -74,7 +76,7 @@ class DynamicalSystem:
                     (np.array): matrix for transformed state equation in linearized dynamics.
 
         """
-        pass
+        raise NotImplementedError
 
     def evaluate_state_deriv(self, nu, x):
         """Function returning the derivative of the transformed state vector w.r.t. the independent variable in the
@@ -118,7 +120,7 @@ class DynamicalSystem:
                     (np.array): final state vector.
 
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def evaluate_Y(self, nu, half_dim):
@@ -132,7 +134,7 @@ class DynamicalSystem:
                     (np.array): moment-function evaluated at nu.
 
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def compute_rhs(self, BC, analytical):
@@ -146,28 +148,28 @@ class DynamicalSystem:
                     u (np.array): right-hand side of moment equation.
 
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def integrate_Y(self, nus, half_dim):
         """Function integrating over the independent variable the moment-function.
 
                 Args:
-                    nus (list): grid of values for independent variable.
+                    nus (List): grid of values for independent variable.
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    outputs (list): moment-function integrated on input grid.
+                    outputs (np.array): moment-function integrated on input grid.
 
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def copy(self):
         """Function returning a copy of the object.
 
         """
-        pass
+        raise NotImplementedError
 
     def transformation(self, x, nu):
         """Method to be overwritten if there is a transformation to be performed to obtain a state vector that has an
@@ -201,11 +203,11 @@ class DynamicalSystem:
         associated to the transformed state vector.
 
                 Args:
-                    nus (list): grid of values for independent variable.
+                    nus (Iterable[float]): grid of values for independent variable.
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    outputs (list): list of inverse fundamental transition matrices integrated on input grid.
+                    outputs (List[np.array]): list of inverse fundamental transition matrices integrated on input grid.
 
         """
 
@@ -216,13 +218,13 @@ class DynamicalSystem:
         def func(nu, x):
             x_matrix = utils.vector_to_square_matrix(x, 2 * half_dim)
             f_matrix = -x_matrix.dot(self.matrix_linear(nu, half_dim))  # right-hand side of matrix differential equation satisfied by phi^-1
-            return utils.square_matrix_to_vector(f_matrix, 2 * half_dim)
+            return utils.square_matrix_to_vector(f_matrix)
 
         integ = integrators.RK4(func)
         outputs = []
         IC_matrix = np.eye(2 * half_dim)
         outputs.append(IC_matrix)
-        IC_vector = utils.square_matrix_to_vector(IC_matrix, 2 * half_dim)  # initial conditions of matrix system turned into a vector for integration
+        IC_vector = utils.square_matrix_to_vector(IC_matrix)  # initial conditions of matrix system turned into a vector for integration
         n_step = int(math.ceil(math.fabs(nus[1] - nus[0]) / conf.params_other["max_stepsize"]))
 
         for k, nu in enumerate(nus[:-1]):
@@ -325,11 +327,11 @@ class ZeroGravity(DynamicalSystem):
         """Function integrating over the independent variable the moment-function.
 
                 Args:
-                    nus (list): grid of values for independent variable.
+                    nus (Iterable[float]): grid of values for independent variable.
                     half_dim (int): half-dimension of state vector.
 
                 Returns:
-                    outputs (list): moment-function integrated on input grid.
+                    outputs (np.array): moment-function integrated on input grid.
 
         """
         matrices = self.integrate_phi_inv(nus, half_dim)
@@ -340,6 +342,9 @@ class ZeroGravity(DynamicalSystem):
 
     def copy(self):
         """Function returning a copy of the object.
+
+                Returns:
+                    (ZeroGravity): copied object.
 
         """
         return ZeroGravity()

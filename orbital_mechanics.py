@@ -226,8 +226,8 @@ def nu_to_dt(e, n, nu0, nu):
                 Args:
                     e (float): eccentricity.
                     n (float) : mean motion.
-                    nu0 (float) : initial true anomaly.
-                    nu (float) : current true anomaly.
+                    nu0 (float) : initial true anomaly in radians.
+                    nu (float) : current true anomaly in radians.
 
                 Returns:
                     dt (float): elapsed time between nu and nu0.
@@ -268,11 +268,11 @@ def dt_to_nu(e, n, nu0, dt):
                 Args:
                     e (float): eccentricity.
                     n (float) : mean motion.
-                    nu0 (float) : initial true anomaly.
+                    nu0 (float) : initial true anomaly in radians.
                     dt (float) : elapsed time since nu0.
 
                 Returns:
-                    nu (float): current true anomaly.
+                    nu (float): current true anomaly in radians.
 
     """
 
@@ -330,7 +330,7 @@ def rho_func(e, nu):
 
             Args:
                 e (float): eccentricity.
-                nu (float): true anomaly.
+                nu (float): true anomaly in radians.
 
             Returns:
                 (float): value of 1 + e cos(nu).
@@ -555,7 +555,7 @@ def state_deriv_nonlin(x, nu, ecc, x_eq, mu, slr):
     """Function computing the derivative of the transformed state vector w.r.t. the true anomaly for the non-linear motion.
 
             Args:
-                x (list): out-of-plane transformed vector.
+                x (List[float]): out-of-plane transformed vector.
                 nu (float): true anomaly.
                 ecc (float): eccentricity of reference orbit.
                 x_eq (np.array): coordinates of equilibrium point.
@@ -563,7 +563,7 @@ def state_deriv_nonlin(x, nu, ecc, x_eq, mu, slr):
                 slr (float): semi-latus rectum of reference orbit.
 
             Returns:
-                (list): state derivative.
+                (List[float]): state derivative.
 
     """
 
@@ -583,14 +583,14 @@ def oop_state_deriv(x, nu, ecc, x_eq, mu):
     """Function computing the derivative of the out-of-plane transformed state vector w.r.t. the true anomaly.
 
             Args:
-                x (list): out-of-plane transformed vector.
+                x (List[float]): out-of-plane transformed vector.
                 nu (float): true anomaly.
                 ecc (float): eccentricity of reference orbit.
                 x_eq (np.array): coordinates of equilibrium point.
                 mu (float): ratio of minor mass over total mass.
 
             Returns:
-                (list): state derivative.
+                (List[float]): state derivative.
 
     """
 
@@ -660,14 +660,14 @@ def ip_state_deriv(x, nu, ecc, x_eq, mu):
     """Function computing the derivative of the in-plane transformed state vector w.r.t. the true anomaly.
 
             Args:
-                x (list): in-plane transformed vector.
+                x (List[float]): in-plane transformed vector.
                 nu (float): true anomaly.
                 ecc (float): eccentricity of reference orbit.
                 x_eq (np.array): coordinates of equilibrium point.
                 mu (float): ratio of minor mass over total mass.
 
             Returns:
-                (list): state derivative.
+                (List[float]): state derivative.
 
     """
     Hessian = Hessian_ip2bp(x_eq) if mu == 0 else Hessian_ip3bp(x_eq, mu)
@@ -682,14 +682,14 @@ def complete_state_deriv(x, nu, ecc, x_eq, mu):
     the true anomaly.
 
             Args:
-                x (list): complete transformed vector.
+                x (List[float]): complete transformed vector.
                 nu (float): true anomaly.
                 ecc (float): eccentricity of reference orbit.
                 x_eq (np.array): coordinates of equilibrium point.
                 mu (float): ratio of minor mass over total mass.
 
             Returns:
-                (list): state derivative.
+                (np.array): state derivative.
 
     """
     (x_ip, x_oop) = utils.unstack_state(x)

@@ -35,9 +35,9 @@ class Plotter:
                     CL (utils.ControlLaw): control law to be simulated.
                     _q (int): type of norm for primer vector.
                     _nb (int): number of points to be plotted.
-                    _nus (list): anomalies to be plotted.
-                    _times (list): instants to be plotted.
-                    _pts (list): values of independent variable to be plotted (depending on boolean 'anomaly')
+                    _nus (np.array): anomalies to be plotted.
+                    _times (np.array): instants to be plotted.
+                    _pts (np.array): values of independent variable to be plotted (depending on boolean 'anomaly')
                     _states (np.array): states to be plotted.
 
     """
@@ -82,6 +82,9 @@ class Plotter:
 
     def copy(self):
         """Function returning a copy of the object.
+
+                Returns:
+                    (Plotter): copied object.
 
         """
 

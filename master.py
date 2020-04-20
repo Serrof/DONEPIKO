@@ -63,7 +63,7 @@ class Master:
         self.plotter.set_norm(p)
 
     def set_linearity_plot(self, linearized):
-        """Function to reset liner property of dynamics to be plotted.
+        """Function to reset linear property of dynamics to be plotted.
 
                 Args:
                     linearized (bool): set to True for linearized dynamics, False otherwise.
@@ -119,6 +119,10 @@ class Master:
         self.plotter.set_control_law(CL)
 
     def suboptimize(self):
+        """Wrapper to solve for a two-impulses trajectory (at initial and final anomalies).
+
+
+        """
 
         self.set_control(self._solver.boundary_impulses(self.BC))
 

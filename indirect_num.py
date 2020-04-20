@@ -39,11 +39,12 @@ def initialize_iterative_grid(grid_input):
     """Function initializing the grid for the relaxed primal problem from the thinner grid used for post-treatment.
 
             Args:
-                grid_input (list): grid of true anomalies used for norm checks of primer vector.
+                grid_input (List[float]): grid of true anomalies used for norm checks of primer vector.
 
             Returns:
-                 (list): sub-grid to use for first iteration in the solving of the primal problem (norm constraints).
-                 (list): indices of points selected in input grid.
+                 (List[float]): sub-grid to use for first iteration in the solving of the primal problem (norm
+                 constraints).
+                 (List[int]): indices of points selected in input grid.
 
     """
 
@@ -62,11 +63,11 @@ def initialize_iterative_grid_randomly(n_points, grid):
 
             Args:
                 n_points (int): number of points to be selected in input grid.
-                grid (list): grid of true anomalies used for norm checks of primer vector.
+                grid (List[float]): grid of true anomalies used for norm checks of primer vector.
 
             Returns:
-                points (list): sub-grid whose points were randomly picked among input grid.
-                indices (list): indices of points randomly picked in input grid.
+                points (List[float]): sub-grid whose points were randomly picked among input grid.
+                indices (List[int]): indices of points randomly picked in input grid.
 
     """
 
@@ -114,14 +115,15 @@ def remove_nus(Y_grid, q, grid_work, indices_work, lamb):
             Args:
                 Y_grid (np.array): grid of moment-function components for norm computation of candidate primer vector.
                 q (int): type of norm for primer vector.
-                grid_work (list): input grid where to trim true anomalies where norm of primer vector is smaller than 1.
-                indices_work (list): indices of elements of grid_work in thinner grid of true anomalies used for post-
-                process norm checks.
+                grid_work (List[float]): input grid where to trim true anomalies where norm of primer vector is smaller
+                than 1.
+                indices_work (List[int]): indices of elements of grid_work in thinner grid of true anomalies used for
+                post-process norm checks.
                 lamb (np.array): coefficients of candidate primer vector.
 
             Returns:
-                 grid (list): filtered grid w.r.t. input one.
-                 indices (list): indices in input grid of true anomalies kept in output grid .
+                 grid (List[float]): filtered grid w.r.t. input one.
+                 indices (List[int]): indices in input grid of true anomalies kept in output grid .
 
     """
 
@@ -147,15 +149,15 @@ def extract_nus(grid_check, Y_grid, lamb, q):
     """Function selecting points of input grid where primer vector has a norm greater than one.
 
             Args:
-                grid_check (): grid of true anomalies where norm of candidate primer vector is compared to 1 to
-                check convergence.
+                grid_check (List[float]): grid of true anomalies where norm of candidate primer vector is compared to 1
+                to check convergence.
                 Y_grid (np.array): grid of moment-function components for norm evaluation of candidate primer vector.
                 lamb (np.array): coefficients of candidate primer vector.
                 q (int): norm for primer vector.
 
             Returns:
-                nus (list): points of grid_check where norm of candidate primer vector is greater than one.
-                indices (list): indices of input grid corresponding to output n_s
+                nus (List[float]): points of grid_check where norm of candidate primer vector is greater than one.
+                indices (List[int]): indices of input grid corresponding to output n_s
 
     """
 
@@ -227,8 +229,8 @@ def solve_primal(grid_check, Y_grid, z, p):
     """Wrapper for solver of primal problem.
 
             Args:
-                grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
-                check convergence.
+                grid_check (List[float]): grid of true anomalies where norm of candidate primer vector is compared to 1
+                to check convergence.
                 Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
                 z (np.array): right-hand side of moment equation.
                 p (int): type of norm to be minimized.
@@ -254,15 +256,15 @@ def primal_to_dual(grid_check, Y_grid, lamb, z, p):
     """Wrapper for retrieving of dual solution from primal one.
 
             Args:
-                grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
-                check convergence.
+                grid_check (List[float]): grid of true anomalies where norm of candidate primer vector is compared to 1
+                to check convergence.
                 Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
                 lamb (np.array): coefficients of primer vector.
                 z (np.array): right-hand side of moment equation.
                 p (int): type of norm to be minimized.
 
             Returns:
-                nus (list): optimal nus of burn.
+                nus (List[float]): optimal nus of burn.
                 DV (np.array): corresponding Delta-Vs.
 
     """
@@ -283,8 +285,8 @@ def solve_primal_1norm(grid_check, Y_grid, z):
     """Function solving primal problem with 1-norm.
 
             Args:
-                grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
-                check convergence.
+                grid_check (List[float]): grid of true anomalies where norm of candidate primer vector is compared to 1
+                to check convergence.
                 Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
                 z (np.array): right-hand side of moment equation.
 
@@ -341,14 +343,14 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
     """Function retrieving solution of dual problem from primal one with 1-norm.
 
             Args:
-                grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
-                check convergence.
+                grid_check (List[float]): grid of true anomalies where norm of candidate primer vector is compared to 1
+                to check convergence.
                 Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
                 lamb (np.array): coefficients of primer vector.
                 z (np.array): right-hand side of moment equation.
 
             Returns:
-                nus (list): optimal nus of burn.
+                nus (List[float]): optimal nus of burn.
                 DVs (np.array): corresponding Delta-Vs.
 
     """
@@ -400,8 +402,8 @@ def solve_primal_2norm(grid_check, Y_grid, z):
     """Function solving primal problem with 2-norm.
 
             Args:
-                grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
-                check convergence.
+                grid_check (List[float]): grid of true anomalies where norm of candidate primer vector is compared to 1
+                to check convergence.
                 Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
                 z (np.array): right-hand side of moment equation.
 
@@ -470,14 +472,14 @@ def primal_to_dual_2norm(grid_check, Y_grid, lamb, z):
     """Function retrieving solution of dual problem from primal one with 2-norm.
 
             Args:
-                grid_check (list): grid of true anomalies where norm of candidate primer vector is compared to 1 to
-                check convergence.
+                grid_check (List[float]): grid of true anomalies where norm of candidate primer vector is compared to 1
+                to check convergence.
                 Y_grid (np.array): grid of moment-function components for norm evaluation of primer vector.
                 lamb (np.array): coefficients of primer vector.
                 z (np.array): right-hand side of moment equation.
 
             Returns:
-                nus (list): optimal nus of burn.
+                nus (List[float]): optimal burns' true anomalies.
                 DVs (np.array): corresponding Delta-Vs.
 
     """

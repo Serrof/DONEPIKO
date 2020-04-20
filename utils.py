@@ -84,22 +84,17 @@ def vector_to_square_matrix(x_vector, n):
     return x_matrix
 
 
-def square_matrix_to_vector(x_matrix, n):
+def square_matrix_to_vector(x_matrix):
     """Function turning a NxN matrix into a N^2-dimensional vector.
 
         Args:
             x_matrix (np.array): square matrix.
-            n (int): size of input matrix.
 
         Returns:
             x_vector (np.array): vector composed of the concatenated columns of the input matrix.
 
     """
-    x_vector = np.zeros(n * n)
-    for i in range(0, n):
-        x_vector[i * n: (i + 1) * n] = x_matrix[i, :]
-
-    return x_vector
+    return np.array(x_matrix).flatten()
 
 
 class BoundaryConditions:
@@ -136,6 +131,9 @@ class BoundaryConditions:
 
     def copy(self):
         """Function returning a copy of the object.
+
+                Returns:
+                    (BoundaryConditions): copied object.
 
         """
 
@@ -204,6 +202,9 @@ class ControlLaw:
 
     def copy(self):
         """Function returning a copy of the object.
+
+                Returns:
+                    (ControlLaw): copied object.
 
         """
 
