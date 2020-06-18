@@ -1,4 +1,4 @@
-## DONEPIKO 1.4.6
+## DONEPIKO 1.4.7
 DONEPIKO stands for Delta-v Optimization Near Equilibrium Points In Keplerian Orbits.
 
 It is a Python toolbox under the GPL 3 license designed to minimize the fuel consumption of trajectories in the Restricted 2- or 3- Body Problem,

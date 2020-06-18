@@ -468,9 +468,9 @@ class RestriTwoBodyProb(BodyProbDyn):
             u -= exp_HCW(-nu1).dot(x1)
         else:  # elliptical case
             M = phi_YA(self.params.ecc, self.params.mean_motion, 0., nu2)
-            u = linalg.inv(M).dot(x2)
+            u = linalg.solve(M, x2)
             M = phi_YA(self.params.ecc, self.params.mean_motion, 0., nu1)
-            u -= linalg.inv(M).dot(x1)
+            u -= linalg.solve(M, x1)
         return u
 
 
@@ -508,9 +508,17 @@ class RestriThreeBodyProb(BodyProbDyn):
                 self.x_eq_normalized = np.array((find_L3(self.params.mu), 0.0, 0.0))
             puls = puls_oop_LP(self.x_eq_normalized, self.params.mu)
             (gamma_re, gamma_im, c, k) = inter_L123(puls * puls)
-            A = np.array([[1.0, 1.0, 1.0, 0.0], [c, -c, 0.0, k], [gamma_re, -gamma_re, 0.0, gamma_im],
-                             [gamma_re * c, gamma_re * c, - gamma_im * k, 0.0]])
-            self._A_inv = np.linalg.inv(A)
+            aux1 = gamma_re * c
+            aux2 = k * gamma_im
+            self._A_inv = np.array([[aux2, gamma_im, -k, 1.],
+                                    [aux2, -gamma_im, k, 1.],
+                                    [aux1, 0., 0., -1.],
+                                    [0., -gamma_re, c, 0.]])
+            d1 = aux1 + aux2
+            self._A_inv[:2, :] *= 0.5
+            self._A_inv[:, 0] /= d1
+            self._A_inv[:, 1:3] /= c * gamma_im - k * gamma_re
+            self._A_inv[:, 3] /= d1
         else:  # Lagrange Point 4 or 5
             if Li == 4:
                 self.x_eq_normalized = np.array((0.5 * (1.0 - 2.0 * self.params.mu), math.sqrt(3.) / 2., 0., 0.))
@@ -520,7 +528,7 @@ class RestriThreeBodyProb(BodyProbDyn):
                 kappa = -1.0 + 2.0 * self.params.mu
             root1, root2, a1, a2, b1, b2, c1, c2, d1, d2 = inter_L45(self.params.mu, kappa)
             A = np.array([[1.0, 0.0, 1.0, 0.0], [a1, a2, c1, c2],
-                             [0.0, root1, 0.0, root2], [b1 * root1, b2 * root1, d1 * root2, d2 * root2]])
+                          [0.0, root1, 0.0, root2], [b1 * root1, b2 * root1, d1 * root2, d2 * root2]])
             self._A_inv = np.linalg.inv(A)
 
     @classmethod
@@ -696,15 +704,11 @@ class RestriThreeBodyProb(BodyProbDyn):
         cos_inter = math.cos(gamma_im_times_nu)
         sin_inter = math.sin(gamma_im_times_nu)
         row1 = [exp_inter, inv_exp, cos_inter, sin_inter]
-        row2 = [c * exp_inter, -c * inv_exp,
-                 -k * sin_inter, k * cos_inter]
-        row3 = [gamma_re * exp_inter, -gamma_re * inv_exp,
-                 -gamma_im * sin_inter, gamma_im * cos_inter]
-        row4 = [gamma_re * c * exp_inter, gamma_re * c * inv_exp,
-                 -gamma_im * k * cos_inter, -gamma_im * k * sin_inter]
-        phi = np.array([row1, row2, row3, row4]).dot(self._A_inv)
+        row2 = [c * exp_inter, -c * inv_exp, -k * sin_inter, k * cos_inter]
+        row3 = [gamma_re * exp_inter, -gamma_re * inv_exp, -gamma_im * sin_inter, gamma_im * cos_inter]
+        row4 = [gamma_re * c * exp_inter, gamma_re * c * inv_exp, -gamma_im * k * cos_inter, -gamma_im * k * sin_inter]
 
-        return phi
+        return np.array([row1, row2, row3, row4]) @ self._A_inv
 
     def _exp_LP45(self, nu, kappa):
         """Function computing the exponential of the true anomaly times the matrix involved in the in-plane
@@ -727,19 +731,12 @@ class RestriThreeBodyProb(BodyProbDyn):
         cos2 = math.cos(root2_times_nu)
         sin2 = math.sin(root2_times_nu)
         row1 = [cos1, sin1, cos2, sin2]
-        row2 = [a1 * cos1 + b1 * sin1,
-                 a2 * cos1 + b2 * sin1,
-                 c1 * cos2 + d1 * sin2,
-                 c2 * cos2 + d2 * sin2]
-        row3 = [-root1 * sin1, root1 * cos1,
-                 -root2 * sin2, root2 * cos2]
-        row4 = [-root1 * a1 * sin1 + root1 * b1 * cos1,
-                 -root1 * a2 * sin1 + root1 * b2 * cos1,
-                 -root2 * c1 * sin2 + root2 * d1 * cos2,
-                 -root2 * c2 * sin2 + root2 * d2 * cos2]
-        phi = np.array([row1, row2, row3, row4]).dot(self._A_inv)
+        row2 = [a1 * cos1 + b1 * sin1, a2 * cos1 + b2 * sin1, c1 * cos2 + d1 * sin2, c2 * cos2 + d2 * sin2]
+        row3 = [-root1 * sin1, root1 * cos1, -root2 * sin2, root2 * cos2]
+        row4 = [-root1 * a1 * sin1 + root1 * b1 * cos1, -root1 * a2 * sin1 + root1 * b2 * cos1,
+                -root2 * c1 * sin2 + root2 * d1 * cos2, -root2 * c2 * sin2 + root2 * d2 * cos2]
 
-        return phi
+        return np.array([row1, row2, row3, row4]) @ self._A_inv
 
     def _transition_ip(self, x1, nu1, nu2):
         """Function returning the in-plane initial vector propagated to the final true anomaly.

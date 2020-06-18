@@ -217,7 +217,7 @@ class DynamicalSystem:
 
         def func(nu, x):
             x_matrix = utils.vector_to_square_matrix(x, 2 * half_dim)
-            f_matrix = -x_matrix.dot(self.matrix_linear(nu, half_dim))  # right-hand side of matrix differential equation satisfied by phi^-1
+            f_matrix = -x_matrix @ self.matrix_linear(nu, half_dim)  # right-hand side of matrix differential equation satisfied by phi^-1
             return utils.square_matrix_to_vector(f_matrix)
 
         integ = integrators.RK4(func)

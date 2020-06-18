@@ -460,7 +460,7 @@ def phi_YA(e, n, nu0, nu):
     phi[3, 2] = -(s + e * math.sin(2.0 * nu))
     phi[3, 3] = -3.0 * e * (J * phi[3, 1] + sr / rho_sq)
 
-    return swap_inv.dot(phi.dot(swap))  # conversion from one local orbital frame to the other
+    return swap_inv @ phi @ swap  # conversion from one local orbital frame to the other
 
 
 def transition_ip2bp(x1_bar, e, n, nu1, nu2):
@@ -513,8 +513,8 @@ def transition_ip2bp(x1_bar, e, n, nu1, nu2):
         phi_inv1[3, 2] = -rho1 * rho1
         phi_inv1[3, 3] = e * sr1
         phi_inv1 *= factor
-        phi_inv1 = swap.dot(phi_inv1.dot(swap_inv))
-        Phi = phi2.dot(phi_inv1)
+        phi_inv1 = swap @ phi_inv1 @ swap_inv
+        Phi = phi2 @ phi_inv1
         return Phi.dot(x1_bar)
 
 
