@@ -36,7 +36,7 @@ class Master:
 
         self.BC = plr.BC.copy()
         self.plotter = plr.copy()
-        self.CL = utils.NoControl(self.BC.half_dim)
+        self.CL = utils.NoControl(self.BC)
         if indirect:
             self._solver = indirect_solver.IndirectSolver(self.plotter.dyn, p, plr.analytical)
         else:  # direct approach chosen

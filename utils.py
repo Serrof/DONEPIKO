@@ -242,20 +242,20 @@ class ControlLaw:
 
 
 class NoControl(ControlLaw):
-    """ Class for dummy control law.
+    """ Class for dummy control law, meaning no actual non-zero impulse.
 
     """
 
-    def __init__(self, half_dim):
-        """Constructor for class NoControl.
+    def __init__(self, BC):
+        """Constructor for class NoControl. Value of independent variable corresponding to a single null impulse is
+        arbitrarily set to the initial one.
 
                 Args:
-                    half_dim (int): half-dimension of state vector.
+                    BC (BoundaryConditions): constraints for two-point boundary value problem.
 
         """
-        DVs = np.zeros((1, half_dim))
         # call to parent constructor
-        ControlLaw.__init__(self, half_dim, [0.], DVs)
+        ControlLaw.__init__(self, BC.half_dim, [BC.nu0], [[0.] * BC.half_dim])
 
 
 def merge_control(CL_ip, CL_oop):
@@ -281,31 +281,24 @@ def merge_control(CL_ip, CL_oop):
     DV_unsorted = np.zeros((len(nus_unsorted), 3))
     for k in range(0, len(nus_unsorted)):
         if k < len(CL_ip.nus):
-            DV_unsorted[k, 0:2] = CL_ip.DVs[k, 0:2]
+            DV_unsorted[k, :2] = CL_ip.DVs[k, :]
         else:  # last loop
             DV_unsorted[k, 2] = CL_oop.DVs[k - len(CL_ip.nus)]
 
     # sort nus and corresponding impulses
     indices_sorting = np.argsort(nus_unsorted)
     nus_conc = nus_unsorted[indices_sorting]
-    DV_conc = np.zeros((len(nus_conc), 3))
-    for k, index in enumerate(indices_sorting):
-        DV_conc[k, :] = DV_unsorted[index, :]
+    DV_conc = DV_unsorted[indices_sorting, :]
 
     # remove duplicated nus and merge impulses accordingly
     nus = []
-    indices_nodupli = []
-    for k, date in enumerate(nus_conc):
-        nus.append(date)
-        indices_nodupli.append(k)
-    removed = 0
-    for k in range(0, len(nus_conc) - 1):
-        if nus_conc[k] == nus_conc[k+1]:
-            del nus[k - removed]
-            del indices_nodupli[k - removed]
-            DV_conc[k, :] += DV_conc[k+1, :]
-            removed += 1
-    DVs = DV_conc[indices_nodupli, :]
+    DVs = []
+    for k, nu in enumerate(nus_conc):
+        if nu not in nus:
+            nus.append(nu)
+            DVs.append(DV_conc[k, :])
+        else:
+            DVs[-1] += DV_conc[k, :]
 
     if len(CL_ip.lamb) != 0 and len(CL_oop.lamb) != 0:
         lamb = stack_state(CL_ip.lamb, CL_oop.lamb)

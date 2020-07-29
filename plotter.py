@@ -61,7 +61,7 @@ class Plotter:
         self.dyn = dyn.copy()
         self.BC = BC.copy()
         if CL is None:
-            self.CL = utils.NoControl(BC.half_dim)
+            self.CL = utils.NoControl(BC)
         self.linearized = linearized
         self.anomaly = anomaly
         self.analytical = analytical

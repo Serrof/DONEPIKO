@@ -65,20 +65,24 @@ class IndirectSolver(solver.Solver):
         """
 
         z = self.dyn.compute_rhs(BC, self.prop_ana)
+
         # scaling the right-hand side of the moment equation
         scale = linalg.norm(z)
-        z /= scale
+        if scale != 0.:
+            z /= scale
 
-        # building grid for norm checks
-        grid_check = list(np.linspace(BC.nu0, BC.nuf, conf.params_indirect["n_check"]))
-        Y_grid = self.grid_Y(grid_check, BC.half_dim)
+            # building grid for norm checks
+            grid_check = list(np.linspace(BC.nu0, BC.nuf, conf.params_indirect["n_check"]))
+            Y_grid = self.grid_Y(grid_check, BC.half_dim)
 
-        lamb = solve_primal(grid_check, Y_grid, z, self.p)
-        (nus, DVs) = primal_to_dual(grid_check, Y_grid, lamb, z, self.p)
+            lamb = solve_primal(grid_check, Y_grid, z, self.p)
+            (nus, DVs) = primal_to_dual(grid_check, Y_grid, lamb, z, self.p)
 
-        DVs *= scale
+            DVs *= scale
 
-        return utils.ControlLaw(BC.half_dim, nus, DVs, lamb)
+            return utils.ControlLaw(BC.half_dim, nus, DVs, lamb)
+        else:
+            return utils.NoControl(BC)
 
     def solveBodyProbDyn(self, BC):
         """Wrapper for all solving strategies (analytical, numerical and both) in case of 2 or 3-body problem.
