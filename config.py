@@ -87,46 +87,44 @@ class Config:
             if child.tag == "params":
 
                 indirect = child.find("indirect")
-                for el in {"tol_lin_prog", "tol_unit_norm", "tol_cvx"}:
+                for el in ["tol_lin_prog", "tol_unit_norm", "tol_cvx"]:
                     self.params_indirect[el] = float(indirect.find(el).text)
-                for el in {"n_init", "n_check", "max_iter"}:
+                for el in ["n_init", "n_check", "max_iter_grid", "max_iter_cvx"]:
                     self.params_indirect[el] = int(indirect.find(el).text)
-                for el in {"exchange"}:
+                for el in ["exchange"]:
                     self.params_indirect[el] = indirect.find(el).attrib
 
                 direct = child.find("direct")
-                for el in {"tol_lin_prog", "DV_min", "tol_cvx"}:
+                for el in ["tol_lin_prog", "DV_min", "tol_cvx"]:
                     self.params_direct[el] = float(direct.find(el).text)
-                for el in {"n_grid_1norm", "n_grid_2norm"}:
+                for el in ["n_grid_1norm", "n_grid_2norm", "max_iter_cvx"]:
                     self.params_direct[el] = int(direct.find(el).text)
 
                 plot = child.find("plot")
-                for el in {"font", "mesh_plot"}:
+                for el in ["font", "mesh_plot"]:
                     self.params_plot[el] = int(plot.find(el).text)
 
                 other = child.find("other")
-                for el in {"max_stepsize"}:
-                    self.params_other[el] = float(other.find(el).text)
-                for el in {"verbose"}:
+                for el in ["verbose"]:
                     self.params_other[el] = other.find(el).attrib
-                for el in {"iter_max_kepler", "iter_max_LP"}:
+                for el in ["iter_max_kepler", "iter_max_LP"]:
                     self.params_other[el] = int(other.find(el).text)
-                for el in {"tol_kepler", "tol_gamma_LP"}:
+                for el in ["tol_kepler", "tol_gamma_LP", "max_stepsize"]:
                     self.params_other[el] = float(other.find(el).text)
 
             # fetch and fill constants
             elif child.tag == "const":
 
                 dist = child.find("dist")
-                for el in {"radius_Earth", "alt_geo", "dist_Earth_Moon", "astro_unit"}:
+                for el in ["radius_Earth", "alt_geo", "dist_Earth_Moon", "astro_unit"]:
                     self.const_dist[el] = float(dist.find(el).text)
 
                 mass = child.find("mass")
-                for el in {"mass_Earth", "mass_Sun", "mass_Moon"}:
+                for el in ["mass_Earth", "mass_Sun", "mass_Moon"]:
                     self.const_mass[el] = float(mass.find(el).text)
 
                 grav = child.find("grav")
-                for el in {"G"}:
+                for el in ["G"]:
                     self.const_grav[el] = float(grav.find(el).text)
 
         # generate dependent constants

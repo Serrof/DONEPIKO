@@ -36,12 +36,12 @@ p = 1  # norm for minimization (1 or 2)
 
 BC = utils.BoundaryConditions(nu0, nuf, x0, xf)
 plr = plotter.Plotter(dyn, BC, p, anomaly=False, linearized=False, analytical=True)
-master = master.Master(indirect=False, p=p, plr=plr)
+mast = master.Master(indirect=False, p=p, plr=plr)
 
-master.solve()
+mast.solve()
 
-master.set_linearity_plot(False)
-master.plot()
-master.write_states("nonlin_states.txt")
+mast.set_linearity_plot(False)
+mast.plot()
+mast.write_states("nonlin_states.txt")
 
-master.show()
+master.Master.show()

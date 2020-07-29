@@ -467,9 +467,9 @@ class RestriTwoBodyProb(BodyProbDyn):
             u = exp_HCW(-nu2).dot(x2)
             u -= exp_HCW(-nu1).dot(x1)
         else:  # elliptical case
-            M = phi_YA(self.params.ecc, self.params.mean_motion, 0., nu2)
+            M = phi_YA(self.params.ecc, 0., nu2)
             u = linalg.solve(M, x2)
-            M = phi_YA(self.params.ecc, self.params.mean_motion, 0., nu1)
+            M = phi_YA(self.params.ecc, 0., nu1)
             u -= linalg.solve(M, x1)
         return u
 

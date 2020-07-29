@@ -36,14 +36,14 @@ p = 1  # norm for minimization (1 or 2)
 
 BC = utils.BoundaryConditions(nu0, nuf, x0, xf)
 plr = plotter.Plotter(dyn, BC, p, anomaly=True, linearized=True, analytical=True)
-master = master.Master(indirect=True, p=p, plr=plr)
+mast = master.Master(indirect=True, p=p, plr=plr)
 
-master.solve()
-master.write_boundary_cond("boundary_conditions_compa_primer.txt")
-master.write_control_law("control_law_compa_primer.txt")
-master.plotter.plot_pv()
+mast.solve()
+mast.write_boundary_cond("boundary_conditions_compa_primer.txt")
+mast.write_control_law("control_law_compa_primer.txt")
+mast.plotter.plot_pv()
 
-master.set_norm_plot(p=2)
-master.plotter.plot_pv()
+mast.set_norm_plot(p=2)
+mast.plotter.plot_pv()
 
-master.show()
+master.Master.show()

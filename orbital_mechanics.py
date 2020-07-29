@@ -13,7 +13,7 @@ import utils
 from config import conf
 
 # pre-computation for rotation matrix between local orbital frames
-# (3-BP co-rotating and LVLH used by Yamanaka & Ankersen)
+# (3-BP co-rotating a.k.a. Hill and LVLH used by Yamanaka & Ankersen)
 swap = np.zeros((4, 4))
 swap[0, 1] = -1.
 swap[1, 0] = 1.
@@ -24,6 +24,19 @@ swap_inv[0, 1] = 1.
 swap_inv[1, 0] = -1.
 swap_inv[2, 3] = 1.
 swap_inv[3, 2] = -1.
+
+
+def _coord_swap(mat):
+    """Function that performs the back and forth transformation between local frames (Hill & Y-A)
+
+            Args:
+                mat (np.array): input matrix.
+
+            Returns:
+                (np.array): new matrix after coordinates have been swapped (and one direction changed).
+
+    """
+    return swap_inv @ mat @ swap
 
 
 def find_L1(mu):
@@ -415,12 +428,11 @@ def exp_HCW(nu):
     return phi
 
 
-def phi_YA(e, n, nu0, nu):
+def phi_YA(e, nu0, nu):
     """Function computing the transition matrix for the in-plane Yamanaka-Ankersen equations.
 
             Args:
                 e (float): eccentricity.
-                n (float): mean motion.
                 nu0 (float): initial true anomaly.
                 nu (float): current true anomaly.
 
@@ -428,10 +440,6 @@ def phi_YA(e, n, nu0, nu):
                 (np.array): transition matrix of in-plane Yamanaka-Ankersen system.
 
     """
-
-    # sanity check(s)
-    if (e >= 1.0) or (e < 0.0):
-        raise ValueError('PHI_YA: eccentricity must be larger or equal to 0 and strictly less than 1')
 
     # pre-computations
     rho = rho_func(e, nu)
@@ -442,8 +450,8 @@ def phi_YA(e, n, nu0, nu):
     c2 = math.cos(2.0 * nu)
     sr = s * rho
     cr = c * rho
-    dt = nu_to_dt(e, n, nu0, nu)
-    J = dt * n / math.sqrt((1.0 - e * e) ** 3)
+    dt = nu_to_dt(e, n=1., nu0=nu0, nu=nu)  # dt is inversely proportional to mean motion so J does not depend on it
+    J = dt / math.sqrt((1.0 - e * e) ** 3)  # implicitly multiplied by 1
 
     phi = np.zeros((4, 4))
     phi[0, 0] = 1.0
@@ -460,7 +468,7 @@ def phi_YA(e, n, nu0, nu):
     phi[3, 2] = -(s + e * math.sin(2.0 * nu))
     phi[3, 3] = -3.0 * e * (J * phi[3, 1] + sr / rho_sq)
 
-    return swap_inv @ phi @ swap  # conversion from one local orbital frame to the other
+    return _coord_swap(phi)  # conversion from one local orbital frame to the other
 
 
 def transition_ip2bp(x1_bar, e, n, nu1, nu2):
@@ -481,16 +489,12 @@ def transition_ip2bp(x1_bar, e, n, nu1, nu2):
     # sanity check(s)
     if len(x1_bar) != 4:
         raise ValueError('TRANSITION_IP2BP: in-plane initial conditions need to be four-dimensional')
-    if (e >= 1.0) or (e < 0.0):
-        raise ValueError('TRANSITION_IP2BP: eccentricity must be larger or equal to 0 and strictly less than 1')
-    if n < 0.0:
-        raise ValueError('TRANSITION_IP2BP: mean motion cannot be smaller than 0')
 
     if e == 0.:
         phi = exp_HCW(nu2 - nu1)
         return phi.dot(x1_bar)
     else:  # elliptical case
-        phi2 = phi_YA(e, n, nu1, nu2)
+        phi2 = phi_YA(e, nu1, nu2)
         rho1 = rho_func(e, nu1)
         s1 = math.sin(nu1)
         c1 = math.cos(nu1)
@@ -513,7 +517,7 @@ def transition_ip2bp(x1_bar, e, n, nu1, nu2):
         phi_inv1[3, 2] = -rho1 * rho1
         phi_inv1[3, 3] = e * sr1
         phi_inv1 *= factor
-        phi_inv1 = swap @ phi_inv1 @ swap_inv
+        phi_inv1 = _coord_swap(phi_inv1)
         Phi = phi2 @ phi_inv1
         return Phi.dot(x1_bar)
 
@@ -555,7 +559,7 @@ def state_deriv_nonlin(x, nu, ecc, x_eq, mu, slr):
     """Function computing the derivative of the transformed state vector w.r.t. the true anomaly for the non-linear motion.
 
             Args:
-                x (List[float]): out-of-plane transformed vector.
+                x (np.array): out-of-plane transformed vector.
                 nu (float): true anomaly.
                 ecc (float): eccentricity of reference orbit.
                 x_eq (np.array): coordinates of equilibrium point.

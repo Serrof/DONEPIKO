@@ -44,8 +44,10 @@ def solver_ana(u, e, n, nu_0, nu_f):
 	nus = []  # vector to store impulses location
 
 	# pre-computations
-	arcu = math.atan2(u[1], u[0])
 	magnu = linalg.norm(u, 2)
+	if magnu == 0.:  # trivial case
+		return nus, DVs, lamb
+	arcu = math.atan2(u[1], u[0])
 
 	if e == 0.0:  # circular case
 		y = nu_0 + ((arcu + math.pi / 2.0 - nu_0) % math.pi)

@@ -73,6 +73,9 @@ class DirectSolver(solver.Solver):
             res = linprog(np.ones(d * n_grid), A_eq=M, b_eq=z,
                           options={"disp": conf.params_other["verbose"],
                                    "tol": conf.params_direct["tol_lin_prog"]})
+            if not res.success:
+                raise InterruptedError("Linear Program did not converge.")
+
             sol = res.x
             if conf.params_other["verbose"]:
                 print('direct cost 1-norm: ' + str(res.fun))
@@ -138,12 +141,17 @@ class DirectSolver(solver.Solver):
                     G += [matrix(mat)]
                     h += [vec]
 
-            solvers.options['show_progress'] = conf.params_other["verbose"]
-            solvers.options['abstol'] = conf.params_direct["tol_cvx"]
+            solvers.options["show_progress"] = conf.params_other["verbose"]
+            solvers.options["abstol"] = conf.params_direct["tol_cvx"]
+            solvers.options["maxiters"] = conf.params_direct["max_iter_cvx"]
             solution = solvers.socp(f, Gq=G, hq=h, A=A, b=matrix(z))
-            sol = list(solution['x'])
+
+            if solution["status"] is not "optimal":
+                raise InterruptedError("Semi-Definite Program did not converge. Set verbose to True to see details.")
+
+            sol = list(solution["x"])
             if conf.params_other["verbose"]:
-                print("direct cost 2-norm: " + str(solution['primal objective']))
+                print("direct cost 2-norm: " + str(solution["primal objective"]))
 
             # extracting nus with non-zero impulses
             lost = 0.0  # variable to keep track of cost from deleted impulses

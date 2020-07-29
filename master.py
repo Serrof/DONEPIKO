@@ -134,27 +134,44 @@ class Master:
         self.CL = self._solver.run(self.BC)
         self.plotter.set_control_law(self.CL)
 
-    def plot(self):
+    def plot(self, selected_plots=None):
         """Function to prepare plots of states and trajectory as well as primer vector in case of an indirect approach.
+
+                Args:
+                    selected_plots (List[int]): figures to plot (optional, default is all). If 1 is in the list, it
+                    will plot the position and velocity history. If 2 is there, it will plot the trajectory. If 3 is
+                    there and that the approach is indirect, it will plot the primer vector.
 
         """
 
-        self.plotter.plot_states()
-        self.plotter.plot_traj()
-        if len(self.CL.lamb) != 0:
-            self.plotter.plot_pv()
+        if selected_plots is None:
+            self.plotter.plot_states()
+            self.plotter.plot_traj()
+            if len(self.CL.lamb) != 0:
+                self.plotter.plot_pv()
+        else:
+            if (1 not in selected_plots) and (2 not in selected_plots) and (3 not in selected_plots):
+                raise ValueError("Plot selection is done with a list including 1, 2 or 3.")
+            if 1 in selected_plots:
+                self.plotter.plot_states()
+            if 2 in selected_plots:
+                self.plotter.plot_traj()
+            if 3 in selected_plots and len(self.CL.lamb) != 0:
+                self.plotter.plot_pv()
 
-    def show(self):
+    @staticmethod
+    def show():
         """Function to show all the pre-computed plots.
 
         """
-        self.plotter.show()
+        plotter.Plotter.show()
 
-    def close(self):
+    @staticmethod
+    def close():
         """Function to close all the plots.
 
         """
-        self.plotter.close()
+        plotter.Plotter.close()
 
     def write_control_law(self, file_path):
         """Wrapper for writer-method of ControlLaw attribute.

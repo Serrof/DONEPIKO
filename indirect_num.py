@@ -128,11 +128,8 @@ def remove_nus(Y_grid, q, grid_work, indices_work, lamb):
     """
 
     hd = int(len(lamb) / 2)
-    grid = []
-    indices = []
-    for index, nu in zip(indices_work, grid_work):
-        grid.append(nu)
-        indices.append(index)
+    grid = list(grid_work)
+    indices = list(indices_work)
     removed_nus = 0
     for k in range(0, len(grid)):
         pv = np.transpose(Y_grid[:, hd * indices[k - removed_nus]: hd * (indices[k - removed_nus] + 1)]).dot(lamb)
@@ -222,6 +219,9 @@ def solve_alphas(M, z, n_alphas):
             print('non-square case')
         alphas = linalg.lstsq(M, z, rcond=None)[0]
 
+    if np.min(alphas) < 0.:
+        raise ValueError("A non-positive delta-V norm was found. Try a grid with more points and/or smaller epsilon.")
+
     return alphas
 
 
@@ -307,7 +307,7 @@ def solve_primal_1norm(grid_check, Y_grid, z):
     iterations = 1
     lamb = None
     res = None
-    while (not converged) and (iterations < conf.params_indirect["max_iter"]):
+    while (not converged) and (iterations < conf.params_indirect["max_iter_grid"]):
 
         # building matrix for linear constraints
         A = np.zeros((d * n_work, d))
@@ -321,6 +321,7 @@ def solve_primal_1norm(grid_check, Y_grid, z):
         lamb = res.x
 
         (converged, index_max) = find_max_pv(Y_grid, lamb, np.inf)
+
         if not converged:
             iterations += 1
             if conf.params_indirect["exchange"]:
@@ -330,8 +331,14 @@ def solve_primal_1norm(grid_check, Y_grid, z):
             n_work = len(grid_work)
 
         else:  # algorithm has converged
-            if conf.params_other["verbose"]:
-                print('converged with ' + str(n_work) + ' points at iteration ' + str(iterations))
+            # check if the solver did converge too
+            if not res.success:
+                raise InterruptedError("The last iteration on the grid did not lead to a convergent LP. "
+                                       "Set verbose to True to see details.")
+
+            else:
+                if conf.params_other["verbose"]:
+                    print('converged with ' + str(n_work) + ' points at iteration ' + str(iterations))
 
     if conf.params_other["verbose"]:
         print('primal numerical cost 1-norm: ' + str(-res.fun))
@@ -422,10 +429,11 @@ def solve_primal_2norm(grid_check, Y_grid, z):
 
     converged = False
     iterations = 1
-    solvers.options['show_progress'] = conf.params_other["verbose"]
-    solvers.options['abstol'] = conf.params_indirect["tol_cvx"]
+    solvers.options["show_progress"] = conf.params_other["verbose"]
+    solvers.options["abstol"] = conf.params_indirect["tol_cvx"]
+    solvers.options["maxiters"] = conf.params_indirect["max_iter_cvx"]
     lamb = np.zeros(d)
-    while (not converged) and (iterations < conf.params_indirect["max_iter"]):
+    while (not converged) and (iterations < conf.params_indirect["max_iter_grid"]):
 
         # building matrices for SDP constraints
         A = None
@@ -447,10 +455,11 @@ def solve_primal_2norm(grid_check, Y_grid, z):
                 h += [matrix(np.eye(hd + 1))]
 
         solution = solvers.sdp(matrix(-z), Gs=A, hs=h)
-        x = np.array(solution['x'])
+        x = np.array(solution["x"])
         lamb[:] = x[:, 0]
 
         (converged, index_max) = find_max_pv(Y_grid, lamb, 2)
+
         if not converged:
             iterations += 1
             if conf.params_indirect["exchange"]:
@@ -458,9 +467,15 @@ def solve_primal_2norm(grid_check, Y_grid, z):
             grid_work.append(grid_check[index_max])  # add nu
             indices_work.append(index_max)
             n_work = len(grid_work)
+
         else:  # algorithm has converged
-            if conf.params_other["verbose"]:
-                print('converged with ' + str(n_work) + ' points at iteration ' + str(iterations))
+            # check if the solver did converge too
+            if solution["status"] is not "optimal":
+                raise InterruptedError("The last iteration on the grid did not lead to a convergent SDP. "
+                                       "Set verbose to True to see details.")
+            else:
+                if conf.params_other["verbose"]:
+                    print('converged with ' + str(n_work) + ' points at iteration ' + str(iterations))
 
     if conf.params_other["verbose"]:
         print('primal numerical cost 2-norm: ' + str(z.dot(lamb)))

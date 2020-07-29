@@ -1,12 +1,13 @@
 <configuration>
 	<params>
 		<indirect>
-			<max_iter>30</max_iter>
+			<max_iter_grid>30</max_iter_grid>
 			<tol_unit_norm>1.0e-4</tol_unit_norm>
 			<n_init>2</n_init>
 			<exchange>True</exchange>
 			<tol_lin_prog>1.0e-11</tol_lin_prog>
 			<tol_cvx>1.0e-11</tol_cvx>
+			<max_iter_cvx>100</max_iter_cvx>
 			<n_check>10000</n_check>
 		</indirect>
 		<direct>
@@ -15,6 +16,7 @@
 			<n_grid_2norm>100</n_grid_2norm>
 			<tol_lin_prog>1.0e-11</tol_lin_prog>
 			<tol_cvx>1.0e-11</tol_cvx>
+			<max_iter_cvx>100</max_iter_cvx>
 		</direct>
 		<plot>
 			<mesh_plot>2000</mesh_plot>

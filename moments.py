@@ -90,10 +90,6 @@ def Y_ip_elliptical2bp(e, n, nu0, nu):
 
     """
 
-    # sanity check(s)
-    if (e >= 1.0) or (e < 0.0):
-        raise ValueError('Y_IP_ELLIPTICAL2BP: eccentricity must be larger or equal to 0 and strictly less than 1')
-
     Y = np.zeros((4, 2))
     rho = rho_func(e, nu)
     rho_inv = 1.0 / rho
