@@ -253,7 +253,9 @@ def nu_to_dt(e, n, nu0, nu):
     if n <= 0.0:
         raise ValueError('nu_to_dt: mean motion cannot be negative')
 
-    if nu < nu0:
+    if nu == nu0:
+        return 0.
+    elif nu < nu0:
         return -nu_to_dt(e, n, nu, nu0)
     else:  # current true anomaly is posterior to initial one
         # convert initial and final true anomalies into eccentric ones (modulo 2 pi)
@@ -267,7 +269,7 @@ def nu_to_dt(e, n, nu0, nu):
         # compute elapsed time (modulo the period) via Kepler equation
         dt = (E - E0 - e * (math.sin(E) - math.sin(E0))) / n
         period = 2.0 * math.pi / n
-        if E - E0 < -1.0e-10:
+        if E - E0 < -1.0e-10:  # < 0 with tolerance
             dt += period
         # add revolutions to previous result
         dt += period * math.floor((nu - nu0) / (2.0 * math.pi))
@@ -295,7 +297,9 @@ def dt_to_nu(e, n, nu0, dt):
     if n <= 0.0:
         raise ValueError('dt_to_nu: mean motion cannot be negative')
 
-    if (nu0 < 0.) or (nu0 >= 2.0 * math.pi):
+    if dt == 0.:
+        return nu0
+    elif (nu0 < 0.) or (nu0 >= 2.0 * math.pi):
         n_mod = math.floor(nu0 / (2.0 * math.pi))
         return 2.0 * math.pi * n_mod + dt_to_nu(e, n, nu0 - 2.0 * math.pi * n_mod, dt)
 
@@ -328,14 +332,57 @@ def dt_to_nu(e, n, nu0, dt):
     nu = nuf
     if dt >= 0.0:
         if nu < nu0:
-            nu += 2.0 * math.pi
+            n_rev += 1.
         nu += 2.0 * math.pi * n_rev
     else:  # negative time of flight
         if nu > nu0:
-            nu -= 2.0 * math.pi
+            n_rev += 1.
         nu -= 2.0 * math.pi * n_rev
 
     return nu
+
+
+def kep_to_posvel(kep, planetary_constant=1.):
+    """Vectorized function that converts Keplerian elements into position-velocity vector.
+
+                Args:
+                    kep (numpy.array): Keplerian elements. Units must be coherent. Angles are in radians.
+                    planetary_constant (float) : gravitational parameter associated to central body. Default value is 1.
+
+                Returns:
+                    (numpy.array): position-velocity vector(s).
+
+    """
+
+    posvel = np.zeros_like(kep)
+    sma = kep[0, :]
+    ecc = kep[1, :]
+    inc = kep[2, :]
+    raan = kep[3, :]
+    nu = kep[5, :]
+    c_i = np.cos(inc)
+    s_i = np.sin(inc)
+    c_raan = np.cos(raan)
+    s_raan = np.sin(raan)
+    rho = rho_func(ecc, nu)
+    fpa = np.arctan(ecc * np.sin(nu) / rho)
+    r = sma * (1. - ecc**2) / rho
+    v = np.sqrt(planetary_constant * (2. / r - 1. / sma))
+    ang1 = kep[4, :] + nu
+    c_ang1 = np.cos(ang1)
+    s_ang1 = np.sin(ang1)
+    ang2 = ang1 - fpa
+    c_ang2 = np.cos(ang2)
+    s_ang2 = np.sin(ang2)
+    c_i_c_raan = c_i * c_raan
+    c_i_s_raan = c_i * s_raan
+    posvel[0, :] = r * (c_ang1 * c_raan - s_ang1 * c_i_s_raan)
+    posvel[1, :] = r * (c_ang1 * s_raan + s_ang1 * c_i_c_raan)
+    posvel[2, :] = r * s_i * s_ang1
+    posvel[3, :] = v * (-s_ang2 * c_raan - c_ang2 * c_i_s_raan)
+    posvel[4, :] = v * (-s_ang2 * s_raan + c_ang2 * c_i_c_raan)
+    posvel[5, :] = v * s_i * c_ang2
+    return posvel
 
 
 def rho_func(e, nu):
@@ -350,7 +397,7 @@ def rho_func(e, nu):
 
     """
 
-    return 1.0 + e * math.cos(nu)
+    return 1.0 + e * np.cos(nu)
 
 
 def phi_harmo(nu, pulsation):

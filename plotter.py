@@ -102,6 +102,9 @@ class Plotter:
             self._times = np.linspace(0., self.dyn.convToAlterIndVar(self.BC.nu0, 0., self.BC.nuf), self._nb)
             self._pts = np.array(self._times)
             self._nus = np.array([self.dyn.convFromAlterIndVar(self.BC.nu0, 0., time) for time in self._times])
+            steps = self._nus[1:] - self._nus[:-1]
+            if np.min(steps) * np.max(steps) < 0.:
+                raise ValueError("There was a problem when converting the independent variable (it is not monotonous).")
 
     def set_ind_var(self, anomaly):
         """Setter for attribute anomaly.
