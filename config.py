@@ -91,8 +91,7 @@ class Config:
                     self.params_indirect[el] = float(indirect.find(el).text)
                 for el in ["n_init", "n_check", "max_iter_grid", "max_iter_cvx"]:
                     self.params_indirect[el] = int(indirect.find(el).text)
-                for el in ["exchange"]:
-                    self.params_indirect[el] = indirect.find(el).attrib
+                self.params_indirect["exchange"] = indirect.find("exchange").text == "True"
 
                 direct = child.find("direct")
                 for el in ["tol_lin_prog", "DV_min", "tol_cvx"]:
@@ -105,8 +104,7 @@ class Config:
                     self.params_plot[el] = int(plot.find(el).text)
 
                 other = child.find("other")
-                for el in ["verbose"]:
-                    self.params_other[el] = other.find(el).attrib
+                self.params_other["verbose"] = other.find("verbose").text == "True"
                 for el in ["iter_max_kepler", "iter_max_LP"]:
                     self.params_other[el] = int(other.find(el).text)
                 for el in ["tol_kepler", "tol_gamma_LP", "max_stepsize"]:

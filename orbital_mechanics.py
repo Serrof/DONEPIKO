@@ -54,11 +54,11 @@ def find_L1(mu):
     gamma0 = pow(mu * (1.0 - mu), 1.0 / 3.0)
     gamma = gamma0 + 1.0
 
-    iter = 0
-    while math.fabs(gamma - gamma0) > conf.params_other["tol_gamma_LP"] and iter < conf.params_other["iter_max_LP"]:
+    nb_iter = 0
+    while math.fabs(gamma - gamma0) > conf.params_other["tol_gamma_LP"] and nb_iter < conf.params_other["iter_max_LP"]:
         gamma0 = gamma
         gamma = pow(mu * pow(gamma0 - 1.0, 2) / (3.0 - 2.0 * mu - gamma0 * (3.0 - mu - gamma0)), 1.0 / 3.0)
-        iter += 1
+        nb_iter += 1
 
     return 1.0 - mu - gamma
 
@@ -78,11 +78,11 @@ def find_L2(mu):
     gamma0 = pow(mu * (1.0 - mu), 1.0 / 3.0)
     gamma = gamma0 + 1.0
 
-    iter = 0
-    while math.fabs(gamma - gamma0) > conf.params_other["tol_gamma_LP"] and iter < conf.params_other["iter_max_LP"]:
+    nb_iter = 0
+    while math.fabs(gamma - gamma0) > conf.params_other["tol_gamma_LP"] and nb_iter < conf.params_other["iter_max_LP"]:
         gamma0 = gamma
         gamma = pow(mu * pow(gamma0 + 1.0, 2) / (3.0 - 2.0 * mu + gamma0 * (3.0 - mu + gamma0)), 1.0 / 3.0)
-        iter += 1
+        nb_iter += 1
 
     return 1.0 - mu + gamma
 
@@ -102,13 +102,13 @@ def find_L3(mu):
     gamma0 = pow(mu * (1.0 - mu), 1.0 / 3.0)
     gamma = gamma0 + 1.0
 
-    iter = 0
-    while math.fabs(gamma - gamma0) > conf.params_other["tol_gamma_LP"] and iter < conf.params_other["iter_max_LP"]:
+    nb_iter = 0
+    while math.fabs(gamma - gamma0) > conf.params_other["tol_gamma_LP"] and nb_iter < conf.params_other["iter_max_LP"]:
         gamma0 = gamma
         gamma = pow((1.0 - mu) * pow(gamma0 + 1.0, 2) / (1.0 + 2.0 * mu + gamma0 * (2.0 + mu + gamma0)), 1.0 / 3.0)
-        iter += 1
+        nb_iter += 1
 
-    return - mu - gamma
+    return -(mu + gamma)
 
 
 def puls_oop_LP(x, mu_ratio):
@@ -436,11 +436,13 @@ def transition_oop(x1_bar, nu1, nu2):
 
     """
 
-    # sanity check(s)
-    if len(x1_bar) != 2:
-        raise ValueError('TRANSITION_OOP: out-of-plane initial conditions need to be two-dimensional')
-
-    return phi_harmo(nu2 - nu1, 1.0).dot(x1_bar)
+    try:
+        return phi_harmo(nu2 - nu1, 1.0).dot(x1_bar)
+    except ValueError as error:
+        if len(x1_bar) != 2:
+            raise ValueError('TRANSITION_OOP: out-of-plane initial conditions need to be two-dimensional')
+        else:
+            raise error
 
 
 def exp_HCW(nu):
@@ -533,40 +535,42 @@ def transition_ip2bp(x1_bar, e, n, nu1, nu2):
 
     """
 
-    # sanity check(s)
-    if len(x1_bar) != 4:
-        raise ValueError('TRANSITION_IP2BP: in-plane initial conditions need to be four-dimensional')
-
-    if e == 0.:
-        phi = exp_HCW(nu2 - nu1)
-        return phi.dot(x1_bar)
-    else:  # elliptical case
-        phi2 = phi_YA(e, nu1, nu2)
-        rho1 = rho_func(e, nu1)
-        s1 = math.sin(nu1)
-        c1 = math.cos(nu1)
-        sr1 = s1 * rho1
-        cr1 = c1 * rho1
-        esq = e * e
-        factor = 1.0 / (1.0 - esq)
-        phi_inv1 = np.zeros((4, 4))
-        phi_inv1[0, 0] = 1.0 / factor
-        phi_inv1[0, 1] = 3.0 * e * s1 * (1.0 + 1.0 / rho1)
-        phi_inv1[0, 2] = -e * (s1 + sr1)
-        phi_inv1[0, 3] = -e * cr1 + 2.0
-        phi_inv1[1, 1] = -3.0 * (rho1 + esq) * s1 / rho1
-        phi_inv1[1, 2] = s1 + sr1
-        phi_inv1[1, 3] = cr1 - 2.0 * e
-        phi_inv1[2, 1] = -3.0 * (e + c1)
-        phi_inv1[2, 2] = e + c1 + cr1
-        phi_inv1[2, 3] = -sr1
-        phi_inv1[3, 1] = 3.0 * rho1 - phi_inv1[0, 0]
-        phi_inv1[3, 2] = -rho1 * rho1
-        phi_inv1[3, 3] = e * sr1
-        phi_inv1 *= factor
-        phi_inv1 = _coord_swap(phi_inv1)
-        Phi = phi2 @ phi_inv1
-        return Phi.dot(x1_bar)
+    try:
+        if e == 0.:
+            phi = exp_HCW(nu2 - nu1)
+            return phi.dot(x1_bar)
+        else:  # elliptical case
+            phi2 = phi_YA(e, nu1, nu2)
+            rho1 = rho_func(e, nu1)
+            s1 = math.sin(nu1)
+            c1 = math.cos(nu1)
+            sr1 = s1 * rho1
+            cr1 = c1 * rho1
+            esq = e * e
+            factor = 1.0 / (1.0 - esq)
+            phi_inv1 = np.zeros((4, 4))
+            phi_inv1[0, 0] = 1.0 / factor
+            phi_inv1[0, 1] = 3.0 * e * s1 * (1.0 + 1.0 / rho1)
+            phi_inv1[0, 2] = -e * (s1 + sr1)
+            phi_inv1[0, 3] = -e * cr1 + 2.0
+            phi_inv1[1, 1] = -3.0 * (rho1 + esq) * s1 / rho1
+            phi_inv1[1, 2] = s1 + sr1
+            phi_inv1[1, 3] = cr1 - 2.0 * e
+            phi_inv1[2, 1] = -3.0 * (e + c1)
+            phi_inv1[2, 2] = e + c1 + cr1
+            phi_inv1[2, 3] = -sr1
+            phi_inv1[3, 1] = 3.0 * rho1 - phi_inv1[0, 0]
+            phi_inv1[3, 2] = -rho1 * rho1
+            phi_inv1[3, 3] = e * sr1
+            phi_inv1 *= factor
+            phi_inv1 = _coord_swap(phi_inv1)
+            Phi = phi2 @ phi_inv1
+            return Phi.dot(x1_bar)
+    except ValueError as error:
+        if len(x1_bar) != 2:
+            raise ValueError('TRANSITION_IP2BP: in-plane initial conditions need to be four-dimensional')
+        else:
+            raise error
 
 
 def pot_grad(x, mu, slr):

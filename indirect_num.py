@@ -305,8 +305,7 @@ def solve_primal_1norm(grid_check, Y_grid, z):
 
     converged = False
     iterations = 1
-    lamb = None
-    res = None
+    lamb = res = None
     while (not converged) and (iterations < conf.params_indirect["max_iter_grid"]):
 
         # building matrix for linear constraints
@@ -436,8 +435,7 @@ def solve_primal_2norm(grid_check, Y_grid, z):
     while (not converged) and (iterations < conf.params_indirect["max_iter_grid"]):
 
         # building matrices for SDP constraints
-        A = None
-        h = None
+        A = h = None
         for j, index in enumerate(indices_work):
             Y = Y_grid[:, hd * index: hd * (index + 1)]
             # construction of matrix in np.array form
@@ -470,7 +468,7 @@ def solve_primal_2norm(grid_check, Y_grid, z):
 
         else:  # algorithm has converged
             # check if the solver did converge too
-            if solution["status"] is not "optimal":
+            if solution["status"] != "optimal":
                 raise InterruptedError("The last iteration on the grid did not lead to a convergent SDP. "
                                        "Set verbose to True to see details.")
             else:

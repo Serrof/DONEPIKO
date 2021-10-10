@@ -125,10 +125,8 @@ class DirectSolver(solver.Solver):
             f = matrix(f)
 
             # building matrices for SDP constraints
-            G = None
-            h = None
-            vec = np.zeros(BC.half_dim + 1)
-            vec = matrix(vec)
+            G = h = None
+            vec = matrix(np.zeros(BC.half_dim + 1))
             for j in range(0, n_grid):
                 mat = np.zeros((BC.half_dim + 1, n_grid * (BC.half_dim + 1)))
                 mat[0, j] = -1.0
@@ -146,7 +144,7 @@ class DirectSolver(solver.Solver):
             solvers.options["maxiters"] = conf.params_direct["max_iter_cvx"]
             solution = solvers.socp(f, Gq=G, hq=h, A=A, b=matrix(z))
 
-            if solution["status"] is not "optimal":
+            if solution["status"] != "optimal":
                 raise InterruptedError("Semi-Definite Program did not converge. Set verbose to True to see details.")
 
             sol = list(solution["x"])
