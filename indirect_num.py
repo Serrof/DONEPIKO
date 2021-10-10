@@ -315,7 +315,7 @@ def solve_primal_1norm(grid_check, Y_grid, z):
             A[d * j: d * j + hd, :] += tY
             A[d * j + hd: d * (j + 1), :] -= tY
 
-        res = linprog(-z, A_ub=A, b_ub=np.ones(d * n_work), bounds=(-np.inf, np.inf),
+        res = linprog(-z, A_ub=A, b_ub=np.ones(d * n_work), bounds=(-np.inf, np.inf), method="revised simplex",
                       options={"disp": conf.params_other["verbose"], "tol": conf.params_indirect["tol_lin_prog"]})
         lamb = res.x
 

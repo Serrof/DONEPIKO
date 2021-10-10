@@ -70,9 +70,8 @@ class DirectSolver(solver.Solver):
                 M[:, d * k + BC.half_dim: d * k + d] = -inter
 
             # solving for slack variables
-            res = linprog(np.ones(d * n_grid), A_eq=M, b_eq=z,
-                          options={"disp": conf.params_other["verbose"],
-                                   "tol": conf.params_direct["tol_lin_prog"]})
+            res = linprog(np.ones(d * n_grid), A_eq=M, b_eq=z, method="revised simplex",
+                          options={"disp": conf.params_other["verbose"], "tol": conf.params_direct["tol_lin_prog"]})
             if not res.success:
                 raise InterruptedError("Linear Program did not converge.")
 
