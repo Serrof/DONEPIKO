@@ -32,7 +32,7 @@ def dual_to_primal_norm_type(p):
     elif p == 2:
         return 2
     else:
-        raise ValueError('dual_to_primal_norm_type: dual norm must be 1 or 2')
+        raise ValueError("dual_to_primal_norm_type: dual norm must be 1 or 2")
 
 
 def initialize_iterative_grid(grid_input):
@@ -212,11 +212,11 @@ def solve_alphas(M, z, n_alphas):
     d = len(z)
     if n_alphas == d:
         if conf.params_other["verbose"]:
-            print('square case')
+            print("square case")
         alphas = linalg.solve(M, z)
     else:  # system of equations is either over or under-determined
         if conf.params_other["verbose"]:
-            print('non-square case')
+            print("non-square case")
         alphas = linalg.lstsq(M, z, rcond=None)[0]
 
     if np.min(alphas) < 0.:
@@ -242,7 +242,7 @@ def solve_primal(grid_check, Y_grid, z, p):
 
     # sanity check(s)
     if (p != 1) and (p != 2):
-        raise ValueError('SOLVE_PRIMAL: norm in cost function must be 1 or 2')
+        raise ValueError("SOLVE_PRIMAL: norm in cost function must be 1 or 2")
 
     if p == 1:
         lamb = solve_primal_1norm(grid_check, Y_grid, z)
@@ -271,7 +271,7 @@ def primal_to_dual(grid_check, Y_grid, lamb, z, p):
 
     # sanity check(s)
     if (p != 1) and (p != 2):
-        raise ValueError('PRIMAL_TO_DUAL: norm in cost function must be 1 or 2')
+        raise ValueError("PRIMAL_TO_DUAL: norm in cost function must be 1 or 2")
 
     if p == 1:
         (nus, DV) = primal_to_dual_1norm(grid_check, Y_grid, lamb, z)
@@ -337,10 +337,10 @@ def solve_primal_1norm(grid_check, Y_grid, z):
 
             else:
                 if conf.params_other["verbose"]:
-                    print('converged with ' + str(n_work) + ' points at iteration ' + str(iterations))
+                    print("converged with " + str(n_work) + " points at iteration " + str(iterations))
 
     if conf.params_other["verbose"]:
-        print('primal numerical cost 1-norm: ' + str(-res.fun))
+        print("primal numerical cost 1-norm: " + str(-res.fun))
 
     return lamb
 
@@ -390,7 +390,7 @@ def primal_to_dual_1norm(grid_check, Y_grid, lamb, z):
     # solve for the alphas
     alphas = solve_alphas(M, z, n_alphas)
     if conf.params_other["verbose"]:
-        print('dual numerical cost 1-norm : ' + str(sum(alphas)))
+        print("dual numerical cost 1-norm : " + str(sum(alphas)))
 
     # reconstructing velocity jumps
     DVs = np.zeros((len(nus), hd))
@@ -473,10 +473,10 @@ def solve_primal_2norm(grid_check, Y_grid, z):
                                        "Set verbose to True to see details.")
             else:
                 if conf.params_other["verbose"]:
-                    print('converged with ' + str(n_work) + ' points at iteration ' + str(iterations))
+                    print("converged with " + str(n_work) + " points at iteration " + str(iterations))
 
     if conf.params_other["verbose"]:
-        print('primal numerical cost 2-norm: ' + str(z.dot(lamb)))
+        print("primal numerical cost 2-norm: " + str(z.dot(lamb)))
 
     return lamb
 
@@ -516,7 +516,7 @@ def primal_to_dual_2norm(grid_check, Y_grid, lamb, z):
 
     alphas = solve_alphas(M, z, len(nus))
     if conf.params_other["verbose"]:
-        print('dual numerical cost 2-norm : ' + str(sum(alphas)))
+        print("dual numerical cost 2-norm : " + str(sum(alphas)))
 
     # reconstructing velocity jumps
     DVs = np.zeros((len(nus), hd))

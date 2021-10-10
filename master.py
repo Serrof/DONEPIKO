@@ -50,7 +50,7 @@ class Master:
 
         """
 
-        self._solver.set_norm(p)
+        self._solver.p = p
 
     def set_norm_plot(self, p):
         """Function to reset type of norm to be plotted.
@@ -81,7 +81,7 @@ class Master:
         """
 
         self.plotter.set_propagation(analytical)
-        self._solver.set_propagation(analytical)
+        self._solver.prop_ana = analytical
 
     def set_boundary_cond(self, BC):
         """Setter for attribute BC.

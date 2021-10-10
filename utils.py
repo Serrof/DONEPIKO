@@ -25,9 +25,9 @@ def stack_state(x_ip, x_oop):
 
     # sanity check(s)
     if len(x_ip) != 4:
-        raise ValueError('STACK_STATE: in-plane vector must be 4-dimensional')
+        raise ValueError("STACK_STATE: in-plane vector must be 4-dimensional")
     if len(x_oop) != 2:
-        raise ValueError('STACK_STATE: out-of-plane vector must be 2-dimensional')
+        raise ValueError("STACK_STATE: out-of-plane vector must be 2-dimensional")
 
     x = np.zeros(6)
     x[0:2] = x_ip[0:2]
@@ -52,7 +52,7 @@ def unstack_state(x):
 
     # sanity check(s)
     if len(x) != 6:
-        raise ValueError('UNSTACK_STATE: complete state vector must be 6-dimensional')
+        raise ValueError("UNSTACK_STATE: complete state vector must be 6-dimensional")
 
     # out-of-plane part
     x_oop = np.zeros(2)
@@ -121,7 +121,7 @@ class BoundaryConditions:
         """
 
         if len(x0) != len(xf):
-            raise ValueError('BoundaryConditions: miss-match between size of initial and final state vectors')
+            raise ValueError("BoundaryConditions: miss-match between size of initial and final state vectors")
 
         self.nu0 = nu0
         self.nuf = nuf
@@ -147,15 +147,15 @@ class BoundaryConditions:
 
         """
 
-        file_object = open(file_path, 'w')
+        file_object = open(file_path, "w")
         file_object.write("Initial true anomaly \n")
-        file_object.write(str(self.nu0) + '\n')
+        file_object.write(str(self.nu0) + "\n")
         file_object.write("Final true anomaly \n")
-        file_object.write(str(self.nuf) + '\n')
+        file_object.write(str(self.nuf) + "\n")
         file_object.write("Initial state vector \n")
         for el in self.x0:
             file_object.write(str(el) + " ")
-        file_object.write('\n')
+        file_object.write("\n")
         file_object.write("Final state vector \n")
         for el in self.xf:
             file_object.write(str(el) + " ")
@@ -228,16 +228,16 @@ class ControlLaw:
 
         """
 
-        file_object = open(file_path, 'w')
+        file_object = open(file_path, "w")
         file_object.write("True anomalies of burn \n")
         for nu in self.nus:
             file_object.write(str(nu) + " ")
-        file_object.write('\n')
+        file_object.write("\n")
         for k in range(0, self.N):
             file_object.write("Delta-V #" + str(k+1) + "\n")
             for i in range(0, self.half_dim):
                 file_object.write(str(self.DVs[k, i]) + " ")
-            file_object.write('\n')
+            file_object.write("\n")
         file_object.close()
 
 
@@ -272,9 +272,9 @@ def merge_control(CL_ip, CL_oop):
 
     # sanity check(s)
     if CL_ip.half_dim != 2:
-        raise ValueError('merge_control: in-plane control vector must have 2 components')
+        raise ValueError("merge_control: in-plane control vector must have 2 components")
     if CL_oop.half_dim != 1:
-        raise ValueError('merge_control: out-of-plane control vector must have 1 component')
+        raise ValueError("merge_control: out-of-plane control vector must have 1 component")
 
     # merge nus and corresponding impulses
     nus_unsorted = np.concatenate((CL_ip.nus, CL_oop.nus), axis=0)

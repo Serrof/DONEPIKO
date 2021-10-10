@@ -78,7 +78,7 @@ class DirectSolver(solver.Solver):
 
             sol = res.x
             if conf.params_other["verbose"]:
-                print('direct cost 1-norm: ' + str(res.fun))
+                print("direct cost 1-norm: " + str(res.fun))
 
             # extracting nus with non-zero impulses
             lost = 0.0  # variable to keep track of cost from deleted impulses

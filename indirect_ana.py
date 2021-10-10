@@ -31,13 +31,13 @@ def solver_ana(u, e, n, nu_0, nu_f):
 
 	# sanity check(s)
 	if len(u) != 2:
-		raise ValueError('SOLVER_ANA: input vector needs to be two-dimensional')
+		raise ValueError("SOLVER_ANA: input vector needs to be two-dimensional")
 	if e >= 1.0 or e < 0.0:
-		raise ValueError('SOLVER_ANA: eccentricity must be larger or equal to 0 and strictly less than 1')
+		raise ValueError("SOLVER_ANA: eccentricity must be larger or equal to 0 and strictly less than 1")
 	if n < 0.0:
-		raise ValueError('SOLVER_ANA: mean motion cannot be smaller than 0')
+		raise ValueError("SOLVER_ANA: mean motion cannot be smaller than 0")
 	if nu_f <= nu_0:
-		raise ValueError('SOLVER_ANA: initial true anomaly cannot be larger than final one')
+		raise ValueError("SOLVER_ANA: initial true anomaly cannot be larger than final one")
 
 	lamb = np.zeros(2)  # vector to store Lagrange coefficients
 	DVs = []  # vector to store Delta-V

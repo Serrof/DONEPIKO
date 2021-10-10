@@ -153,7 +153,7 @@ def Y_2bp(e, n, nu0, nu, m):
 
     # sanity check(s)
     if (m != 1) and (m != 2) and (m != 3):
-        raise ValueError('Y_2BP: half-dimension must be 1, 2 or 3')
+        raise ValueError("Y_2BP: half-dimension must be 1, 2 or 3")
 
     if m == 1:
         return Y_oop(e, nu)

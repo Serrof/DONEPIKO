@@ -19,7 +19,7 @@ import math
 import indirect_num
 from config import conf
 
-plt.rcParams.update({'font.size': conf.params_plot["font"]})
+plt.rcParams.update({"font.size": conf.params_plot["font"]})
 
 
 class Plotter:
@@ -37,7 +37,7 @@ class Plotter:
                     _nb (int): number of points to be plotted.
                     _nus (np.array): anomalies to be plotted.
                     _times (np.array): instants to be plotted.
-                    _pts (np.array): values of independent variable to be plotted (depending on boolean 'anomaly')
+                    _pts (np.array): values of independent variable to be plotted (depending on boolean "anomaly")
                     _states (np.array): states to be plotted.
 
     """
@@ -69,7 +69,7 @@ class Plotter:
             # propagation has to be numerical for elliptical out-of-plane L1, 2 or 3 or elliptical in-plane of any LP
             if analytical and dyn.params.mu != 0. and dyn.params.ecc != 0. and \
                     (dyn.params.Li in [1, 2, 3] or BC.half_dim > 1):
-                print('WARNING: propagation type within plotter changed to numerical')
+                print("WARNING: propagation type within plotter changed to numerical")
                 self.analytical = False
 
         self._nb = conf.params_plot["mesh_plot"]
@@ -202,7 +202,7 @@ class Plotter:
 
         else:  # dynamics for plots has to be numerically simulated
             if self.BC.half_dim == 1 and not self.linearized:
-                raise ValueError('_compute_states: non-linear dynamics cannot be only out-of-plane')
+                raise ValueError("_compute_states: non-linear dynamics cannot be only out-of-plane")
 
             else:  # linearized dynamics or in-plane or complete non-linear dynamics
 
@@ -288,39 +288,39 @@ class Plotter:
         min_pv = np.min(pv[0, :])
         max_pv = np.max(pv[0, :])
         if self.BC.half_dim == 1:
-            ax1.plot(self._pts, pv[0, :], color='black', ls='dashed', label='$\delta z$-axis', linewidth=2)
+            ax1.plot(self._pts, pv[0, :], color="black", ls="dashed", label="$\delta z$-axis", linewidth=2)
         else:  # in-plane or complete dynamics
             min_pv = min(np.min(pv[1, :]), min_pv)
             max_pv = max(np.max(pv[1, :]), max_pv)
             if self.BC.half_dim == 2:
-                ax1.plot(self._pts, pv[0, :], color='blue', ls='dashed', label='$\delta x$-axis', linewidth=2)
-                ax1.plot(self._pts, pv[1, :], color='red', ls='dashed', label='$\delta y$-axis', linewidth=2)
+                ax1.plot(self._pts, pv[0, :], color="blue", ls="dashed", label="$\delta x$-axis", linewidth=2)
+                ax1.plot(self._pts, pv[1, :], color="red", ls="dashed", label="$\delta y$-axis", linewidth=2)
             else:  # complete dynamics
-                ax1.plot(self._pts, pv[0, :], color='blue', ls='dashed', label='$\delta x$-axis', linewidth=2)
-                ax1.plot(self._pts, pv[1, :], color='red', ls='dashed', label='$\delta y$-axis', linewidth=2)
-                ax1.plot(self._pts, pv[2, :], color='black', ls='dashed', label='$\delta z$-axis', linewidth=2)
+                ax1.plot(self._pts, pv[0, :], color="blue", ls="dashed", label="$\delta x$-axis", linewidth=2)
+                ax1.plot(self._pts, pv[1, :], color="red", ls="dashed", label="$\delta y$-axis", linewidth=2)
+                ax1.plot(self._pts, pv[2, :], color="black", ls="dashed", label="$\delta z$-axis", linewidth=2)
                 min_pv = min(np.min(pv[2, :]), min_pv)
                 max_pv = max(np.max(pv[2, :]), max_pv)
 
-        ax2.plot(self._pts, pv_norm, color='green', linewidth=2)
+        ax2.plot(self._pts, pv_norm, color="green", linewidth=2)
 
-        ax1.set_ylabel('components')
+        ax1.set_ylabel("components")
         ax1.set_xlim([self._pts[0], self._pts[-1]])
         ax1.set_ylim([min_pv, max_pv])
         ax1.grid()
         ax1.legend()
-        ax1.set_title('primer vector')
+        ax1.set_title("primer vector")
 
         if self.BC.half_dim == 1:
-            ax2.set_ylabel('norm')
+            ax2.set_ylabel("norm")
         else:  # in-plane or complete dynamics
-            ax2.set_ylabel(str(self._q) + '-norm')
+            ax2.set_ylabel(str(self._q) + "-norm")
         ax2.set_xlim([self._pts[0], self._pts[-1]])
         ax2.set_ylim([0.0, np.max(pv_norm)])
         if self.anomaly:
-            ax2.set_xlabel('true anomaly (rad)')
+            ax2.set_xlabel("true anomaly (rad)")
         else:  # the independent variable is time
-            ax2.set_xlabel('time (s)')
+            ax2.set_xlabel("time (s)")
         ax2.grid()
 
     def plot_states(self):
@@ -338,39 +338,39 @@ class Plotter:
         color_plot = None
         while index < self.BC.half_dim:
             if self.BC.half_dim == 1:
-                color_plot = 'black'    
+                color_plot = "black"
             elif self.BC.half_dim == 2:
                 if index == 0:
-                    color_plot = 'blue'
+                    color_plot = "blue"
                 elif index == 1:
-                    color_plot = 'red'
+                    color_plot = "red"
             else:  # complete dynamics
                 if index == 0:
-                    color_plot = 'blue'
+                    color_plot = "blue"
                 elif index == 1:
-                    color_plot = 'red'
+                    color_plot = "red"
                 else:  # index = 2
-                    color_plot = 'black'
-            ax1.plot([self._pts[0]], [self.BC.x0[index]], marker='o', color=color_plot, markersize=12)
-            ax2.plot([self._pts[0]], [self.BC.x0[index + self.BC.half_dim]], marker='o', color=color_plot,
+                    color_plot = "black"
+            ax1.plot([self._pts[0]], [self.BC.x0[index]], marker="o", color=color_plot, markersize=12)
+            ax2.plot([self._pts[0]], [self.BC.x0[index + self.BC.half_dim]], marker="o", color=color_plot,
                      markersize=12)
-            ax1.plot([self._pts[-1]], [self.BC.xf[index]], marker='o', color=color_plot, markersize=12)
-            ax2.plot([self._pts[-1]], [self.BC.xf[index + self.BC.half_dim]], marker='o', color=color_plot,
+            ax1.plot([self._pts[-1]], [self.BC.xf[index]], marker="o", color=color_plot, markersize=12)
+            ax2.plot([self._pts[-1]], [self.BC.xf[index + self.BC.half_dim]], marker="o", color=color_plot,
                      markersize=12)
             ax1.plot(self._pts, self._states[index, :], color_plot, linewidth=2)
             ax2.plot(self._pts, self._states[index + self.BC.half_dim, :], color_plot, linewidth=2)
             index += 1
 
         if self.linearized:
-            ax1.set_title('state vector under linearized dynamics')
+            ax1.set_title("state vector under linearized dynamics")
         else:  # simulated dynamics is non-linear
-            ax1.set_title('state vector under non-linear dynamics')
+            ax1.set_title("state vector under non-linear dynamics")
         ax1.set_xlim([self._pts[0], self._pts[-1]])
         ax2.set_xlim([self._pts[0], self._pts[-1]])
         ax1.grid()
         ax2.grid()
-        ax1.set_ylabel('position (m)')
-        ax2.set_ylabel('velocity (m/s)')
+        ax1.set_ylabel("position (m)")
+        ax2.set_ylabel("velocity (m/s)")
 
         cost = [0.]
         if self.CL.nus[0] == self.BC.nu0:
@@ -391,14 +391,14 @@ class Plotter:
             cost.append(cost[-1])
             dates_cost.append(self._pts[-1])
 
-        ax3.step(dates_cost, cost, where='post', color='green', linewidth=2) 
+        ax3.step(dates_cost, cost, where="post", color="green", linewidth=2) 
         ax3.set_xlim([self._pts[0], self._pts[-1]])
         ax3.set_ylim([0., cost[-1]])
         if self.anomaly:
-            ax3.set_xlabel('true anomaly (rad)')
+            ax3.set_xlabel("true anomaly (rad)")
         else:  # the independent variable is time
-            ax3.set_xlabel('time (s)')
-        ax3.set_ylabel('cost (m/s)')
+            ax3.set_xlabel("time (s)")
+        ax3.set_ylabel("cost (m/s)")
         ax3.grid()
 
     def plot_traj(self):
@@ -413,22 +413,22 @@ class Plotter:
         # plotting position and velocity as functions of the independent variable
         if self.BC.half_dim == 3:
             fig = plt.figure()
-            color_plot = 'green'
-            ax = fig.add_subplot(111, projection='3d')
-            ax.plot([self.BC.x0[0]], [self.BC.x0[1]], [self.BC.x0[2]], marker='+', color=color_plot)
-            ax.plot([self.BC.xf[0]], [self.BC.xf[1]], [self.BC.xf[2]], marker='x', color=color_plot)
+            color_plot = "green"
+            ax = fig.add_subplot(111, projection="3d")
+            ax.plot([self.BC.x0[0]], [self.BC.x0[1]], [self.BC.x0[2]], marker="+", color=color_plot)
+            ax.plot([self.BC.xf[0]], [self.BC.xf[1]], [self.BC.xf[2]], marker="x", color=color_plot)
             ax.plot(self._states[0, :], self._states[1, :], self._states[2, :], color=color_plot)
-            ax.set_xlabel('X (m)')
-            ax.set_ylabel('Y (m)')
-            ax.set_zlabel('Z (m)')  
+            ax.set_xlabel("X (m)")
+            ax.set_ylabel("Y (m)")
+            ax.set_zlabel("Z (m)")  
         else:  # in-plane or ouf-of-plane dynamics only
             fig, ax = plt.subplots(1, 1)
             if self.BC.half_dim == 1: 
-                color_plot = 'black'
+                color_plot = "black"
             else:   # in-plane dynamics
-                color_plot = 'purple'
-            ax.plot([self.BC.x0[0]], [self.BC.x0[1]], marker='+', color=color_plot)
-            ax.plot([self.BC.xf[0]], [self.BC.xf[1]], marker='x', color=color_plot)
+                color_plot = "purple"
+            ax.plot([self.BC.x0[0]], [self.BC.x0[1]], marker="+", color=color_plot)
+            ax.plot([self.BC.xf[0]], [self.BC.xf[1]], marker="x", color=color_plot)
             ax.plot(self._states[0, :], self._states[1, :], color=color_plot)
             ax.grid()
 
@@ -437,9 +437,9 @@ class Plotter:
                 ax.plot([self.BC.x0[0], self.BC.x0[0]], [self.BC.x0[1], self._states[1, 0]], color=color_plot)
 
         if self.BC.half_dim == 1:
-            ax.set_title('phase plane')
+            ax.set_title("phase plane")
         else:  # in-plane or complete dynamics
-            ax.set_title('trajectory')
+            ax.set_title("trajectory")
 
     @staticmethod
     def show():

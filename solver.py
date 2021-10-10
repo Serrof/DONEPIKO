@@ -41,7 +41,7 @@ class Solver:
 
         # sanity check(s)
         if p != 1 and p != 2:
-            raise ValueError('solver: type of norm to minimized must be 1 or 2')
+            raise ValueError("solver: type of norm to minimized must be 1 or 2")
 
         self.dyn = dyn.copy()
         self._indirect = indirect
@@ -61,26 +61,6 @@ class Solver:
         """
 
         raise NotImplementedError
-
-    def set_norm(self, p):
-        """Setter for attribute p.
-
-                Args:
-                    p (int): type of norm to be minimized.
-
-        """
-
-        self.p = p
-
-    def set_propagation(self, prop_ana):
-        """Setter for attribute prop_ana.
-
-                Args:
-                    prop_ana (bool): set to true for analytical propagation of motion, false for integration.
-
-        """
-
-        self.prop_ana = prop_ana
 
     def set_dyn(self, dyn):
         """Setter for attribute dyn.
