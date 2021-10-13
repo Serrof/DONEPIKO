@@ -379,6 +379,46 @@ def kep_to_posvel(kep, planetary_constant=1.):
     return posvel
 
 
+def matrix_inertial_local(ref_posvel):
+    """Function computing the 3x3 matrix to transform from the inertial frame to the local orbital frame defined by the
+    input, such that the X axis is along the position and the Z along the angular momentum.
+
+        Args:
+            ref_posvel (np.ndarray): position-velocity (in inertial frame) defining the local orbital frame.
+
+        Returns:
+            (np.ndarray): matrix to go from inertial to local frame.
+
+    """
+
+    ux = ref_posvel[:3] / np.linalg.norm(ref_posvel[:3])
+    uz = np.cross(ref_posvel[:3], ref_posvel[3:6])
+    uz /= np.linalg.norm(uz)
+    uy = np.cross(uz, ux)
+    return np.array([ux, uy, uz])
+
+
+def conv_posvel_inertial_local(posvel_inertial, ref_posvel):
+    """Function to convert from inertial to the local orbital frame defined by a reference.
+
+            Args:
+                posvel_inertial (np.ndarray): position-velocity vector in inertial frame to be converted.
+                ref_posvel (np.ndarray): position-velocity (in inertial frame) defining the local orbital frame.
+
+            Returns:
+                (np.ndarray): position-velocity vector in local orbital frame.
+
+    """
+
+    rel_posvel = posvel_inertial - ref_posvel
+    omega = np.linalg.norm(np.cross(ref_posvel[:3], ref_posvel[3:6])) / np.linalg.norm(ref_posvel[:3]) ** 2
+    mat = matrix_inertial_local(ref_posvel)
+    posvel_local = np.array(6)
+    posvel_local[:3] = mat.dot(rel_posvel[:3])
+    posvel_local[3:6] = mat.dot(rel_posvel[3:6]) - np.cross(np.array([0., 0., omega]), posvel_local[:3])
+    return posvel_local
+
+
 def rho_func(e, nu):
     """Function that returns 1 + e cos(nu).
 
