@@ -413,7 +413,7 @@ def conv_posvel_inertial_local(posvel_inertial, ref_posvel):
     rel_posvel = posvel_inertial - ref_posvel
     omega = np.linalg.norm(np.cross(ref_posvel[:3], ref_posvel[3:6])) / np.linalg.norm(ref_posvel[:3]) ** 2
     mat = matrix_inertial_local(ref_posvel)
-    posvel_local = np.array(6)
+    posvel_local = np.zeros(6)
     posvel_local[:3] = mat.dot(rel_posvel[:3])
     posvel_local[3:6] = mat.dot(rel_posvel[3:6]) - np.cross(np.array([0., 0., omega]), posvel_local[:3])
     return posvel_local
